@@ -7,6 +7,36 @@ import apiconfig from '../../../../api/apiconfig';
 const PatientManagement = () => {
   const navigate = useNavigate();
   const [patients, setPatients] = useState([]); // State for storing patients
+  const [showModal, setShowModal] = useState(false); // State for modal visibility
+  const [showViewModal, setShowViewModal] = useState(false); // State for view modal visibility
+  const [showUpdateModal, setShowUpdateModal] = useState(false); // State for update modal visibility
+  const [formData, setFormData] = useState({
+    FirstName: '',
+    LastName: '',
+    DateOfBirth: '',
+    ContactInfo: {
+      Phone: '',
+      Email: '',
+      Address: ''
+    },
+    Gender: '',
+    MedicalHistory: []
+  });
+  const [updateFormData, setUpdateFormData] = useState({
+    FirstName: '',
+    LastName: '',
+    DateOfBirth: '',
+    ContactInfo: {
+      Phone: '',
+      Email: '',
+      Address: ''
+    },
+    Gender: '',
+    MedicalHistory: []
+  });
+  const [patientId, setPatientId] = useState(''); // State for auto-generated Patient ID
+  const [selectedPatient, setSelectedPatient] = useState(null); // State for selected patient details
+  const [currentPatientId, setCurrentPatientId] = useState(''); // State for the patient being updated
 
   // Fetch patients from the backend
   useEffect(() => {
@@ -14,6 +44,15 @@ const PatientManagement = () => {
       try {
         const response = await axios.get(apiconfig.patients.getAll);
         setPatients(response.data.data);
+
+        // Generate the next patient ID based on existing patients
+        const lastPatientId = response.data.data.length
+          ? response.data.data[response.data.data.length - 1].PatientID
+          : 'P-000000';
+        const newId = `P-${(parseInt(lastPatientId.split('-')[1]) + 1)
+          .toString()
+          .padStart(6, '0')}`;
+        setPatientId(newId);
       } catch (error) {
         console.error("Error fetching patients:", error);
       }
@@ -23,6 +62,189 @@ const PatientManagement = () => {
 
   const handleTabClick = (path) => {
     navigate(path);
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    if (name.startsWith('ContactInfo')) {
+      const contactField = name.split('.')[1]; // Extract the field like Phone, Email, Address
+      setFormData({
+        ...formData,
+        ContactInfo: {
+          ...formData.ContactInfo,
+          [contactField]: value
+        }
+      });
+    } else if (name === 'MedicalHistory') {
+      setFormData({ ...formData, MedicalHistory: value.split(',') }); // Assuming medical history is a comma-separated list
+    } else {
+      setFormData({ ...formData, [name]: value });
+    }
+  };
+
+  // Handler for opening the update modal
+  const handleUpdateClick = (patient) => {
+    setCurrentPatientId(patient.PatientID);
+    setUpdateFormData({
+      FirstName: patient.FirstName || '',
+      LastName: patient.LastName || '',
+      DateOfBirth: patient.DateOfBirth || '',
+      ContactInfo: {
+        Phone: patient.ContactInfo?.Phone || '',
+        Email: patient.ContactInfo?.Email || '',
+        Address: patient.ContactInfo?.Address || ''
+      },
+      Gender: patient.Gender || '',
+      MedicalHistory: Array.isArray(patient.MedicalHistory) ? patient.MedicalHistory.join(', ') : ''
+    });
+    setShowUpdateModal(true);
+  };
+  
+
+  const handleUpdateInputChange = (e) => {
+    const { name, value } = e.target;
+    if (name.startsWith('ContactInfo')) {
+      const contactField = name.split('.')[1];
+      setUpdateFormData({
+        ...updateFormData,
+        ContactInfo: {
+          ...updateFormData.ContactInfo,
+          [contactField]: value
+        }
+      });
+    } else if (name === 'MedicalHistory') {
+      setUpdateFormData({ ...updateFormData, MedicalHistory: value.split(',').map(item => item.trim()) }); // Convert to array
+    } else {
+      setUpdateFormData({ ...updateFormData, [name]: value });
+    }
+  };
+  
+
+  const handleUpdateSubmit = async () => {
+    try {
+      // Prepare the updated patient data
+      const updatedPatient = {
+        ...updateFormData, // Use the data from the update form
+        PatientID: currentPatientId // Ensure PatientID is included for identification
+      };
+  
+      // Ensure MedicalHistory is an array
+      updatedPatient.MedicalHistory = Array.isArray(updatedPatient.MedicalHistory) ? updatedPatient.MedicalHistory : [];
+  
+      // Update the patient on the backend
+      await axios.put(apiconfig.patients.update, updatedPatient);
+  
+      // Update the state with the updated patient record
+      setPatients(patients.map(patient => 
+        patient.PatientID === currentPatientId ? updatedPatient : patient
+      ));
+      setShowUpdateModal(false); // Close modal after submission
+  
+      // Clear the update form
+      setUpdateFormData({
+        FirstName: '',
+        LastName: '',
+        DateOfBirth: '',
+        ContactInfo: {
+          Phone: '',
+          Email: '',
+          Address: ''
+        },
+        Gender: '',
+        MedicalHistory: []
+      });
+      setCurrentPatientId(''); // Clear currentPatientId
+    } catch (error) {
+      console.error("Error updating patient record:", error);
+    }
+  };
+  
+  
+
+  const handleSubmit = async () => {
+    try {
+      // Generate a new PatientID based on the current patients state
+      const lastPatientId = patients.length
+        ? patients[patients.length - 1].PatientID
+        : 'P-000000';
+      const newId = `P-${(parseInt(lastPatientId.split('-')[1]) + 1).toString().padStart(6, '0')}`;
+
+      const newPatient = {
+        ...formData,
+        PatientID: newId // Include the newly generated PatientID
+      };
+
+      // Add the new patient to the backend
+      await axios.post(apiconfig.patients.create, newPatient);
+      
+      // Update the state with the new patient record without overwriting the existing ones
+      setPatients([...patients, newPatient]);
+      setShowModal(false); // Close modal after submission
+
+      // Clear the form after submission
+      setFormData({
+        FirstName: '',
+        LastName: '',
+        DateOfBirth: '',
+        ContactInfo: {
+          Phone: '',
+          Email: '',
+          Address: ''
+        },
+        Gender: '',
+        MedicalHistory: []
+      });
+
+      // Generate the next PatientID
+      const newGeneratedId = `P-${(parseInt(newId.split('-')[1]) + 1).toString().padStart(6, '0')}`;
+      setPatientId(newGeneratedId);
+    } catch (error) {
+      console.error("Error creating patient record:", error);
+    }
+  };
+
+  const handleView = (patient) => {
+    setSelectedPatient({
+      ...patient,
+      MedicalHistory: Array.isArray(patient.MedicalHistory) ? patient.MedicalHistory : []
+    });
+    setShowViewModal(true);
+  };
+  
+
+  const handleCloseViewModal = () => {
+    setShowViewModal(false);
+    setSelectedPatient(null);
+  };
+
+  const handleDelete = async (id) => {
+    try {
+      await axios.delete(apiconfig.patients.delete, {
+        data: { PatientID: id } // Send the ID in the request body
+      });
+      
+      // Remove the deleted patient from the state
+      setPatients(patients.filter(patient => patient.PatientID !== id));
+    } catch (error) {
+      console.error("Error deleting patient record:", error);
+    }
+  };
+
+  const handleCloseUpdateModal = () => {
+    setShowUpdateModal(false);
+    setCurrentPatientId('');
+    setUpdateFormData({
+      FirstName: '',
+      LastName: '',
+      DateOfBirth: '',
+      ContactInfo: {
+        Phone: '',
+        Email: '',
+        Address: ''
+      },
+      Gender: '',
+      MedicalHistory: []
+    });
   };
 
   return (
@@ -52,14 +274,19 @@ const PatientManagement = () => {
             alignItems: 'center',
             marginRight: 'auto' // Push tabs to the left
           }}>
-            {[
-              { name: 'Patient Management', path: '/patientmanagement' },
-              { name: 'Appointments', path: '/appointment' },
-              { name: 'Medical Records', path: '/medicalrecords' },
-              { name: 'Laboratory Test', path: '/laboratorytest' },
-              { name: 'Bills and Payments', path: '/billspayment' },
-              { name: 'Report and Analytics', path: '/reportsandanalytics' }
-            ].map((tab, index) => (
+            {[{
+              name: 'Patient Management', path: '/patientmanagement'
+            }, {
+              name: 'Appointments', path: '/appointment'
+            }, {
+              name: 'Medical Records', path: '/medicalrecords'
+            }, {
+              name: 'Laboratory Test', path: '/laboratorytest'
+            }, {
+              name: 'Bills and Payments', path: '/billspayment'
+            }, {
+              name: 'Report and Analytics', path: '/reportsandanalytics'
+            }].map((tab, index) => (
               <li 
                 key={index} 
                 onClick={() => handleTabClick(tab.path)}
@@ -88,15 +315,17 @@ const PatientManagement = () => {
         </div>
 
         <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'center' }}>
-          <button style={{ 
-            marginLeft: 'auto', // Aligns button to the right
-            padding: '10px 20px', 
-            backgroundColor: '#4CAF50', 
-            color: 'white', 
-            border: 'none', 
-            borderRadius: '5px', 
-            cursor: 'pointer' 
-          }}>
+          <button 
+            onClick={() => setShowModal(true)} // Show modal on click
+            style={{ 
+              marginLeft: 'auto', // Aligns button to the right
+              padding: '10px 20px', 
+              backgroundColor: '#4CAF50', 
+              color: 'white', 
+              border: 'none', 
+              borderRadius: '5px', 
+              cursor: 'pointer' 
+            }}>
             + New Record
           </button>
           <input 
@@ -133,34 +362,52 @@ const PatientManagement = () => {
             <tbody>
               {patients.length > 0 ? (
                 patients.map((patient, index) => (
-                  <tr key={index} style={{ borderBottom: '1px solid #ddd' }}>
-                    <td style={{ padding: '12px' }}>{patient.PatientID}</td>
-                    <td style={{ padding: '12px' }}>{patient.FirstName}</td>
-                    <td style={{ padding: '12px' }}>{patient.LastName}</td>
-                    <td style={{ padding: '12px' }}>{patient.DateOfBirth}</td>
-                    <td style={{ padding: '12px' }}>{patient.Gender}</td>
-                    <td style={{ padding: '12px', textAlign: 'center' }}>
+                  <tr key={index}>
+                    <td style={{ padding: '12px', borderBottom: '1px solid #ddd' }}>{patient.PatientID}</td>
+                    <td style={{ padding: '12px', borderBottom: '1px solid #ddd' }}>{patient.FirstName}</td>
+                    <td style={{ padding: '12px', borderBottom: '1px solid #ddd' }}>{patient.LastName}</td>
+                    <td style={{ padding: '12px', borderBottom: '1px solid #ddd' }}>{patient.DateOfBirth}</td>
+                    <td style={{ padding: '12px', borderBottom: '1px solid #ddd' }}>
+                      {patient.Gender.charAt(0).toUpperCase() + patient.Gender.slice(1)}
+                    </td>
+                    <td style={{ padding: '12px', borderBottom: '1px solid #ddd', textAlign: 'center' }}>
                       <button 
-                        style={{ 
-                          padding: '8px 12px', 
-                          backgroundColor: '#4CAF50', 
-                          color: 'white', 
-                          border: 'none', 
-                          borderRadius: '5px', 
-                          marginRight: '8px', 
-                          cursor: 'pointer' 
-                        }}>
+                        style={{
+                          backgroundColor: '#4CAF50',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '5px',
+                          cursor: 'pointer',
+                          padding: '5px 10px',
+                          marginRight: '5px'
+                        }}
+                        onClick={() => handleView(patient)}>
+                        View
+                      </button>
+                      <button 
+                        style={{
+                          backgroundColor: '#2196F3',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '5px',
+                          cursor: 'pointer',
+                          padding: '5px 10px',
+                          marginRight: '5px'
+                        }}
+                        onClick={() => handleUpdateClick(patient)}>
                         Update
                       </button>
                       <button 
+                        onClick={() => handleDelete(patient.PatientID)} 
                         style={{ 
-                          padding: '8px 12px', 
-                          backgroundColor: '#f44336', 
+                          padding: '5px 10px', 
+                          backgroundColor: '#DC3545', 
                           color: 'white', 
                           border: 'none', 
-                          borderRadius: '5px', 
-                          cursor: 'pointer' 
-                        }}>
+                          borderRadius: '3px', 
+                          cursor: 'pointer'
+                        }}
+                      >
                         Delete
                       </button>
                     </td>
@@ -168,12 +415,358 @@ const PatientManagement = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="6" style={{ padding: '12px', textAlign: 'center' }}>No records found</td>
+                  <td colSpan="6" style={{ textAlign: 'center', padding: '12px' }}>No patients found</td>
                 </tr>
               )}
             </tbody>
           </table>
         </div>
+        {/* Modal for New Record */}
+        {showModal && (
+          <div 
+            style={{ 
+              position: 'fixed', 
+              top: '0', 
+              left: '0', 
+              right: '0', 
+              bottom: '0', 
+              backgroundColor: 'rgba(0,0,0,0.5)', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center' 
+            }}>
+            <div style={{ 
+              backgroundColor: '#fff', 
+              padding: '30px', 
+              borderRadius: '5px', 
+              width: '500px', 
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)' 
+            }}>
+              <h3>New Patient Record</h3>
+              <label>Patient ID (Auto-generated)</label>
+              <input 
+                type="text" 
+                value={patientId} 
+                readOnly 
+                style={{ width: '480px', padding: '10px', marginBottom: '10px', borderRadius: '5px', border: '1px solid #ccc' }} 
+              />
+              <input 
+                type="text" 
+                name="FirstName" 
+                value={formData.FirstName} 
+                onChange={handleInputChange} 
+                placeholder="First Name" 
+                style={{ width: '480px', padding: '10px', marginBottom: '10px', borderRadius: '5px', border: '1px solid #ccc' }} 
+              />
+              <input 
+                type="text" 
+                name="LastName" 
+                value={formData.LastName} 
+                onChange={handleInputChange} 
+                placeholder="Last Name" 
+                style={{ width: '480px', padding: '10px', marginBottom: '10px', borderRadius: '5px', border: '1px solid #ccc' }} 
+              />
+              <input 
+                type="date" 
+                name="DateOfBirth" 
+                value={formData.DateOfBirth} 
+                onChange={handleInputChange} 
+                placeholder="Date of Birth" 
+                style={{ width: '480px', padding: '10px', marginBottom: '10px', borderRadius: '5px', border: '1px solid #ccc' }} 
+              />
+              <input 
+                type="text" 
+                name="ContactInfo.Phone" 
+                value={formData.ContactInfo.Phone} 
+                onChange={handleInputChange} 
+                placeholder="Phone" 
+                style={{ width: '480px', padding: '10px', marginBottom: '10px', borderRadius: '5px', border: '1px solid #ccc' }} 
+              />
+              <input 
+                type="email" 
+                name="ContactInfo.Email" 
+                value={formData.ContactInfo.Email} 
+                onChange={handleInputChange} 
+                placeholder="Email" 
+                style={{ width: '480px', padding: '10px', marginBottom: '10px', borderRadius: '5px', border: '1px solid #ccc' }} 
+              />
+              <input 
+                type="text" 
+                name="ContactInfo.Address" 
+                value={formData.ContactInfo.Address} 
+                onChange={handleInputChange} 
+                placeholder="Address" 
+                style={{ width: '480px', padding: '10px', marginBottom: '10px', borderRadius: '5px', border: '1px solid #ccc' }} 
+              />
+              <select 
+                name="Gender" 
+                value={formData.Gender} 
+                onChange={handleInputChange} 
+                placeholder="Gender" 
+                style={{ width: '500px', padding: '10px', marginBottom: '10px', borderRadius: '5px', border: '1px solid #ccc' }}
+              >
+                <option value="" disabled>Select Gender</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+              </select>
+              <textarea 
+                name="MedicalHistory" 
+                value={formData.MedicalHistory} 
+                onChange={handleInputChange} 
+                placeholder="Medical History (comma separated)" 
+                style={{ width: '480px', padding: '10px', marginBottom: '10px', borderRadius: '5px', border: '1px solid #ccc' }} 
+              />
+              <button 
+                onClick={handleSubmit} 
+                style={{ 
+                  width: '100%', 
+                  padding: '10px', 
+                  backgroundColor: '#4CAF50', 
+                  color: 'white', 
+                  border: 'none', 
+                  borderRadius: '5px', 
+                  cursor: 'pointer' 
+                }}>
+                Submit
+              </button>
+              <button 
+                onClick={() => setShowModal(false)} 
+                style={{ 
+                  width: '100%', 
+                  padding: '10px', 
+                  marginTop: '10px', 
+                  backgroundColor: '#f44336', 
+                  color: 'white', 
+                  border: 'none', 
+                  borderRadius: '5px', 
+                  cursor: 'pointer' 
+                }}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Modal for Viewing Patient */}
+        {showViewModal && selectedPatient && (
+          <div 
+            style={{ 
+              position: 'fixed', 
+              top: '0', 
+              left: '0', 
+              right: '0', 
+              bottom: '0', 
+              backgroundColor: 'rgba(0,0,0,0.5)', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center' 
+            }}>
+            <div style={{ 
+              backgroundColor: '#fff', 
+              padding: '30px', 
+              borderRadius: '5px', 
+              width: '500px', 
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)' 
+            }}>
+              <h3>Patient Details</h3>
+              <label>Patient ID</label>
+              <input 
+                type="text" 
+                value={selectedPatient.PatientID} 
+                readOnly 
+                style={{ width: '480px', padding: '10px', marginBottom: '10px', borderRadius: '5px', border: '1px solid #ccc' }} 
+              />
+              <input 
+                type="text" 
+                value={selectedPatient.FirstName} 
+                readOnly 
+                style={{ width: '480px', padding: '10px', marginBottom: '10px', borderRadius: '5px', border: '1px solid #ccc' }} 
+              />
+              <input 
+                type="text" 
+                value={selectedPatient.LastName} 
+                readOnly 
+                style={{ width: '480px', padding: '10px', marginBottom: '10px', borderRadius: '5px', border: '1px solid #ccc' }} 
+              />
+              <input 
+                type="date" 
+                value={selectedPatient.DateOfBirth} 
+                readOnly 
+                style={{ width: '480px', padding: '10px', marginBottom: '10px', borderRadius: '5px', border: '1px solid #ccc' }} 
+              />
+              <input 
+                type="text" 
+                value={selectedPatient.ContactInfo.Phone} 
+                readOnly 
+                style={{ width: '480px', padding: '10px', marginBottom: '10px', borderRadius: '5px', border: '1px solid #ccc' }} 
+              />
+              <input 
+                type="email" 
+                value={selectedPatient.ContactInfo.Email} 
+                readOnly 
+                style={{ width: '480px', padding: '10px', marginBottom: '10px', borderRadius: '5px', border: '1px solid #ccc' }} 
+              />
+              <input 
+                type="text" 
+                value={selectedPatient.ContactInfo.Address} 
+                readOnly 
+                style={{ width: '480px', padding: '10px', marginBottom: '10px', borderRadius: '5px', border: '1px solid #ccc' }} 
+              />
+              <select 
+                value={selectedPatient.Gender} 
+                readOnly 
+                style={{ width: '500px', padding: '10px', marginBottom: '10px', borderRadius: '5px', border: '1px solid #ccc' }}
+              >
+                <option value="Male" >Male</option>
+                <option value="Female" >Female</option>
+              </select>
+              <textarea 
+                value={selectedPatient.MedicalHistory.join(', ')} 
+                readOnly 
+                style={{ width: '480px', padding: '10px', marginBottom: '10px', borderRadius: '5px', border: '1px solid #ccc' }} 
+              />
+              <button 
+                onClick={handleCloseViewModal} 
+                style={{ 
+                  width: '100%', 
+                  padding: '10px', 
+                  backgroundColor: '#f44336', 
+                  color: 'white', 
+                  border: 'none', 
+                  borderRadius: '5px', 
+                  cursor: 'pointer' 
+                }}>
+                Close
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Modal for Updating Patient */}
+        {showUpdateModal && (
+          <div 
+            style={{ 
+              position: 'fixed', 
+              top: '0', 
+              left: '0', 
+              right: '0', 
+              bottom: '0', 
+              backgroundColor: 'rgba(0,0,0,0.5)', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center' 
+            }}>
+            <div style={{ 
+              backgroundColor: '#fff', 
+              padding: '30px', 
+              borderRadius: '5px', 
+              width: '500px', 
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)' 
+            }}>
+              <h3>Update Patient Record</h3>
+              <label>Patient ID (Read-only)</label>
+              <input 
+                type="text" 
+                value={currentPatientId} 
+                readOnly 
+                style={{ width: '480px', padding: '10px', marginBottom: '10px', borderRadius: '5px', border: '1px solid #ccc' }} 
+              />
+              <input 
+                type="text" 
+                name="FirstName" 
+                value={updateFormData.FirstName} 
+                onChange={handleUpdateInputChange} 
+                placeholder="First Name" 
+                style={{ width: '480px', padding: '10px', marginBottom: '10px', borderRadius: '5px', border: '1px solid #ccc' }} 
+              />
+              <input 
+                type="text" 
+                name="LastName" 
+                value={updateFormData.LastName} 
+                onChange={handleUpdateInputChange} 
+                placeholder="Last Name" 
+                style={{ width: '480px', padding: '10px', marginBottom: '10px', borderRadius: '5px', border: '1px solid #ccc' }} 
+              />
+              <input 
+                type="date" 
+                name="DateOfBirth" 
+                value={updateFormData.DateOfBirth} 
+                onChange={handleUpdateInputChange} 
+                placeholder="Date of Birth" 
+                style={{ width: '480px', padding: '10px', marginBottom: '10px', borderRadius: '5px', border: '1px solid #ccc' }} 
+              />
+              <input 
+                type="text" 
+                name="ContactInfo.Phone" 
+                value={updateFormData.ContactInfo.Phone} 
+                onChange={handleUpdateInputChange} 
+                placeholder="Phone" 
+                style={{ width: '480px', padding: '10px', marginBottom: '10px', borderRadius: '5px', border: '1px solid #ccc' }} 
+              />
+              <input 
+                type="email" 
+                name="ContactInfo.Email" 
+                value={updateFormData.ContactInfo.Email} 
+                onChange={handleUpdateInputChange} 
+                placeholder="Email" 
+                style={{ width: '480px', padding: '10px', marginBottom: '10px', borderRadius: '5px', border: '1px solid #ccc' }} 
+              />
+              <input 
+                type="text" 
+                name="ContactInfo.Address" 
+                value={updateFormData.ContactInfo.Address} 
+                onChange={handleUpdateInputChange} 
+                placeholder="Address" 
+                style={{ width: '480px', padding: '10px', marginBottom: '10px', borderRadius: '5px', border: '1px solid #ccc' }} 
+              />
+              <select 
+                name="Gender" 
+                value={updateFormData.Gender} 
+                onChange={handleUpdateInputChange} 
+                placeholder="Gender" 
+                style={{ width: '500px', padding: '10px', marginBottom: '10px', borderRadius: '5px', border: '1px solid #ccc' }}
+              >
+                <option value="" disabled>Select Gender</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+              </select>
+              <textarea 
+                name="MedicalHistory" 
+                value={updateFormData.MedicalHistory} 
+                onChange={handleUpdateInputChange} 
+                placeholder="Medical History (comma separated)" 
+                style={{ width: '480px', padding: '10px', marginBottom: '10px', borderRadius: '5px', border: '1px solid #ccc' }} 
+              />
+              <button 
+                onClick={handleUpdateSubmit} 
+                style={{ 
+                  width: '100%', 
+                  padding: '10px', 
+                  backgroundColor: '#4CAF50', 
+                  color: 'white', 
+                  border: 'none', 
+                  borderRadius: '5px', 
+                  cursor: 'pointer' 
+                }}>
+                Save
+              </button>
+              <button 
+                onClick={handleCloseUpdateModal} 
+                style={{ 
+                  width: '100%', 
+                  padding: '10px', 
+                  marginTop: '10px', 
+                  backgroundColor: '#f44336', 
+                  color: 'white', 
+                  border: 'none', 
+                  borderRadius: '5px', 
+                  cursor: 'pointer' 
+                }}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
