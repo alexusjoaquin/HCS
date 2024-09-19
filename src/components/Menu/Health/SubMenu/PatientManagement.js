@@ -37,7 +37,27 @@ const PatientManagement = () => {
   const [patientId, setPatientId] = useState(''); // State for auto-generated Patient ID
   const [selectedPatient, setSelectedPatient] = useState(null); // State for selected patient details
   const [currentPatientId, setCurrentPatientId] = useState(''); // State for the patient being updated
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filteredPatients, setFilteredPatients] = useState(patients); // State for filtered patients
 
+
+  useEffect(() => {
+    const filterPatients = () => {
+      if (searchQuery) {
+        const lowerCaseQuery = searchQuery.toLowerCase();
+        const filtered = patients.filter(patient =>
+          patient.FirstName.toLowerCase().includes(lowerCaseQuery) ||
+          patient.LastName.toLowerCase().includes(lowerCaseQuery)
+        );
+        setFilteredPatients(filtered);
+      } else {
+        setFilteredPatients(patients); // Show all patients if search query is empty
+      }
+    };
+    
+    filterPatients();
+  }, [searchQuery, patients]); // Run the effect when searchQuery or patients change
+  
   // Fetch patients from the backend
   useEffect(() => {
     const fetchPatients = async () => {
@@ -331,7 +351,9 @@ const PatientManagement = () => {
           <input 
             type="text" 
             placeholder="Search records" 
-            style={{ padding: '10px', width: '200px', borderRadius: '5px', border: '1px solid #ccc', marginLeft: '20px' }} 
+            style={{ padding: '10px', width: '200px', borderRadius: '5px', border: '1px solid #ccc', marginLeft: '20px' }}  
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
         
@@ -360,8 +382,8 @@ const PatientManagement = () => {
               </tr>
             </thead>
             <tbody>
-              {patients.length > 0 ? (
-                patients.map((patient, index) => (
+              {filteredPatients.length > 0 ? (
+                filteredPatients.map((patient, index) => (
                   <tr key={index}>
                     <td style={{ padding: '12px', borderBottom: '1px solid #ddd' }}>{patient.PatientID}</td>
                     <td style={{ padding: '12px', borderBottom: '1px solid #ddd' }}>{patient.FirstName}</td>
@@ -419,6 +441,7 @@ const PatientManagement = () => {
                 </tr>
               )}
             </tbody>
+
           </table>
         </div>
         {/* Modal for New Record */}
