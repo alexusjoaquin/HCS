@@ -1,42 +1,63 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../../../templates/Sidebar';
+import MedRecordModal from '../Modals/MedRecordModal/MedRecordModal';
+import MedRecordViewModal from '../Modals/MedRecordViewModal/MedRecordViewModal'; // Import the view modal
+import MedRecordUpdateModal from '../Modals/MedRecordUpdateModal/MedRecordUpdateModal';
+import '../CssFiles/MedicalRecord.css';
 
 const MedicalRecord = () => {
   const navigate = useNavigate();
+  const [isModalOpen, setModalOpen] = useState(false);
+  const [isViewModalOpen, setViewModalOpen] = useState(false);
+  const [isUpdateModalOpen, setUpdateModalOpen] = useState(false); // New state for update modal
+  const [selectedRecord, setSelectedRecord] = useState(null);
 
   const handleTabClick = (path) => {
     navigate(path);
   };
 
+  const handleNewRecord = (data) => {
+    console.log('New Record Submitted:', data);
+    // Optionally, update your records state to include this new record
+  };
+
+  const handleViewRecord = (record) => {
+    setSelectedRecord(record);
+    setViewModalOpen(true);
+  };
+
+  const handleUpdateRecord = (updatedRecord) => {
+    console.log('Updated Record:', updatedRecord);
+    // Update your records state with the updated record
+    setUpdateModalOpen(false);
+  };
+
+  const handleUpdateClick = (record) => {
+    setSelectedRecord(record);
+    setUpdateModalOpen(true); // Open the update modal
+  };
+
+  const mockRecords = [
+    {
+      fullname: "Jonard Matados",
+      dateOfConfinement: "08/20/2024",
+      diagnostic: "Hypertension",
+      dateOfDischarge: "08/20/2024",
+    },
+    // Add more mock records as needed
+  ];
+
   return (
-    <div style={{ display: 'flex', minHeight: '100vh' }}>
+    <div className="container">
       <Sidebar />
-      <div style={{ 
-        flex: 1, 
-        padding: '20px', 
-        marginLeft: '250px', 
-        boxSizing: 'border-box', 
-        overflow: 'hidden' 
-      }}>
-        <h2 style={{ marginBottom: '20px', fontSize: '30px', color: "#0B8769", marginLeft: '50px' }}>MEDICAL RECORDS</h2>
-        
+      <div className="content">
+        <h2 className="header">MEDICAL RECORDS</h2>
+
         {/* Tabs Section */}
-        <div style={{ 
-          marginBottom: '20px', 
-          display: 'flex', 
-          alignItems: 'center', 
-          marginLeft: '50px' // Align with header
-        }}>
-          <ul style={{ 
-            listStyle: 'none', 
-            padding: 0, 
-            margin: 0, 
-            display: 'flex', 
-            alignItems: 'center',
-            marginRight: 'auto' // Push tabs to the left
-          }}>
-            {[
+        <div className="tabs">
+          <ul className="tabList">
+            {[ 
               { name: 'Patient Management', path: '/patientmanagement' },
               { name: 'Appointments', path: '/appointment' },
               { name: 'Medical Records', path: '/medicalrecords' },
@@ -47,23 +68,7 @@ const MedicalRecord = () => {
               <li 
                 key={index} 
                 onClick={() => handleTabClick(tab.path)}
-                style={{ 
-                  marginRight: '10px', 
-                  cursor: 'pointer', 
-                  padding: '10px 20px', 
-                  borderRadius: '5px', 
-                  backgroundColor: '#0B8769', // Updated background color
-                  color: 'white', // Updated text color
-                  textAlign: 'center', 
-                  transition: 'background-color 0.3s, transform 0.3s', 
-                  fontWeight: 'bold',
-                  minWidth: '150px', // Uniform width
-                  textOverflow: 'ellipsis', 
-                  whiteSpace: 'nowrap', 
-                  overflow: 'hidden'
-                }}
-                onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#0A6B5F'} // Hover effect
-                onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#0B8769'} // Reset hover effect
+                className="tabItem"
               >
                 {tab.name}
               </li>
@@ -71,79 +76,47 @@ const MedicalRecord = () => {
           </ul>
         </div>
 
-        <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'center' }}>
-          <button style={{ 
-            marginLeft: 'auto', // Aligns button to the right
-            padding: '10px 20px', 
-            backgroundColor: '#4CAF50', 
-            color: 'white', 
-            border: 'none', 
-            borderRadius: '5px', 
-            cursor: 'pointer' 
-          }}>
-            + New Record
-          </button>
+        <div className="buttonContainer">
+          <button className="newRecordButton" onClick={() => setModalOpen(true)}>+ New Record</button>
           <input 
             type="text" 
             placeholder="Search records" 
-            style={{ padding: '10px', width: '200px', borderRadius: '5px', border: '1px solid #ccc', marginLeft: '20px' }} 
+            className="searchInput" 
           />
         </div>
-        
-        <div style={{ 
-          overflowX: 'auto', 
-          backgroundColor: '#fff', 
-          borderRadius: '5px', 
-          boxShadow: '0 2px 4px rgba(0,0,0,0.1)', 
-          maxWidth: 'calc(100% - 30px)', // Adjusted to prevent overflow
-          marginLeft: '50px' // Align with tabs and header
-        }}>
-          <table style={{ 
-            width: '100%', 
-            borderCollapse: 'collapse', 
-            minWidth: '600px', // Ensures the table is not too narrow
-            marginLeft: '0' // Align the table with its container
-          }}>
+
+        <div className="tableContainer">
+          <table className="table">
             <thead>
-              <tr style={{ backgroundColor: '#f2f2f2', textAlign: 'left' }}>
-                <th style={{ padding: '12px', borderBottom: '1px solid #ddd' }}>Fullname</th>
-                <th style={{ padding: '12px', borderBottom: '1px solid #ddd' }}>Date of Confinement</th>
-                <th style={{ padding: '12px', borderBottom: '1px solid #ddd' }}>Diagnostic</th>
-                <th style={{ padding: '12px', borderBottom: '1px solid #ddd' }}>Date of Discharge</th>
-                <th style={{ padding: '12px', borderBottom: '1px solid #ddd', textAlign: 'center' }}>Actions</th>
+              <tr className="tableHeader">
+                <th>Fullname</th>
+                <th>Date of Confinement</th>
+                <th>Diagnostic</th>
+                <th>Date of Discharge</th>
+                <th className="actions">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {[...Array(8)].map((_, index) => (
-                <tr key={index} style={{ borderBottom: '1px solid #ddd' }}>
-                  <td style={{ padding: '12px' }}>P-0000001</td>
-                  <td style={{ padding: '12px' }}>Jonard Matados</td>
-                  <td style={{ padding: '12px' }}>Quezon City</td>
-                  <td style={{ padding: '12px' }}>08/20/2024</td>
-                  <td style={{ padding: '12px', textAlign: 'center' }}>
+              {mockRecords.map((record, index) => (
+                <tr key={index} className="tableRow">
+                  <td>{record.fullname}</td>
+                  <td>{record.dateOfConfinement}</td>
+                  <td>{record.diagnostic}</td>
+                  <td>{record.dateOfDischarge}</td>
+                  <td className="actions">
                     <button 
-                      style={{ 
-                        padding: '8px 12px', 
-                        backgroundColor: '#4CAF50', 
-                        color: 'white', 
-                        border: 'none', 
-                        borderRadius: '5px', 
-                        marginRight: '8px', 
-                        cursor: 'pointer' 
-                      }}>
+                      className="actionButton viewButton" 
+                      onClick={() => handleViewRecord(record)} // Open view modal with the record
+                    >
+                      View
+                    </button>
+                    <button 
+                      className="actionButton updateButton" 
+                      onClick={() => handleUpdateClick(record)} // Open update modal with the record
+                    >
                       Update
                     </button>
-                    <button 
-                      style={{ 
-                        padding: '8px 12px', 
-                        backgroundColor: '#f44336', 
-                        color: 'white', 
-                        border: 'none', 
-                        borderRadius: '5px', 
-                        cursor: 'pointer' 
-                      }}>
-                      Delete
-                    </button>
+                    <button className="actionButton deleteButton">Delete</button>
                   </td>
                 </tr>
               ))}
@@ -151,6 +124,28 @@ const MedicalRecord = () => {
           </table>
         </div>
       </div>
+
+      {/* Modal Component for New Record */}
+      <MedRecordModal
+        isOpen={isModalOpen}
+        onClose={() => setModalOpen(false)}
+        onSubmit={handleNewRecord}
+      />
+
+      {/* Modal Component for Viewing Record */}
+      <MedRecordViewModal
+        isOpen={isViewModalOpen}
+        onClose={() => setViewModalOpen(false)}
+        medicalRecord={selectedRecord}
+      />
+
+      {/* Modal Component for Updating Record */}
+      <MedRecordUpdateModal
+        isOpen={isUpdateModalOpen}
+        onClose={() => setUpdateModalOpen(false)}
+        onSave={handleUpdateRecord}
+        medicalRecord={selectedRecord} // Ensure this is checked
+      />
     </div>
   );
 };

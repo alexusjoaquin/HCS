@@ -1,41 +1,81 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../../../templates/Sidebar';
+import BillsPaymentModal from '../Modals/BillsPaymentModal/BillsPaymentModal';
+import BillsPaymentViewModal from '../Modals/BillsPaymentViewModal/BillsPaymentViewModal'; // Import your view modal
+import BillsPaymentUpdateModal from '../Modals/BillsPaymentUpdateModal/BillsPaymentUpdateModal';
+import '../CssFiles/BillsPayment.css';
 
 const BillsPayment = () => {
   const navigate = useNavigate();
+  const [isModalOpen, setModalOpen] = useState(false);
+  const [isViewModalOpen, setViewModalOpen] = useState(false); // State for view modal
+  const [selectedBill, setSelectedBill] = useState(null); // State for selected bill
+  const [isUpdateModalOpen, setUpdateModalOpen] = useState(false);
+  const [selectedUpdateBill, setSelectedUpdateBill] = useState(null);
+
+  const handleUpdateClick = (bill) => {
+    setSelectedUpdateBill(bill); // Set the selected bill for updating
+    setUpdateModalOpen(true); // Open the update modal
+  };
+  
+
+  const handleUpdateModalClose = () => {
+    setUpdateModalOpen(false);
+    setSelectedUpdateBill(null); // Clear selected bill on close
+  };
+
+  const handleUpdateModalSave = (data) => {
+    console.log('Updated Data:', data);
+    setUpdateModalOpen(false);
+  };
+
+  
 
   const handleTabClick = (path) => {
     navigate(path);
   };
 
+  const handleNewBillClick = () => {
+    setModalOpen(true);
+  };
+
+  const handleModalClose = () => {
+    setModalOpen(false);
+  };
+
+  const handleModalSubmit = (data) => {
+    console.log('Submitted Data:', data);
+    setModalOpen(false);
+  };
+
+  const handleViewClick = (bill) => {
+    setSelectedBill(bill); // Set the selected bill
+    setViewModalOpen(true); // Open the view modal
+  };
+
+  const handleViewModalClose = () => {
+    setViewModalOpen(false);
+    setSelectedBill(null); // Clear selected bill on close
+  };
+
+  // Example bill data for rendering
+  const billsData = [...Array(8)].map((_, index) => ({
+    id: `B-000000${index + 1}`,
+    patientName: 'Jonard Matados',
+    amountDue: 500.00,
+    dueDate: '2024-09-15',
+    paymentStatus: 'Pending',
+  }));
+
   return (
-    <div style={{ display: 'flex', minHeight: '100vh' }}>
+    <div className="container">
       <Sidebar />
-      <div style={{ 
-        flex: 1, 
-        padding: '20px', 
-        marginLeft: '250px', 
-        boxSizing: 'border-box', 
-        overflow: 'hidden' 
-      }}>
-        <h2 style={{ marginBottom: '20px', fontSize: '30px', color: "#0B8769", marginLeft: '50px' }}>BILLS AND PAYMENTS</h2>
+      <div className="main-content">
+        <h2 className="header">BILLS AND PAYMENTS</h2>
         
-        {/* Tabs Section */}
-        <div style={{ 
-          marginBottom: '20px', 
-          display: 'flex', 
-          alignItems: 'center', 
-          marginLeft: '50px' // Align with header
-        }}>
-          <ul style={{ 
-            listStyle: 'none', 
-            padding: 0, 
-            margin: 0, 
-            display: 'flex', 
-            alignItems: 'center',
-            marginRight: 'auto' // Push tabs to the left
-          }}>
+        <div className="tabs">
+          <ul className="tabs-list">
             {[
               { name: 'Patient Management', path: '/patientmanagement' },
               { name: 'Appointments', path: '/appointment' },
@@ -47,23 +87,7 @@ const BillsPayment = () => {
               <li 
                 key={index} 
                 onClick={() => handleTabClick(tab.path)}
-                style={{ 
-                  marginRight: '10px', 
-                  cursor: 'pointer', 
-                  padding: '10px 20px', 
-                  borderRadius: '5px', 
-                  backgroundColor: '#0B8769', 
-                  color: 'white', 
-                  textAlign: 'center', 
-                  transition: 'background-color 0.3s, transform 0.3s', 
-                  fontWeight: 'bold',
-                  minWidth: '150px', 
-                  textOverflow: 'ellipsis', 
-                  whiteSpace: 'nowrap', 
-                  overflow: 'hidden'
-                }}
-                onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#0A6B5F'} 
-                onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#0B8769'} 
+                className="tab"
               >
                 {tab.name}
               </li>
@@ -71,87 +95,64 @@ const BillsPayment = () => {
           </ul>
         </div>
 
-        <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'center' }}>
-          <button style={{ 
-            marginLeft: 'auto', 
-            padding: '10px 20px', 
-            backgroundColor: '#4CAF50', 
-            color: 'white', 
-            border: 'none', 
-            borderRadius: '5px', 
-            cursor: 'pointer' 
-          }}>
-            + New Bill
-          </button>
+        <div className="button-container">
+          <button className="new-bill-button" onClick={handleNewBillClick}>+ New Bill</button>
           <input 
             type="text" 
             placeholder="Search bills" 
-            style={{ padding: '10px', width: '200px', borderRadius: '5px', border: '1px solid #ccc', marginLeft: '20px' }} 
+            className="search-input" 
           />
         </div>
         
-        <div style={{ 
-          overflowX: 'auto', 
-          backgroundColor: '#fff', 
-          borderRadius: '5px', 
-          boxShadow: '0 2px 4px rgba(0,0,0,0.1)', 
-          maxWidth: 'calc(100% - 30px)', 
-          marginLeft: '50px' 
-        }}>
-          <table style={{ 
-            width: '100%', 
-            borderCollapse: 'collapse', 
-            minWidth: '600px', 
-            marginLeft: '0' 
-          }}>
+        <div className="table-container">
+          <table>
             <thead>
-              <tr style={{ backgroundColor: '#f2f2f2', textAlign: 'left' }}>
-                <th style={{ padding: '12px', borderBottom: '1px solid #ddd' }}>Bill ID</th>
-                <th style={{ padding: '12px', borderBottom: '1px solid #ddd' }}>Patient Name</th>
-                <th style={{ padding: '12px', borderBottom: '1px solid #ddd' }}>Amount Due</th>
-                <th style={{ padding: '12px', borderBottom: '1px solid #ddd' }}>Due Date</th>
-                <th style={{ padding: '12px', borderBottom: '1px solid #ddd' }}>Payment Status</th>
-                <th style={{ padding: '12px', borderBottom: '1px solid #ddd', textAlign: 'center' }}>Actions</th>
+              <tr>
+                <th>Bill ID</th>
+                <th>Patient Name</th>
+                <th>Amount Due</th>
+                <th>Due Date</th>
+                <th>Payment Status</th>
+                <th className="actions">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {[...Array(8)].map((_, index) => (
-                <tr key={index} style={{ borderBottom: '1px solid #ddd' }}>
-                  <td style={{ padding: '12px' }}>B-0000001</td>
-                  <td style={{ padding: '12px' }}>Jonard Matados</td>
-                  <td style={{ padding: '12px' }}>$500.00</td>
-                  <td style={{ padding: '12px' }}>2024-09-15</td>
-                  <td style={{ padding: '12px', color: 'red' }}>Pending</td>
-                  <td style={{ padding: '12px', textAlign: 'center' }}>
-                    <button 
-                      style={{ 
-                        padding: '8px 12px', 
-                        backgroundColor: '#4CAF50', 
-                        color: 'white', 
-                        border: 'none', 
-                        borderRadius: '5px', 
-                        marginRight: '8px', 
-                        cursor: 'pointer' 
-                      }}>
-                      Update
-                    </button>
-                    <button 
-                      style={{ 
-                        padding: '8px 12px', 
-                        backgroundColor: '#f44336', 
-                        color: 'white', 
-                        border: 'none', 
-                        borderRadius: '5px', 
-                        cursor: 'pointer' 
-                      }}>
-                      Delete
-                    </button>
+              {billsData.map((bill, index) => (
+                <tr key={index}>
+                  <td>{bill.id}</td>
+                  <td>{bill.patientName}</td>
+                  <td>${bill.amountDue.toFixed(2)}</td>
+                  <td>{bill.dueDate}</td>
+                  <td style={{ color: 'red' }}>{bill.paymentStatus}</td>
+                  <td className="actions">
+                    <button className="view-button" onClick={() => handleViewClick(bill)}>View</button>
+                    <button className="update-button" onClick={() => handleUpdateClick(bill)}>Update</button>
+                    <button className="delete-button">Delete</button>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
+
+        <BillsPaymentModal 
+          isOpen={isModalOpen} 
+          onClose={handleModalClose} 
+          onSubmit={handleModalSubmit} 
+        />
+
+        <BillsPaymentViewModal 
+          isOpen={isViewModalOpen} 
+          onClose={handleViewModalClose} 
+          bill={selectedBill} 
+        /> {/* Render the view modal */}
+
+        <BillsPaymentUpdateModal 
+          isOpen={isUpdateModalOpen} 
+          onClose={handleUpdateModalClose} 
+          onSave={handleUpdateModalSave} 
+          bill={selectedUpdateBill} // Pass the selected bill for updating
+        />
       </div>
     </div>
   );
