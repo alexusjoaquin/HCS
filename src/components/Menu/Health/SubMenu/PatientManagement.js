@@ -479,6 +479,7 @@ const PatientManagement = () => {
                 value={formData.FirstName} 
                 onChange={handleInputChange} 
                 placeholder="First Name" 
+                required
                 style={{ width: '480px', padding: '10px', marginBottom: '10px', borderRadius: '5px', border: '1px solid #ccc' }} 
               />
               <input 
@@ -487,6 +488,7 @@ const PatientManagement = () => {
                 value={formData.LastName} 
                 onChange={handleInputChange} 
                 placeholder="Last Name" 
+                required
                 style={{ width: '480px', padding: '10px', marginBottom: '10px', borderRadius: '5px', border: '1px solid #ccc' }} 
               />
               <input 
@@ -494,7 +496,7 @@ const PatientManagement = () => {
                 name="DateOfBirth" 
                 value={formData.DateOfBirth} 
                 onChange={handleInputChange} 
-                placeholder="Date of Birth" 
+                required
                 style={{ width: '480px', padding: '10px', marginBottom: '10px', borderRadius: '5px', border: '1px solid #ccc' }} 
               />
               <input 
@@ -503,6 +505,7 @@ const PatientManagement = () => {
                 value={formData.ContactInfo.Phone} 
                 onChange={handleInputChange} 
                 placeholder="Phone" 
+                required
                 style={{ width: '480px', padding: '10px', marginBottom: '10px', borderRadius: '5px', border: '1px solid #ccc' }} 
               />
               <input 
@@ -511,6 +514,7 @@ const PatientManagement = () => {
                 value={formData.ContactInfo.Email} 
                 onChange={handleInputChange} 
                 placeholder="Email" 
+                required
                 style={{ width: '480px', padding: '10px', marginBottom: '10px', borderRadius: '5px', border: '1px solid #ccc' }} 
               />
               <input 
@@ -519,13 +523,14 @@ const PatientManagement = () => {
                 value={formData.ContactInfo.Address} 
                 onChange={handleInputChange} 
                 placeholder="Address" 
+                required
                 style={{ width: '480px', padding: '10px', marginBottom: '10px', borderRadius: '5px', border: '1px solid #ccc' }} 
               />
               <select 
                 name="Gender" 
                 value={formData.Gender} 
                 onChange={handleInputChange} 
-                placeholder="Gender" 
+                required
                 style={{ width: '500px', padding: '10px', marginBottom: '10px', borderRadius: '5px', border: '1px solid #ccc' }}
               >
                 <option value="" disabled>Select Gender</option>
@@ -537,6 +542,7 @@ const PatientManagement = () => {
                 value={formData.MedicalHistory} 
                 onChange={handleInputChange} 
                 placeholder="Medical History (comma separated)" 
+                required
                 style={{ width: '480px', padding: '10px', marginBottom: '10px', borderRadius: '5px', border: '1px solid #ccc' }} 
               />
               <button 

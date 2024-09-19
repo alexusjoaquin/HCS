@@ -1,145 +1,117 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../../../templates/Sidebar';
+import AppointmentModal from '../Modals/AppointmentModal/AppointmentModal';
+import AppointmentViewModal from '../Modals/AppointmentViewModal/AppointmentViewModal';
+import AppointmentUpdateModal from '../Modals/AppointmentUpdateModal/AppointmentUpdateModal'; // Import the update modal
+import '../CssFiles/Appointment.css';
 
 const Appointments = () => {
+  const [isModalOpen, setModalOpen] = useState(false);
+  const [isViewModalOpen, setViewModalOpen] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] = useState(null);
   const navigate = useNavigate();
 
   const handleTabClick = (path) => {
     navigate(path);
   };
 
+  const handleNewRecord = () => {
+    setSelectedAppointment(null);
+    setModalOpen(true);
+  };
+
+  const handleModalClose = () => {
+    setModalOpen(false);
+    setViewModalOpen(false);
+  };
+
+  const handleModalSubmit = (data) => {
+    console.log('New Appointment Data:', data);
+    setModalOpen(false);
+  };
+
+  const handleUpdate = (appointment) => {
+    setSelectedAppointment(appointment);
+    setModalOpen(true);
+  };
+
+  const handleDelete = (id) => {
+    console.log(`Deleting appointment with id ${id}`);
+  };
+
+  const handleView = (appointment) => {
+    setSelectedAppointment(appointment);
+    setViewModalOpen(true);
+  };
+
+  const handleSave = (data) => {
+    console.log('Updated Appointment Data:', data);
+    setModalOpen(false);
+    // Implement further logic to update the appointment in your data store
+  };
+
+  const appointments = [
+    { id: 1, fullname: 'Jonard Matados', contactNumber: '1234567890', date: '2024-01-01', doctor: 'Dr. Smith' },
+    // Add more sample appointments as needed
+  ];
+
   return (
-    <div style={{ display: 'flex', minHeight: '100vh' }}>
+    <div className="container">
       <Sidebar />
-      <div style={{ 
-        flex: 1, 
-        padding: '20px', 
-        marginLeft: '250px', 
-        boxSizing: 'border-box', 
-        overflow: 'hidden' 
-      }}>
-        <h2 style={{ marginBottom: '20px', fontSize: '30px', color: "#0B8769", marginLeft: '50px' }}>APPOINTMENTS</h2>
-        
-        {/* Tabs Section */}
-        <div style={{ 
-          marginBottom: '20px', 
-          display: 'flex', 
-          alignItems: 'center', 
-          marginLeft: '50px' // Align with header
-        }}>
-          <ul style={{ 
-            listStyle: 'none', 
-            padding: 0, 
-            margin: 0, 
-            display: 'flex', 
-            alignItems: 'center',
-            marginRight: 'auto' // Push tabs to the left
-          }}>
-            {[
+      <div className="content">
+        <h2 className="header">APPOINTMENTS</h2>
+
+        <div className="tabs">
+          <ul className="tab-list">
+            {[ 
               { name: 'Patient Management', path: '/patientmanagement' },
               { name: 'Appointments', path: '/appointment' },
               { name: 'Medical Records', path: '/medicalrecords' },
               { name: 'Laboratory Test', path: '/laboratorytest' },
               { name: 'Bills and Payments', path: '/billspayment' },
-              { name: 'Report and Analytics', path: '/reportsandanalytics' }
+              { name: 'Report and Analytics', path: '/reportsandanalytics' },
             ].map((tab, index) => (
-              <li 
-                key={index} 
-                onClick={() => handleTabClick(tab.path)}
-                style={{ 
-                  marginRight: '10px', 
-                  cursor: 'pointer', 
-                  padding: '10px 20px', 
-                  borderRadius: '5px', 
-                  backgroundColor: '#0B8769', // Updated background color
-                  color: 'white', // Updated text color
-                  textAlign: 'center', 
-                  transition: 'background-color 0.3s, transform 0.3s', 
-                  fontWeight: 'bold',
-                  minWidth: '150px', // Uniform width
-                  textOverflow: 'ellipsis', 
-                  whiteSpace: 'nowrap', 
-                  overflow: 'hidden'
-                }}
-                onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#0A6B5F'} // Hover effect
-                onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#0B8769'} // Reset hover effect
-              >
+              <li key={index} onClick={() => handleTabClick(tab.path)} className="tab">
                 {tab.name}
               </li>
             ))}
           </ul>
         </div>
 
-        <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'center' }}>
-          <button style={{ 
-            marginLeft: 'auto', // Aligns button to the right
-            padding: '10px 20px', 
-            backgroundColor: '#4CAF50', 
-            color: 'white', 
-            border: 'none', 
-            borderRadius: '5px', 
-            cursor: 'pointer' 
-          }}>
+        <div className="button-container">
+          <button className="new-record-button" onClick={handleNewRecord}>
             + New Record
           </button>
-          <input 
-            type="text" 
-            placeholder="Search records" 
-            style={{ padding: '10px', width: '200px', borderRadius: '5px', border: '1px solid #ccc', marginLeft: '20px' }} 
-          />
+          <input type="text" placeholder="Search records" className="search-input" />
         </div>
-        
-        <div style={{ 
-          overflowX: 'auto', 
-          backgroundColor: '#fff', 
-          borderRadius: '5px', 
-          boxShadow: '0 2px 4px rgba(0,0,0,0.1)', 
-          maxWidth: 'calc(100% - 30px)', // Adjusted to prevent overflow
-          marginLeft: '50px' // Align with tabs and header
-        }}>
-          <table style={{ 
-            width: '100%', 
-            borderCollapse: 'collapse', 
-            minWidth: '600px', // Ensures the table is not too narrow
-            marginLeft: '0' // Align the table with its container
-          }}>
+
+        <div className="table-container">
+          <table className="table">
             <thead>
-              <tr style={{ backgroundColor: '#f2f2f2', textAlign: 'left' }}>
-                <th style={{ padding: '12px', borderBottom: '1px solid #ddd' }}>Fullname</th>
-                <th style={{ padding: '12px', borderBottom: '1px solid #ddd' }}>Contact no.</th>
-                <th style={{ padding: '12px', borderBottom: '1px solid #ddd' }}>Appointment Date</th>
-                <th style={{ padding: '12px', borderBottom: '1px solid #ddd', textAlign: 'center' }}>Actions</th>
+              <tr>
+                <th>Fullname</th>
+                <th>Contact no.</th>
+                <th>Appointment Date</th>
+                <th>Doctor</th>
+                <th className="actions">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {[...Array(8)].map((_, index) => (
-                <tr key={index} style={{ borderBottom: '1px solid #ddd' }}>
-                  <td style={{ padding: '12px' }}>P-0000001</td>
-                  <td style={{ padding: '12px' }}>Jonard Matados</td>
-                  <td style={{ padding: '12px' }}>Quezon City</td>
-                  <td style={{ padding: '12px', textAlign: 'center' }}>
-                    <button 
-                      style={{ 
-                        padding: '8px 12px', 
-                        backgroundColor: '#4CAF50', 
-                        color: 'white', 
-                        border: 'none', 
-                        borderRadius: '5px', 
-                        marginRight: '8px', 
-                        cursor: 'pointer' 
-                      }}>
+              {appointments.map((appointment) => (
+                <tr key={appointment.id}>
+                  <td>{appointment.fullname}</td>
+                  <td>{appointment.contactNumber}</td>
+                  <td>{appointment.date}</td>
+                  <td>{appointment.doctor}</td>
+                  <td className="actions">
+                    <button className="view-button" onClick={() => handleView(appointment)}>
+                      View
+                    </button>
+                    <button className="update-button" onClick={() => handleUpdate(appointment)}>
                       Update
                     </button>
-                    <button 
-                      style={{ 
-                        padding: '8px 12px', 
-                        backgroundColor: '#f44336', 
-                        color: 'white', 
-                        border: 'none', 
-                        borderRadius: '5px', 
-                        cursor: 'pointer' 
-                      }}>
+                    <button className="delete-button" onClick={() => handleDelete(appointment.id)}>
                       Delete
                     </button>
                   </td>
@@ -149,6 +121,28 @@ const Appointments = () => {
           </table>
         </div>
       </div>
+
+      {/* Modal for New Record */}
+      <AppointmentModal
+        isOpen={isModalOpen && selectedAppointment === null}
+        onClose={handleModalClose}
+        onSubmit={handleModalSubmit}
+      />
+
+      {/* Modal for Viewing Appointment */}
+      <AppointmentViewModal
+        isOpen={isViewModalOpen}
+        onClose={handleModalClose}
+        appointment={selectedAppointment}
+      />
+
+      {/* Modal for Updating Appointment */}
+      <AppointmentUpdateModal
+        isOpen={isModalOpen && selectedAppointment !== null} // Only show when there's a selected appointment
+        onClose={handleModalClose}
+        onSave={handleSave}
+        appointment={selectedAppointment || {}} // Pass an empty object if null
+      />
     </div>
   );
 };
