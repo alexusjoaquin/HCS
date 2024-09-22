@@ -1,12 +1,29 @@
-import React from 'react';
+// src/components/Modals/MedRecordModal/MedRecordModal.js
+import React, { useState, useEffect } from 'react';
 
 const MedRecordModal = ({ isOpen, onClose, onSubmit }) => {
-  const [formData, setFormData] = React.useState({
-    fullname: '',
-    dateOfConfinement: '',
-    diagnostic: '',
-    dateOfDischarge: '',
+  const [formData, setFormData] = useState({
+    PatientID: '',
+    DoctorID: '',
+    Date: '',
+    Diagnosis: '',
+    Treatment: '',
+    Notes: '',
   });
+
+  useEffect(() => {
+    if (!isOpen) {
+      // Clear form data when the modal is closed
+      setFormData({
+        PatientID: '',
+        DoctorID: '',
+        Date: '',
+        Diagnosis: '',
+        Treatment: '',
+        Notes: '',
+      });
+    }
+  }, [isOpen]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -16,135 +33,153 @@ const MedRecordModal = ({ isOpen, onClose, onSubmit }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     onSubmit(formData);
-    onClose();
+    // The form will be cleared via the useEffect hook when the modal closes
   };
 
   if (!isOpen) return null;
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      background: 'rgba(0, 0, 0, 0.7)',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-    }}>
-      <div style={{
-        background: 'white',
-        padding: '20px',
-        borderRadius: '8px',
-        width: '400px',
-        boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
-      }}>
+    <div style={modalStyles.overlay}>
+      <div style={modalStyles.content}>
         <h2>New Medical Record</h2>
         <form onSubmit={handleSubmit}>
           <label>
-            Fullname:
+            Patient ID:
             <input
               type="text"
-              name="fullname"
-              value={formData.fullname}
+              name="PatientID"
+              value={formData.PatientID}
               onChange={handleChange}
-              placeholder="Enter patient's full name"
+              placeholder="Enter Patient ID"
               required
-              style={{
-                width: 'calc(100% - 20px)',
-                padding: '8px',
-                marginBottom: '10px',
-                border: '1px solid #ccc',
-                borderRadius: '4px',
-                display: 'block',
-              }}
+              style={modalStyles.input}
             />
           </label>
           <label>
-            Date of Confinement:
-            <input
-              type="date"
-              name="dateOfConfinement"
-              value={formData.dateOfConfinement}
-              onChange={handleChange}
-              required
-              style={{
-                width: 'calc(100% - 20px)',
-                padding: '8px',
-                marginBottom: '10px',
-                border: '1px solid #ccc',
-                borderRadius: '4px',
-                display: 'block',
-              }}
-            />
-          </label>
-          <label>
-            Diagnostic:
+            Doctor ID:
             <input
               type="text"
-              name="diagnostic"
-              value={formData.diagnostic}
+              name="DoctorID"
+              value={formData.DoctorID}
               onChange={handleChange}
-              placeholder="Enter diagnostic information"
+              placeholder="Enter Doctor ID"
               required
-              style={{
-                width: 'calc(100% - 20px)',
-                padding: '8px',
-                marginBottom: '10px',
-                border: '1px solid #ccc',
-                borderRadius: '4px',
-                display: 'block',
-              }}
+              style={modalStyles.input}
             />
           </label>
           <label>
-            Date of Discharge:
+            Date:
             <input
               type="date"
-              name="dateOfDischarge"
-              value={formData.dateOfDischarge}
+              name="Date"
+              value={formData.Date}
               onChange={handleChange}
               required
-              style={{
-                width: 'calc(100% - 20px)',
-                padding: '8px',
-                marginBottom: '10px',
-                border: '1px solid #ccc',
-                borderRadius: '4px',
-                display: 'block',
-              }}
+              style={modalStyles.input}
             />
           </label>
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-          }}>
-            <button type="submit" style={{
-              padding: '12px 20px',
-              border: 'none',
-              borderRadius: '5px',
-              cursor: 'pointer',
-              fontSize: '16px',
-              width: '130px',
-              backgroundColor: '#4CAF50',
-              color: 'white',
-            }}>Submit</button>
-            <button type="button" onClick={onClose} style={{
-              padding: '12px 20px',
-              border: 'none',
-              borderRadius: '5px',
-              cursor: 'pointer',
-              fontSize: '16px',
-              width: '130px',
-              backgroundColor: '#f44336',
-              color: 'white',
-            }}>Close</button>
+          <label>
+            Diagnosis:
+            <input
+              type="text"
+              name="Diagnosis"
+              value={formData.Diagnosis}
+              onChange={handleChange}
+              placeholder="Enter Diagnosis"
+              required
+              style={modalStyles.input}
+            />
+          </label>
+          <label>
+            Treatment:
+            <input
+              type="text"
+              name="Treatment"
+              value={formData.Treatment}
+              onChange={handleChange}
+              placeholder="Enter Treatment"
+              required
+              style={modalStyles.input}
+            />
+          </label>
+          <label>
+            Notes:
+            <textarea
+              name="Notes"
+              value={formData.Notes}
+              onChange={handleChange}
+              placeholder="Enter any additional notes"
+              required
+              style={{ ...modalStyles.input, height: '80px', resize: 'vertical' }}
+            />
+          </label>
+          <div style={modalStyles.buttonContainer}>
+            <button type="submit" style={modalStyles.submitButton}>
+              Submit
+            </button>
+            <button type="button" onClick={onClose} style={modalStyles.closeButton}>
+              Close
+            </button>
           </div>
         </form>
       </div>
     </div>
   );
+};
+
+const modalStyles = {
+  overlay: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    background: 'rgba(0, 0, 0, 0.7)',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000, // Ensures the modal is on top
+  },
+  content: {
+    background: 'white',
+    padding: '20px',
+    borderRadius: '8px',
+    width: '500px',
+    boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
+    position: 'relative',
+  },
+  input: {
+    width: '100%',
+    padding: '8px',
+    marginBottom: '10px',
+    border: '1px solid #ccc',
+    borderRadius: '4px',
+    display: 'block',
+  },
+  buttonContainer: {
+    display: 'flex',
+    justifyContent: 'space-between',
+  },
+  submitButton: {
+    padding: '12px 20px',
+    border: 'none',
+    borderRadius: '5px',
+    cursor: 'pointer',
+    fontSize: '16px',
+    width: '130px',
+    backgroundColor: '#4CAF50',
+    color: 'white',
+  },
+  closeButton: {
+    padding: '12px 20px',
+    border: 'none',
+    borderRadius: '5px',
+    cursor: 'pointer',
+    fontSize: '16px',
+    width: '130px',
+    backgroundColor: '#f44336',
+    color: 'white',
+  },
 };
 
 export default MedRecordModal;
