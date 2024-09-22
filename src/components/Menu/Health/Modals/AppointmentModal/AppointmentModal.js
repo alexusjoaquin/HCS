@@ -1,12 +1,14 @@
+// src/components/Modals/AppointmentModal/AppointmentModal.js
 import React from 'react';
 
 const AppointmentModal = ({ isOpen, onClose, onSubmit }) => {
   const [formData, setFormData] = React.useState({
-    fullname: '',
-    contactNumber: '',
-    appointmentDate: '',
-    appointmentTime: '',
-    doctor: '',
+    PatientID: '',
+    DoctorID: '',
+    Date: '',
+    Time: '',
+    Reason: '',
+    Status: 'Scheduled', // Default status
   });
 
   const handleChange = (e) => {
@@ -17,156 +19,164 @@ const AppointmentModal = ({ isOpen, onClose, onSubmit }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     onSubmit(formData);
+    // Reset form after submission if desired
+    setFormData({
+      PatientID: '',
+      DoctorID: '',
+      Date: '',
+      Time: '',
+      Reason: '',
+      Status: 'Scheduled',
+    });
     onClose();
   };
 
   if (!isOpen) return null;
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      background: 'rgba(0, 0, 0, 0.7)',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-    }}>
-      <div style={{
-        background: 'white',
-        padding: '20px',
-        borderRadius: '8px',
-        width: '400px',
-        boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
-      }}>
+    <div style={modalStyles.overlay}>
+      <div style={modalStyles.content}>
         <h2>New Appointment</h2>
         <form onSubmit={handleSubmit}>
           <label>
-            Fullname:
+            Patient ID:
             <input
               type="text"
-              name="fullname"
-              value={formData.fullname}
+              name="PatientID"
+              value={formData.PatientID}
               onChange={handleChange}
-              placeholder="Enter your full name"
+              placeholder="Enter Patient ID"
               required
-              style={{
-                width: 'calc(100% - 20px)',
-                padding: '8px',
-                marginBottom: '10px',
-                border: '1px solid #ccc',
-                borderRadius: '4px',
-                display: 'block',
-              }}
+              style={modalStyles.input}
             />
           </label>
           <label>
-            Contact Number:
+            Doctor ID:
             <input
               type="text"
-              name="contactNumber"
-              value={formData.contactNumber}
+              name="DoctorID"
+              value={formData.DoctorID}
               onChange={handleChange}
-              placeholder="Enter your contact number"
+              placeholder="Enter Doctor ID"
               required
-              style={{
-                width: 'calc(100% - 20px)',
-                padding: '8px',
-                marginBottom: '10px',
-                border: '1px solid #ccc',
-                borderRadius: '4px',
-                display: 'block',
-              }}
+              style={modalStyles.input}
             />
           </label>
-          <div style={{
-            display: 'flex',
-            marginBottom: '10px',
-            gap: '10px',
-          }}>
-            <label style={{ flex: 1 }}>
-              Appointment Date:
-              <input
-                type="date"
-                name="appointmentDate"
-                value={formData.appointmentDate}
-                onChange={handleChange}
-                required
-                style={{
-                  width: 'calc(100% - 20px)', // Adjusted width
-                  padding: '8px',
-                  border: '1px solid #ccc',
-                  borderRadius: '4px',
-                }}
-              />
-            </label>
-            <label style={{ flex: 1 }}>
-              Time:
-              <input
-                type="time"
-                name="appointmentTime"
-                value={formData.appointmentTime}
-                onChange={handleChange}
-                required
-                style={{
-                  width: 'calc(100% - 20px)', // Adjusted width
-                  padding: '8px',
-                  border: '1px solid #ccc',
-                  borderRadius: '4px',
-                }}
-              />
-            </label>
-          </div>
           <label>
-            Doctor:
+            Date:
             <input
-              type="text"
-              name="doctor"
-              value={formData.doctor}
+              type="date"
+              name="Date"
+              value={formData.Date}
               onChange={handleChange}
-              placeholder="Enter doctor's name"
               required
-              style={{
-                width: 'calc(100% - 20px)',
-                padding: '8px',
-                marginBottom: '10px',
-                border: '1px solid #ccc',
-                borderRadius: '4px',
-                display: 'block',
-              }}
+              style={modalStyles.input}
             />
           </label>
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-          }}>
-            <button type="submit" style={{
-              padding: '12px 20px',
-              border: 'none',
-              borderRadius: '5px',
-              cursor: 'pointer',
-              fontSize: '16px',
-              width: '130px',
-              backgroundColor: '#4CAF50',
-              color: 'white',
-            }}>Submit</button>
-            <button type="button" onClick={onClose} style={{
-              padding: '12px 20px',
-              border: 'none',
-              borderRadius: '5px',
-              cursor: 'pointer',
-              fontSize: '16px',
-              width: '130px',
-              backgroundColor: '#f44336',
-              color: 'white',
-            }}>Close</button>
+          <label>
+            Time:
+            <input
+              type="time"
+              name="Time"
+              value={formData.Time}
+              onChange={handleChange}
+              required
+              style={modalStyles.input}
+            />
+          </label>
+          <label>
+            Reason:
+            <input
+              type="text"
+              name="Reason"
+              value={formData.Reason}
+              onChange={handleChange}
+              placeholder="Enter Reason for Appointment"
+              required
+              style={modalStyles.input}
+            />
+          </label>
+          <label>
+            Status:
+            <select
+              name="Status"
+              value={formData.Status}
+              onChange={handleChange}
+              required
+              style={modalStyles.input}
+            >
+              <option value="Scheduled">Scheduled</option>
+              <option value="Completed">Completed</option>
+              <option value="Cancelled">Cancelled</option>
+            </select>
+          </label>
+          <div style={modalStyles.buttonContainer}>
+            <button type="submit" style={modalStyles.submitButton}>
+              Submit
+            </button>
+            <button type="button" onClick={onClose} style={modalStyles.closeButton}>
+              Close
+            </button>
           </div>
         </form>
       </div>
     </div>
   );
+};
+
+const modalStyles = {
+  overlay: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    background: 'rgba(0, 0, 0, 0.7)',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000, // Ensures the modal is on top
+  },
+  content: {
+    background: 'white',
+    padding: '20px',
+    borderRadius: '8px',
+    width: '400px',
+    boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
+    position: 'relative',
+  },
+  input: {
+    width: '100%',
+    padding: '8px',
+    marginBottom: '10px',
+    border: '1px solid #ccc',
+    borderRadius: '4px',
+    display: 'block',
+  },
+  buttonContainer: {
+    display: 'flex',
+    justifyContent: 'space-between',
+  },
+  submitButton: {
+    padding: '12px 20px',
+    border: 'none',
+    borderRadius: '5px',
+    cursor: 'pointer',
+    fontSize: '16px',
+    width: '130px',
+    backgroundColor: '#4CAF50',
+    color: 'white',
+  },
+  closeButton: {
+    padding: '12px 20px',
+    border: 'none',
+    borderRadius: '5px',
+    cursor: 'pointer',
+    fontSize: '16px',
+    width: '130px',
+    backgroundColor: '#f44336',
+    color: 'white',
+  },
 };
 
 export default AppointmentModal;
