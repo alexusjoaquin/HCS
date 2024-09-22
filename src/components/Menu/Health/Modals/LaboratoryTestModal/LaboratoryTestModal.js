@@ -1,10 +1,15 @@
+// LaboratoryTestModal.js
+
 import React from 'react';
 
 const LaboratoryTestModal = ({ isOpen, onClose, onSubmit }) => {
   const [formData, setFormData] = React.useState({
-    patientName: '',
-    testTaken: '',
-    testResult: '',
+    PatientID: '',
+    DoctorID: '',
+    TestName: '',
+    TestDate: '',
+    Results: '',
+    Notes: '',
   });
 
   const handleChange = (e) => {
@@ -16,117 +21,163 @@ const LaboratoryTestModal = ({ isOpen, onClose, onSubmit }) => {
     e.preventDefault();
     onSubmit(formData);
     onClose();
+    setFormData({
+      PatientID: '',
+      DoctorID: '',
+      TestName: '',
+      TestDate: '',
+      Results: '',
+      Notes: '',
+    }); // Reset form after submission
   };
 
   if (!isOpen) return null;
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      background: 'rgba(0, 0, 0, 0.7)',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-    }}>
-      <div style={{
-        background: 'white',
-        padding: '20px',
-        borderRadius: '8px',
-        width: '400px',
-        boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
-      }}>
+    <div style={modalStyles.overlay}>
+      <div style={modalStyles.content}>
         <h2>New Laboratory Test</h2>
         <form onSubmit={handleSubmit}>
           <label>
-            Patient Name:
+            Patient ID:
             <input
               type="text"
-              name="patientName"
-              value={formData.patientName}
+              name="PatientID"
+              value={formData.PatientID}
               onChange={handleChange}
-              placeholder="Enter patient's name"
+              placeholder="Enter Patient ID"
               required
-              style={{
-                width: 'calc(100% - 20px)',
-                padding: '8px',
-                marginBottom: '10px',
-                border: '1px solid #ccc',
-                borderRadius: '4px',
-                display: 'block',
-              }}
+              style={modalStyles.input}
             />
           </label>
           <label>
-            Test Taken:
+            Doctor ID:
             <input
               type="text"
-              name="testTaken"
-              value={formData.testTaken}
+              name="DoctorID"
+              value={formData.DoctorID}
               onChange={handleChange}
-              placeholder="Enter test taken"
+              placeholder="Enter Doctor ID"
               required
-              style={{
-                width: 'calc(100% - 20px)',
-                padding: '8px',
-                marginBottom: '10px',
-                border: '1px solid #ccc',
-                borderRadius: '4px',
-                display: 'block',
-              }}
+              style={modalStyles.input}
             />
           </label>
           <label>
-            Test Result:
+            Test Name:
             <input
               type="text"
-              name="testResult"
-              value={formData.testResult}
+              name="TestName"
+              value={formData.TestName}
               onChange={handleChange}
-              placeholder="Enter test result"
+              placeholder="Enter Test Name"
               required
-              style={{
-                width: 'calc(100% - 20px)',
-                padding: '8px',
-                marginBottom: '10px',
-                border: '1px solid #ccc',
-                borderRadius: '4px',
-                display: 'block',
-              }}
+              style={modalStyles.input}
             />
           </label>
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-          }}>
-            <button type="submit" style={{
-              padding: '12px 20px',
-              border: 'none',
-              borderRadius: '5px',
-              cursor: 'pointer',
-              fontSize: '16px',
-              width: '130px',
-              backgroundColor: '#4CAF50',
-              color: 'white',
-            }}>Submit</button>
-            <button type="button" onClick={onClose} style={{
-              padding: '12px 20px',
-              border: 'none',
-              borderRadius: '5px',
-              cursor: 'pointer',
-              fontSize: '16px',
-              width: '130px',
-              backgroundColor: '#f44336',
-              color: 'white',
-            }}>Close</button>
+          <label>
+            Test Date:
+            <input
+              type="date"
+              name="TestDate"
+              value={formData.TestDate}
+              onChange={handleChange}
+              required
+              style={modalStyles.input}
+            />
+          </label>
+          <label>
+            Results:
+            <input
+              type="text"
+              name="Results"
+              value={formData.Results}
+              onChange={handleChange}
+              placeholder="Enter Results"
+              required
+              style={modalStyles.input}
+            />
+          </label>
+          <label>
+            Notes:
+            <textarea
+              name="Notes"
+              value={formData.Notes}
+              onChange={handleChange}
+              placeholder="Enter Notes"
+              style={modalStyles.textarea}
+            />
+          </label>
+          <div style={modalStyles.buttonContainer}>
+            <button type="submit" style={modalStyles.submitButton}>Submit</button>
+            <button type="button" onClick={onClose} style={modalStyles.closeButton}>Close</button>
           </div>
         </form>
       </div>
     </div>
   );
+};
+
+const modalStyles = {
+  overlay: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    background: 'rgba(0, 0, 0, 0.7)',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000, // Ensure the modal is above other elements
+  },
+  content: {
+    background: 'white',
+    padding: '20px',
+    borderRadius: '8px',
+    width: '500px',
+    boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
+    maxHeight: '90vh',
+    overflowY: 'auto', // Handle overflow for smaller screens
+  },
+  input: {
+    width: '100%',
+    padding: '8px',
+    marginBottom: '10px',
+    border: '1px solid #ccc',
+    borderRadius: '4px',
+    display: 'block',
+  },
+  textarea: {
+    width: '100%',
+    padding: '8px',
+    marginBottom: '10px',
+    border: '1px solid #ccc',
+    borderRadius: '4px',
+    display: 'block',
+    height: '80px',
+  },
+  buttonContainer: {
+    display: 'flex',
+    justifyContent: 'space-between',
+  },
+  submitButton: {
+    padding: '12px 20px',
+    border: 'none',
+    borderRadius: '5px',
+    cursor: 'pointer',
+    fontSize: '16px',
+    backgroundColor: '#4CAF50',
+    color: 'white',
+  },
+  closeButton: {
+    padding: '12px 20px',
+    border: 'none',
+    borderRadius: '5px',
+    cursor: 'pointer',
+    fontSize: '16px',
+    backgroundColor: '#f44336',
+    color: 'white',
+  },
 };
 
 export default LaboratoryTestModal;

@@ -1,3 +1,5 @@
+// LaboratoryTestViewModal.js
+
 import React from 'react';
 
 const LaboratoryTestViewModal = ({ isOpen, onClose, laboratoryTest }) => {
@@ -31,28 +33,64 @@ const LaboratoryTestViewModal = ({ isOpen, onClose, laboratoryTest }) => {
                 <h2>Laboratory Test Details</h2>
                 <div style={{ marginTop: '10px' }}>
                     <label style={{ display: 'block', marginBottom: '5px' }}>
-                        Patient Name:
+                        Test ID:
                         <input
                             type="text"
-                            value={laboratoryTest.patientName}
+                            value={laboratoryTest.TestID}
                             readOnly
                             style={{ width: '380px', marginBottom: '10px', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
                         />
                     </label>
                     <label style={{ display: 'block', marginBottom: '5px' }}>
-                        Test Taken:
+                        Patient ID:
                         <input
                             type="text"
-                            value={laboratoryTest.testTaken}
+                            value={laboratoryTest.PatientID}
                             readOnly
                             style={{ width: '380px', marginBottom: '10px', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
                         />
                     </label>
                     <label style={{ display: 'block', marginBottom: '5px' }}>
-                        Test Result:
+                        Doctor ID:
                         <input
                             type="text"
-                            value={laboratoryTest.testResult}
+                            value={laboratoryTest.DoctorID}
+                            readOnly
+                            style={{ width: '380px', marginBottom: '10px', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
+                        />
+                    </label>
+                    <label style={{ display: 'block', marginBottom: '5px' }}>
+                        Test Name:
+                        <input
+                            type="text"
+                            value={laboratoryTest.TestName}
+                            readOnly
+                            style={{ width: '380px', marginBottom: '10px', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
+                        />
+                    </label>
+                    <label style={{ display: 'block', marginBottom: '5px' }}>
+                        Test Date:
+                        <input
+                            type="date"
+                            value={laboratoryTest.TestDate}
+                            readOnly
+                            style={{ width: '380px', marginBottom: '10px', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
+                        />
+                    </label>
+                    <label style={{ display: 'block', marginBottom: '5px' }}>
+                        Results:
+                        <input
+                            type="text"
+                            value={laboratoryTest.Results}
+                            readOnly
+                            style={{ width: '380px', marginBottom: '20px', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
+                        />
+                    </label>
+                    <label style={{ display: 'block', marginBottom: '5px' }}>
+                        Notes:
+                        <textarea
+                            name="Notes"
+                            value={laboratoryTest.Notes}
                             readOnly
                             style={{ width: '380px', marginBottom: '20px', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
                         />
