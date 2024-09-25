@@ -3,6 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios'; // Axios for API calls
 import Sidebar from '../../../templates/Sidebar';
 import apiconfig from '../../../../api/apiconfig';
+import { toast } from 'react-toastify'; // For notifications
+import Swal from 'sweetalert2';
+import withReactContent from 'sweetalert2-react-content';
+
+const MySwal = withReactContent(Swal);
 
 const PatientManagement = () => {
   const navigate = useNavigate();
@@ -142,23 +147,49 @@ const PatientManagement = () => {
 
   const handleUpdateSubmit = async () => {
     try {
+      // Initialize an array to collect error messages
+      const errorMessages = [];
+  
+      // Example validation checks (add your specific validation rules as needed)
+      if (!updateFormData.FirstName) errorMessages.push('First name is required.');
+      if (!updateFormData.LastName) errorMessages.push('Last name is required.');
+      if (!updateFormData.DateOfBirth) errorMessages.push('Date of birth is required.');
+  
+      // If there are any error messages, notify the user and return early
+      if (errorMessages.length > 0) {
+        errorMessages.forEach((message) => toast.error(message));
+        return;
+      }
+  
       // Prepare the updated patient data
       const updatedPatient = {
         ...updateFormData, // Use the data from the update form
-        PatientID: currentPatientId // Ensure PatientID is included for identification
+        PatientID: currentPatientId, // Ensure PatientID is included for identification
       };
   
       // Ensure MedicalHistory is an array
-      updatedPatient.MedicalHistory = Array.isArray(updatedPatient.MedicalHistory) ? updatedPatient.MedicalHistory : [];
+      updatedPatient.MedicalHistory = Array.isArray(updatedPatient.MedicalHistory)
+        ? updatedPatient.MedicalHistory
+        : [];
   
       // Update the patient on the backend
       await axios.put(apiconfig.patients.update, updatedPatient);
   
       // Update the state with the updated patient record
-      setPatients(patients.map(patient => 
-        patient.PatientID === currentPatientId ? updatedPatient : patient
-      ));
+      setPatients(
+        patients.map((patient) =>
+          patient.PatientID === currentPatientId ? updatedPatient : patient
+        )
+      );
       setShowUpdateModal(false); // Close modal after submission
+  
+      // Show success notification
+      MySwal.fire({
+        icon: 'success',
+        title: 'Success',
+        text: 'Record updated successfully!',
+        confirmButtonText: 'OK',
+      });
   
       // Clear the update form
       setUpdateFormData({
@@ -168,39 +199,59 @@ const PatientManagement = () => {
         ContactInfo: {
           Phone: '',
           Email: '',
-          Address: ''
+          Address: '',
         },
         Gender: '',
-        MedicalHistory: []
+        MedicalHistory: [],
       });
       setCurrentPatientId(''); // Clear currentPatientId
     } catch (error) {
-      console.error("Error updating patient record:", error);
+      console.error('Error updating patient record:', error);
+      toast.error('Failed to update patient record.');
     }
   };
+  
   
   
 
   const handleSubmit = async () => {
     try {
+      // Initialize an array to collect error messages
+      const errorMessages = [];
+  
+  
+      // If there are any error messages, notify the user and return early
+      if (errorMessages.length > 0) {
+        errorMessages.forEach(message => toast.error(message));
+        return;
+      }
+  
       // Generate a new PatientID based on the current patients state
       const lastPatientId = patients.length
         ? patients[patients.length - 1].PatientID
         : 'P-000000';
       const newId = `P-${(parseInt(lastPatientId.split('-')[1]) + 1).toString().padStart(6, '0')}`;
-
+  
       const newPatient = {
         ...formData,
         PatientID: newId // Include the newly generated PatientID
       };
-
+  
       // Add the new patient to the backend
       await axios.post(apiconfig.patients.create, newPatient);
-      
+  
+      // Notify success
+      MySwal.fire({
+        icon: 'success',
+        title: 'Success',
+        text: 'Patient record created successfully!',
+        confirmButtonText: 'OK',
+      });
+  
       // Update the state with the new patient record without overwriting the existing ones
       setPatients([...patients, newPatient]);
       setShowModal(false); // Close modal after submission
-
+  
       // Clear the form after submission
       setFormData({
         FirstName: '',
@@ -214,14 +265,16 @@ const PatientManagement = () => {
         Gender: '',
         MedicalHistory: []
       });
-
+  
       // Generate the next PatientID
       const newGeneratedId = `P-${(parseInt(newId.split('-')[1]) + 1).toString().padStart(6, '0')}`;
       setPatientId(newGeneratedId);
     } catch (error) {
       console.error("Error creating patient record:", error);
+      toast.error('Failed to create patient record.');
     }
   };
+  
 
   const handleView = (patient) => {
     setSelectedPatient({
@@ -238,18 +291,39 @@ const PatientManagement = () => {
   };
 
   const handleDelete = async (id) => {
-    try {
-      await axios.delete(apiconfig.patients.delete, {
-        data: { PatientID: id } // Send the ID in the request body
-      });
-      
-      // Remove the deleted patient from the state
-      setPatients(patients.filter(patient => patient.PatientID !== id));
-    } catch (error) {
-      console.error("Error deleting patient record:", error);
+    // Integrate SweetAlert2 confirm dialog
+    const result = await MySwal.fire({
+      title: 'Are you sure?',
+      text: 'Do you want to delete this patient record?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Yes, delete it!',
+      reverseButtons: true,
+    });
+  
+    if (result.isConfirmed) {
+      try {
+        await axios.delete(apiconfig.patients.delete, {
+          data: { PatientID: id }, // Send the ID in the request body
+        });
+  
+        // Remove the deleted patient from the state
+        setPatients(patients.filter((patient) => patient.PatientID !== id));
+        MySwal.fire({
+          icon: 'success',
+          title: 'Deleted!',
+          text: 'Patient record has been deleted.',
+          confirmButtonText: 'OK',
+        });
+      } catch (error) {
+        console.error('Error deleting patient record:', error);
+        toast.error('Failed to delete patient record.');
+      }
     }
+    // If canceled, do nothing
   };
-
   const handleCloseUpdateModal = () => {
     setShowUpdateModal(false);
     setCurrentPatientId('');
@@ -446,135 +520,201 @@ const PatientManagement = () => {
         </div>
         {/* Modal for New Record */}
         {showModal && (
-          <div 
-            style={{ 
-              position: 'fixed', 
-              top: '0', 
-              left: '0', 
-              right: '0', 
-              bottom: '0', 
-              backgroundColor: 'rgba(0,0,0,0.5)', 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'center' 
-            }}>
-            <div style={{ 
-              backgroundColor: '#fff', 
-              padding: '30px', 
-              borderRadius: '5px', 
-              width: '500px', 
-              boxShadow: '0 2px 4px rgba(0,0,0,0.1)' 
-            }}>
-              <h3>New Patient Record</h3>
-              <label>Patient ID (Auto-generated)</label>
-              <input 
-                type="text" 
-                value={patientId} 
-                readOnly 
-                style={{ width: '480px', padding: '10px', marginBottom: '10px', borderRadius: '5px', border: '1px solid #ccc' }} 
-              />
-              <input 
-                type="text" 
-                name="FirstName" 
-                value={formData.FirstName} 
-                onChange={handleInputChange} 
-                placeholder="First Name" 
-                required
-                style={{ width: '480px', padding: '10px', marginBottom: '10px', borderRadius: '5px', border: '1px solid #ccc' }} 
-              />
-              <input 
-                type="text" 
-                name="LastName" 
-                value={formData.LastName} 
-                onChange={handleInputChange} 
-                placeholder="Last Name" 
-                required
-                style={{ width: '480px', padding: '10px', marginBottom: '10px', borderRadius: '5px', border: '1px solid #ccc' }} 
-              />
-              <input 
-                type="date" 
-                name="DateOfBirth" 
-                value={formData.DateOfBirth} 
-                onChange={handleInputChange} 
-                required
-                style={{ width: '480px', padding: '10px', marginBottom: '10px', borderRadius: '5px', border: '1px solid #ccc' }} 
-              />
-              <input 
-                type="text" 
-                name="ContactInfo.Phone" 
-                value={formData.ContactInfo.Phone} 
-                onChange={handleInputChange} 
-                placeholder="Phone" 
-                required
-                style={{ width: '480px', padding: '10px', marginBottom: '10px', borderRadius: '5px', border: '1px solid #ccc' }} 
-              />
-              <input 
-                type="email" 
-                name="ContactInfo.Email" 
-                value={formData.ContactInfo.Email} 
-                onChange={handleInputChange} 
-                placeholder="Email" 
-                required
-                style={{ width: '480px', padding: '10px', marginBottom: '10px', borderRadius: '5px', border: '1px solid #ccc' }} 
-              />
-              <input 
-                type="text" 
-                name="ContactInfo.Address" 
-                value={formData.ContactInfo.Address} 
-                onChange={handleInputChange} 
-                placeholder="Address" 
-                required
-                style={{ width: '480px', padding: '10px', marginBottom: '10px', borderRadius: '5px', border: '1px solid #ccc' }} 
-              />
-              <select 
-                name="Gender" 
-                value={formData.Gender} 
-                onChange={handleInputChange} 
-                required
-                style={{ width: '500px', padding: '10px', marginBottom: '10px', borderRadius: '5px', border: '1px solid #ccc' }}
-              >
-                <option value="" disabled>Select Gender</option>
-                <option value="male">Male</option>
-                <option value="female">Female</option>
-              </select>
-              <textarea 
-                name="MedicalHistory" 
-                value={formData.MedicalHistory} 
-                onChange={handleInputChange} 
-                placeholder="Medical History (comma separated)" 
-                required
-                style={{ width: '480px', padding: '10px', marginBottom: '10px', borderRadius: '5px', border: '1px solid #ccc' }} 
-              />
-              <button 
-                onClick={handleSubmit} 
-                style={{ 
-                  width: '100%', 
-                  padding: '10px', 
-                  backgroundColor: '#4CAF50', 
-                  color: 'white', 
-                  border: 'none', 
-                  borderRadius: '5px', 
-                  cursor: 'pointer' 
-                }}>
-                Submit
-              </button>
-              <button 
-                onClick={() => setShowModal(false)} 
-                style={{ 
-                  width: '100%', 
-                  padding: '10px', 
-                  marginTop: '10px', 
-                  backgroundColor: '#f44336', 
-                  color: 'white', 
-                  border: 'none', 
-                  borderRadius: '5px', 
-                  cursor: 'pointer' 
-                }}>
-                Cancel
-              </button>
-            </div>
-          </div>
-        )}
+        <div
+          style={{
+            position: 'fixed',
+            top: '0',
+            left: '0',
+            right: '0',
+            bottom: '0',
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <form
+            onSubmit={(e) => {
+              e.preventDefault(); // Prevent default form submission
+              handleSubmit(); // Call your handleSubmit function
+            }}
+            style={{
+              backgroundColor: '#fff',
+              padding: '30px',
+              borderRadius: '5px',
+              width: '500px',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+            }}
+          >
+            <h3>New Patient Record</h3>
+            <label>Patient ID (Auto-generated)</label>
+            <input
+              type="text"
+              value={patientId}
+              readOnly
+              style={{
+                width: '480px',
+                padding: '10px',
+                marginBottom: '10px',
+                borderRadius: '5px',
+                border: '1px solid #ccc',
+              }}
+            />
+            <input
+              required
+              type="text"
+              name="FirstName"
+              value={formData.FirstName}
+              onChange={handleInputChange}
+              placeholder="First Name"
+              style={{
+                width: '480px',
+                padding: '10px',
+                marginBottom: '10px',
+                borderRadius: '5px',
+                border: '1px solid #ccc',
+              }}
+            />
+            <input
+              required
+              type="text"
+              name="LastName"
+              value={formData.LastName}
+              onChange={handleInputChange}
+              placeholder="Last Name"
+              style={{
+                width: '480px',
+                padding: '10px',
+                marginBottom: '10px',
+                borderRadius: '5px',
+                border: '1px solid #ccc',
+              }}
+            />
+            <input
+              required
+              type="date"
+              name="DateOfBirth"
+              value={formData.DateOfBirth}
+              onChange={handleInputChange}
+              style={{
+                width: '480px',
+                padding: '10px',
+                marginBottom: '10px',
+                borderRadius: '5px',
+                border: '1px solid #ccc',
+              }}
+            />
+            <input
+              required
+              type="text"
+              name="ContactInfo.Phone"
+              value={formData.ContactInfo.Phone}
+              onChange={handleInputChange}
+              placeholder="Phone"
+              style={{
+                width: '480px',
+                padding: '10px',
+                marginBottom: '10px',
+                borderRadius: '5px',
+                border: '1px solid #ccc',
+              }}
+            />
+            <input
+              required
+              type="email"
+              name="ContactInfo.Email"
+              value={formData.ContactInfo.Email}
+              onChange={handleInputChange}
+              placeholder="Email"
+              style={{
+                width: '480px',
+                padding: '10px',
+                marginBottom: '10px',
+                borderRadius: '5px',
+                border: '1px solid #ccc',
+              }}
+            />
+            <input
+              required
+              type="text"
+              name="ContactInfo.Address"
+              value={formData.ContactInfo.Address}
+              onChange={handleInputChange}
+              placeholder="Address"
+              style={{
+                width: '480px',
+                padding: '10px',
+                marginBottom: '10px',
+                borderRadius: '5px',
+                border: '1px solid #ccc',
+              }}
+            />
+            <select
+              required
+              name="Gender"
+              value={formData.Gender}
+              onChange={handleInputChange}
+              style={{
+                width: '500px',
+                padding: '10px',
+                marginBottom: '10px',
+                borderRadius: '5px',
+                border: '1px solid #ccc',
+              }}
+            >
+              <option value="" disabled>
+                Select Gender
+              </option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+            </select>
+            <textarea
+              required
+              name="MedicalHistory"
+              value={formData.MedicalHistory}
+              onChange={handleInputChange}
+              placeholder="Medical History (comma separated)"
+              style={{
+                width: '480px',
+                padding: '10px',
+                marginBottom: '10px',
+                borderRadius: '5px',
+                border: '1px solid #ccc',
+              }}
+            />
+            <button
+              type="submit"
+              style={{
+                width: '100%',
+                padding: '10px',
+                backgroundColor: '#4CAF50',
+                color: 'white',
+                border: 'none',
+                borderRadius: '5px',
+                cursor: 'pointer',
+              }}
+            >
+              Submit
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowModal(false)}
+              style={{
+                width: '100%',
+                padding: '10px',
+                marginTop: '10px',
+                backgroundColor: '#f44336',
+                color: 'white',
+                border: 'none',
+                borderRadius: '5px',
+                cursor: 'pointer',
+              }}
+            >
+              Cancel
+            </button>
+          </form>
+        </div>
+      )}
 
         {/* Modal for Viewing Patient */}
         {showViewModal && selectedPatient && (
