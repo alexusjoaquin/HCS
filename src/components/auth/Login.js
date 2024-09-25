@@ -16,11 +16,15 @@ import {
   IconButton,
   Snackbar,
   Alert,
+  Grid,
+  Paper,
+  useTheme,
 } from '@mui/material';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import axios from 'axios';
 
+// Validation schema to validate username/email and password
 const validationSchema = Yup.object().shape({
   identifier: Yup.string()
     .required('Username or Email is required')
@@ -40,6 +44,7 @@ const validationSchema = Yup.object().shape({
 
 const Login = () => {
   const navigate = useNavigate();
+  const theme = useTheme();
   const [showPassword, setShowPassword] = useState(false);
   const [snackbar, setSnackbar] = useState({
     open: false,
@@ -112,190 +117,220 @@ const Login = () => {
         justifyContent: 'center',
         minHeight: '100vh',
         backgroundImage:
-          'url(https://images.unsplash.com/photo-1580281657524-7e2897e8a53f?ixlib=rb-4.0.3&auto=format&fit=crop&w=1950&q=80)',
+          'linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url(https://images.unsplash.com/photo-1580281657524-7e2897e8a53f?ixlib=rb-4.0.3&auto=format&fit=crop&w=1950&q=80)',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
         position: 'relative',
-        '&:before': {
-          content: '""',
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.5)', // Optional dark overlay
-          backdropFilter: 'blur(5px)', // Blur effect
-        },
+        padding: theme.spacing(2),
       }}
     >
-      <Container
-        maxWidth="xs"
-        sx={{
-          zIndex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          bgcolor: 'white', // Semi-transparent white background
-          boxShadow: '0px 10px 30px rgba(0, 0, 0, 0.3)',
-          borderRadius: '16px',
-          padding: '3rem 2rem',
-        }}
-      >
-        <Box
-          component="img"
-          src="/logo.jpg"
-          alt="Logo"
+      <Container maxWidth="sm">
+        <Paper
+          elevation={10}
           sx={{
-            width: 80,
-            height: 80,
-            marginBottom: '1rem',
-          }}
-        />
-        <Typography
-          variant="h5"
-          component="h1"
-          sx={{
-            marginBottom: '1.5rem',
-            fontWeight: 'bold',
-            color: '#333',
+            padding: theme.spacing(4),
+            borderRadius: '16px',
+            backgroundColor: 'white',
+            boxShadow: '0px 10px 30px rgba(0, 0, 0, 0.3)',
+            transition: 'transform 0.3s, box-shadow 0.3s',
+            '&:hover': {
+              transform: 'translateY(-5px)',
+              boxShadow: '0px 15px 40px rgba(0, 0, 0, 0.35)',
+            },
           }}
         >
-          Healthcare System Login
-        </Typography>
-        <Formik
-          initialValues={{ identifier: '', password: '', remember: false }}
-          validationSchema={validationSchema}
-          onSubmit={handleSubmit}
-        >
-          {({
-            errors,
-            touched,
-            handleChange,
-            handleBlur,
-            isSubmitting,
-            values,
-            setFieldValue,
-          }) => (
-            <Form
-              style={{
-                width: '100%',
-                marginTop: '1rem',
-              }}
-            >
-              {errors.general && (
-                <Typography color="error" variant="body2" sx={{ mb: 2 }}>
-                  {errors.general}
-                </Typography>
-              )}
-              <Field
-                as={TextField}
-                variant="outlined"
-                margin="normal"
-                fullWidth
-                id="identifier"
-                label="Username or Email"
-                name="identifier"
-                autoComplete="username"
-                autoFocus
-                onChange={handleChange}
-                onBlur={handleBlur}
-                helperText={touched.identifier && errors.identifier}
-                error={touched.identifier && Boolean(errors.identifier)}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: '8px',
-                  },
-                }}
-              />
-              <Field
-                as={TextField}
-                variant="outlined"
-                margin="normal"
-                fullWidth
-                name="password"
-                label="Password"
-                type={showPassword ? 'text' : 'password'}
-                id="password"
-                autoComplete="current-password"
-                onChange={handleChange}
-                onBlur={handleBlur}
-                helperText={touched.password && errors.password}
-                error={touched.password && Boolean(errors.password)}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: '8px',
-                  },
-                }}
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton
-                        onClick={handleClickShowPassword}
-                        edge="end"
-                        aria-label="toggle password visibility"
-                      >
-                        {showPassword ? <VisibilityOff /> : <Visibility />}
-                      </IconButton>
-                    </InputAdornment>
-                  ),
-                }}
-              />
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    color="primary"
-                    name="remember"
-                    checked={values.remember}
-                    onChange={(e) => setFieldValue('remember', e.target.checked)}
-                  />
-                }
-                label="Remember me"
-                sx={{ mt: 1 }}
-              />
-              <Button
-                type="submit"
-                fullWidth
-                variant="contained"
-                color="primary"
-                disabled={isSubmitting}
-                sx={{
-                  marginTop: '1.5rem',
-                  padding: '0.75rem',
-                  borderRadius: '8px',
-                  backgroundColor: '#00796b',
-                  '&:hover': {
-                    backgroundColor: '#004d40',
-                  },
-                  textTransform: 'none',
-                  fontWeight: 'bold',
-                  position: 'relative',
-                }}
-              >
-                {isSubmitting ? (
-                  <CircularProgress size={24} color="inherit" />
-                ) : (
-                  'Sign In'
-                )}
-              </Button>
+          <Grid container spacing={2} alignItems="center" direction="column">
+            <Grid item>
               <Box
+                component="img"
+                src="/logo.jpg"
+                alt="Logo"
                 sx={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  marginTop: '1rem',
+                  width: 100,
+                  height: 100,
+                  objectFit: 'contain',
+                }}
+              />
+            </Grid>
+            <Grid item>
+              <Typography
+                variant="h4"
+                component="h1"
+                align="center"
+                sx={{
+                  fontWeight: 'bold',
+                  color: '#333',
                 }}
               >
-                <Link href="#" variant="body2" underline="hover">
-                  Forgot password?
-                </Link>
-                <Link href="#" variant="body2" underline="hover">
-                  Don't have an account? Sign Up
-                </Link>
-              </Box>
-            </Form>
-          )}
-        </Formik>
+                Welcome Back
+              </Typography>
+              <Typography
+                variant="subtitle1"
+                align="center"
+                sx={{
+                  color: '#666',
+                }}
+              >
+                Please log in to your account
+              </Typography>
+            </Grid>
+            <Grid item sx={{ width: '100%' }}>
+              <Formik
+                initialValues={{ identifier: '', password: '', remember: false }}
+                validationSchema={validationSchema}
+                onSubmit={handleSubmit}
+              >
+                {({
+                  errors,
+                  touched,
+                  handleChange,
+                  handleBlur,
+                  isSubmitting,
+                  values,
+                  setFieldValue,
+                }) => (
+                  <Form>
+                    {errors.general && (
+                      <Typography color="error" variant="body2" sx={{ mb: 2 }}>
+                        {errors.general}
+                      </Typography>
+                    )}
+                    <Field
+                      as={TextField}
+                      variant="filled"
+                      margin="normal"
+                      fullWidth
+                      id="identifier"
+                      label="Username or Email"
+                      name="identifier"
+                      autoComplete="username"
+                      autoFocus
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      helperText={touched.identifier && errors.identifier}
+                      error={touched.identifier && Boolean(errors.identifier)}
+                      sx={{
+                        '& .MuiFilledInput-root': {
+                          borderRadius: '8px',
+                          backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                        },
+                        '& .MuiFilledInput-root:before': {
+                          borderBottom: 'none',
+                        },
+                        '& .MuiFilledInput-root:hover:before': {
+                          borderBottom: 'none',
+                        },
+                        '& .MuiFilledInput-root:after': {
+                          borderBottom: 'none',
+                        },
+                      }}
+                    />
+                    <Field
+                      as={TextField}
+                      variant="filled"
+                      margin="normal"
+                      fullWidth
+                      name="password"
+                      label="Password"
+                      type={showPassword ? 'text' : 'password'}
+                      id="password"
+                      autoComplete="current-password"
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      helperText={touched.password && errors.password}
+                      error={touched.password && Boolean(errors.password)}
+                      sx={{
+                        '& .MuiFilledInput-root': {
+                          borderRadius: '8px',
+                          backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                        },
+                        '& .MuiFilledInput-root:before': {
+                          borderBottom: 'none',
+                        },
+                        '& .MuiFilledInput-root:hover:before': {
+                          borderBottom: 'none',
+                        },
+                        '& .MuiFilledInput-root:after': {
+                          borderBottom: 'none',
+                        },
+                      }}
+                      InputProps={{
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            <IconButton
+                              onClick={handleClickShowPassword}
+                              edge="end"
+                              aria-label="toggle password visibility"
+                            >
+                              {showPassword ? <VisibilityOff /> : <Visibility />}
+                            </IconButton>
+                          </InputAdornment>
+                        ),
+                      }}
+                    />
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          color="primary"
+                          name="remember"
+                          checked={values.remember}
+                          onChange={(e) => setFieldValue('remember', e.target.checked)}
+                        />
+                      }
+                      label="Remember me"
+                      sx={{ mt: 1 }}
+                    />
+                    <Button
+                      type="submit"
+                      fullWidth
+                      variant="contained"
+                      color="primary"
+                      disabled={isSubmitting}
+                      sx={{
+                        marginTop: '1.5rem',
+                        padding: '0.75rem',
+                        borderRadius: '8px',
+                        backgroundColor: '#00796b',
+                        '&:hover': {
+                          backgroundColor: '#004d40',
+                        },
+                        textTransform: 'none',
+                        fontWeight: 'bold',
+                        position: 'relative',
+                        transition: 'background-color 0.3s',
+                      }}
+                    >
+                      {isSubmitting ? (
+                        <CircularProgress size={24} color="inherit" />
+                      ) : (
+                        'Sign In'
+                      )}
+                    </Button>
+                    <Grid container justifyContent="flex-end" sx={{ mt: 2 }}>
+                      <Grid item>
+                        <Link
+                          component="button"
+                          variant="body2"
+                          onClick={() => navigate('/register')}
+                          underline="hover"
+                          sx={{
+                            color: '#00796b',
+                            '&:hover': {
+                              color: '#004d40',
+                            },
+                          }}
+                        >
+                          Don't have an account? Sign Up
+                        </Link>
+                      </Grid>
+                    </Grid>
+                  </Form>
+                )}
+              </Formik>
+            </Grid>
+          </Grid>
+        </Paper>
       </Container>
 
       {/* Snackbar for Notifications */}
