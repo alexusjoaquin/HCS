@@ -64,7 +64,7 @@ const Sidebar = () => {
         Healthcare System
       </Typography>
       <List component="nav" sx={{ flexGrow: 1 }}>
-        <ListItem button onClick={() => handleNavigation('/dashboard')}>
+        <ListItem button onClick={() => handleNavigation('/landing')}>
           <ListItemIcon sx={{ color: '#bbbbbb' }}> {/* Light gray icon color */}
             <DashboardIcon />
           </ListItemIcon>
