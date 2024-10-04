@@ -368,10 +368,7 @@ const PatientManagement = () => {
             alignItems: 'center',
             marginRight: 'auto' // Push tabs to the left
           }}>
-            {[{
-              name: 'Patient Management', path: '/patientmanagement'
-            }
-
+            {[
             ].map((tab, index) => (
               <li 
                 key={index} 

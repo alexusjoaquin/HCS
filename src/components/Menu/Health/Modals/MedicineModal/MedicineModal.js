@@ -9,39 +9,42 @@ import {
   Grid,
 } from '@mui/material';
 
-const CrimeReportModal = ({ isOpen, onClose, onSubmit }) => {
-  // Ensure all initial values are defined
+const MedicineModal = ({ isOpen, onClose, onSubmit }) => {
   const [formData, setFormData] = React.useState({
-    ReportID: '', // Add Report ID
-    Location: '',
-    Date: '',
-    Description: '',
-    OfficerInCharge: '',
+    TransactionID: '',
+    ResidentID: '',
+    MedicineName: '',
   });
 
-  // Generate a unique Report ID whenever the modal opens
+  // Generate a unique Transaction ID whenever the modal opens
   useEffect(() => {
     if (isOpen) {
-      const generatedID = `RID-${Date.now()}`; // Example ID generation logic
-      setFormData({
-        ReportID: generatedID,
-        Location: '',
-        Date: '',
-        Description: '',
-        OfficerInCharge: '',
-      });
+      const generatedID = `TX-${Date.now()}`; // Example ID generation logic
+      setFormData((prevState) => ({
+        ...prevState,
+        TransactionID: generatedID,
+      }));
     }
   }, [isOpen]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    setFormData((prevState) => ({
+      ...prevState,
+      [name]: value,
+    }));
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    await onSubmit(formData); // Wait for the submission to complete
-    onClose(); // Close only after successful submission
+    onSubmit(formData);
+    // Reset form after submission
+    setFormData({
+      TransactionID: '',
+      ResidentID: '',
+      MedicineName: '',
+    });
+    onClose();
   };
 
   if (!isOpen) return null;
@@ -64,65 +67,41 @@ const CrimeReportModal = ({ isOpen, onClose, onSubmit }) => {
       <Container maxWidth="sm">
         <Paper elevation={10} sx={{ padding: 4, borderRadius: '16px' }}>
           <Typography variant="h5" component="h2" align="center" gutterBottom>
-            New Crime Report
+            New Medicine Record
           </Typography>
           <form onSubmit={handleSubmit}>
             <Grid container spacing={2}>
               <Grid item xs={12}>
                 <TextField
                   fullWidth
-                  name="ReportID"
-                  label="Report ID"
-                  value={formData.ReportID}
+                  name="TransactionID"
+                  label="Transaction ID"
+                  value={formData.TransactionID}
                   onChange={handleChange}
-                  placeholder="Enter Report ID"
+                  placeholder="Enter Transaction ID"
                   required
-                  disabled // Disable input for Report ID
+                  disabled // Disable input for TransactionID
                 />
               </Grid>
               <Grid item xs={12}>
                 <TextField
                   fullWidth
-                  name="Location"
-                  label="Location"
-                  value={formData.Location}
+                  name="ResidentID"
+                  label="Resident ID"
+                  value={formData.ResidentID}
                   onChange={handleChange}
-                  placeholder="Enter Location"
+                  placeholder="Enter Resident ID"
                   required
                 />
               </Grid>
               <Grid item xs={12}>
                 <TextField
                   fullWidth
-                  type="date"
-                  name="Date"
-                  value={formData.Date}
+                  name="MedicineName"
+                  label="Medicine Name"
+                  value={formData.MedicineName}
                   onChange={handleChange}
-                  required
-                  InputLabelProps={{ shrink: true }}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  name="Description"
-                  label="Description"
-                  value={formData.Description}
-                  onChange={handleChange}
-                  placeholder="Enter Description"
-                  required
-                  multiline
-                  rows={4}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  name="OfficerInCharge"
-                  label="Officer In Charge"
-                  value={formData.OfficerInCharge}
-                  onChange={handleChange}
-                  placeholder="Enter Officer In Charge"
+                  placeholder="Enter Medicine Name"
                   required
                 />
               </Grid>
@@ -148,4 +127,4 @@ const CrimeReportModal = ({ isOpen, onClose, onSubmit }) => {
   );
 };
 
-export default CrimeReportModal;
+export default MedicineModal;

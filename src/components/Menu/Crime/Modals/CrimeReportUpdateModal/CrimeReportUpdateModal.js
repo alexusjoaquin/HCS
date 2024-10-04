@@ -1,166 +1,150 @@
-// src/components/Modals/CrimeReportUpdateModal/CrimeReportUpdateModal.js
 import React from 'react';
+import {
+  Box,
+  Button,
+  TextField,
+  Typography,
+  Container,
+  Paper,
+  Grid,
+} from '@mui/material';
 
 const CrimeReportUpdateModal = ({ isOpen, onClose, onSave, report }) => {
+  // Initialize the form data state based on the report prop
   const [formData, setFormData] = React.useState({
-    ReportID: report.ReportID || '',
-    Description: report.Description || '',
-    Date: report.Date || '',
-    Location: report.Location || '',
-    OfficerInCharge: report.OfficerInCharge || '',
+    ReportID: '',
+    Description: '',
+    Location: '',
+    Date: '',
+    OfficerInCharge: '',
   });
 
+  // Update the form data state when the report prop changes
   React.useEffect(() => {
-    setFormData({
-      ReportID: report.ReportID || '',
-      Description: report.Description || '',
-      Date: report.Date || '',
-      Location: report.Location || '',
-      OfficerInCharge: report.OfficerInCharge || '',
-    });
+    if (report) {
+      setFormData({
+        ReportID: report.ReportID || '',
+        Description: report.Description || '',
+        Location: report.Location || '',
+        Date: report.Date || '',
+        OfficerInCharge: report.OfficerInCharge || '',
+      });
+    }
   }, [report]);
 
+  // Handle changes to form inputs
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
 
+  // Handle form submission
   const handleSave = (e) => {
     e.preventDefault();
-    onSave(formData);
+    onSave(formData); // Call the onSave prop function with the form data
+    onClose(); // Close the modal after saving
   };
 
-  if (!isOpen) return null;
+  // Prevent rendering if the modal is not open or report is null
+  if (!isOpen || !report) return null;
 
   return (
-    <div style={modalStyles.overlay}>
-      <div style={modalStyles.content}>
-        <h2>Update Crime Report</h2>
-        <form onSubmit={handleSave}>
-          <label>
-            Report ID:
-            <input
-              type="text"
-              name="ReportID"
-              value={formData.ReportID}
-              readOnly
-              style={modalStyles.input}
-            />
-          </label>
-          <label>
-            Description:
-            <input
-              type="text"
-              name="Description"
-              value={formData.Description}
-              onChange={handleChange}
-              placeholder="Enter Report Description"
-              required
-              style={modalStyles.input}
-            />
-          </label>
-          <label>
-            Date:
-            <input
-              type="date"
-              name="Date"
-              value={formData.Date}
-              onChange={handleChange}
-              required
-              style={modalStyles.input}
-            />
-          </label>
-          <label>
-            Location:
-            <input
-              type="text"
-              name="Location"
-              value={formData.Location}
-              onChange={handleChange}
-              placeholder="Enter Location"
-              required
-              style={modalStyles.input}
-            />
-          </label>
-          <label>
-            Officer In Charge:
-            <input
-              type="text"
-              name="OfficerInCharge"
-              value={formData.OfficerInCharge}
-              onChange={handleChange}
-              placeholder="Enter Officer's Name"
-              required
-              style={modalStyles.input}
-            />
-          </label>
-          <div style={modalStyles.buttonContainer}>
-            <button type="submit" style={modalStyles.saveButton}>
-              Save
-            </button>
-            <button type="button" onClick={onClose} style={modalStyles.cancelButton}>
-              Cancel
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+    <Box
+      sx={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'rgba(0, 0, 0, 0.7)',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 1000,
+      }}
+    >
+      <Container maxWidth="sm">
+        <Paper elevation={10} sx={{ padding: 4, borderRadius: '16px' }}>
+          <Typography variant="h5" component="h2" align="center" gutterBottom>
+            Update Crime Report
+          </Typography>
+          <form onSubmit={handleSave}>
+            <Grid container spacing={2}>
+              <Grid item xs={12}>
+                <TextField
+                  type="text"
+                  name="ReportID"
+                  value={formData.ReportID}
+                  readOnly
+                  label="Report ID"
+                  sx={{ width: '100%' }}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  name="Description"
+                  label="Description"
+                  value={formData.Description}
+                  onChange={handleChange}
+                  placeholder="Enter Report Description"
+                  required
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  type="date"
+                  name="Date"
+                  label="Date"
+                  value={formData.Date}
+                  onChange={handleChange}
+                  required
+                  InputLabelProps={{ shrink: true }} // Ensure label stays visible
+                  sx={{ width: '100%' }} // Ensure the field takes the full width
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  name="Location"
+                  label="Location"
+                  value={formData.Location}
+                  onChange={handleChange}
+                  placeholder="Enter Location"
+                  required
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  name="OfficerInCharge"
+                  label="Officer In Charge"
+                  value={formData.OfficerInCharge}
+                  onChange={handleChange}
+                  placeholder="Enter Officer's Name"
+                  required
+                />
+              </Grid>
+              <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <Button type="submit" variant="contained" color="primary" sx={{ width: '48%' }}>
+                  Save
+                </Button>
+                <Button
+                  type="button"
+                  onClick={onClose}
+                  variant="contained"
+                  color="secondary"
+                  sx={{ width: '48%' }}
+                >
+                  Cancel
+                </Button>
+              </Grid>
+            </Grid>
+          </form>
+        </Paper>
+      </Container>
+    </Box>
   );
-};
-
-const modalStyles = {
-  overlay: {
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    background: 'rgba(0, 0, 0, 0.7)',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 1000,
-  },
-  content: {
-    background: 'white',
-    padding: '20px',
-    borderRadius: '8px',
-    width: '400px',
-    boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
-    position: 'relative',
-  },
-  input: {
-    width: '100%',
-    padding: '8px',
-    marginBottom: '10px',
-    border: '1px solid #ccc',
-    borderRadius: '4px',
-    display: 'block',
-  },
-  buttonContainer: {
-    display: 'flex',
-    justifyContent: 'space-between',
-  },
-  saveButton: {
-    padding: '12px 20px',
-    border: 'none',
-    borderRadius: '5px',
-    cursor: 'pointer',
-    fontSize: '16px',
-    width: '130px',
-    backgroundColor: '#4CAF50',
-    color: 'white',
-  },
-  cancelButton: {
-    padding: '12px 20px',
-    border: 'none',
-    borderRadius: '5px',
-    cursor: 'pointer',
-    fontSize: '16px',
-    width: '130px',
-    backgroundColor: '#f44336',
-    color: 'white',
-  },
 };
 
 export default CrimeReportUpdateModal;

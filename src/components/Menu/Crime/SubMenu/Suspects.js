@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import Sidebar from '../../../templates/Sidebar';
 import suspectService from '../../../services/suspectService'; // Adjust the path if necessary
 import SuspectModal from '../Modals/SuspectModal/SuspectModal';
@@ -8,6 +7,7 @@ import SuspectUpdateModal from '../Modals/SuspectUpdateModal/SuspectUpdateModal'
 import { toast } from 'react-toastify';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
+import { Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography } from '@mui/material';
 
 const MySwal = withReactContent(Swal);
 
@@ -17,7 +17,6 @@ const Suspects = () => {
   const [isViewModalOpen, setViewModalOpen] = useState(false);
   const [isUpdateModalOpen, setUpdateModalOpen] = useState(false);
   const [selectedSuspect, setSelectedSuspect] = useState(null);
-  const navigate = useNavigate();
 
   useEffect(() => {
     fetchSuspects();
@@ -38,17 +37,13 @@ const Suspects = () => {
     }
   };
 
-  const handleTabClick = (path) => {
-    navigate(path);
-  };
-
   const handleNewSuspect = () => {
     setSelectedSuspect(null);
-    setCreateModalOpen(true); // Open the create modal
+    setCreateModalOpen(true);
   };
 
   const handleCreateModalClose = () => {
-    setCreateModalOpen(false); // Close the create modal
+    setCreateModalOpen(false);
   };
 
   const handleCreateSubmit = async (data) => {
@@ -68,53 +63,53 @@ const Suspects = () => {
         text: 'Suspect created successfully!',
         confirmButtonText: 'OK',
       });
-      setCreateModalOpen(false); // Close the modal after submission
-      fetchSuspects(); // Refresh the suspects list
+      setCreateModalOpen(false);
+      fetchSuspects();
     } catch (error) {
       console.error('Error creating suspect:', error);
-      toast.error('Failed to create suspect: ' + error.message); // Show error notification
+      toast.error('Failed to create suspect: ' + error.message);
     }
   };
 
   const handleView = (suspect) => {
     setSelectedSuspect(suspect);
-    setViewModalOpen(true); // Open the view modal
+    setViewModalOpen(true);
   };
 
   const handleViewModalClose = () => {
-    setViewModalOpen(false); // Close the view modal
-    setSelectedSuspect(null); // Reset selected suspect
+    setViewModalOpen(false);
+    setSelectedSuspect(null);
   };
 
   const handleUpdate = (suspect) => {
     setSelectedSuspect(suspect);
-    setUpdateModalOpen(true); // Open the update modal
+    setUpdateModalOpen(true);
   };
 
   const handleUpdateModalClose = () => {
-    setUpdateModalOpen(false); // Close the update modal
-    setSelectedSuspect(null); // Reset selected suspect
+    setUpdateModalOpen(false);
+    setSelectedSuspect(null);
   };
 
   const handleUpdateSubmit = async (data) => {
     try {
       const updatedSuspect = {
-        SuspectID: selectedSuspect.SuspectID, // Use the selected record's ID
+        SuspectID: selectedSuspect.SuspectID,
         FullName: data.FullName,
         Alias: data.Alias,
         LastKnownAddress: data.LastKnownAddress,
         Status: data.Status,
       };
 
-      await suspectService.updateSuspect(updatedSuspect); // Send to service
+      await suspectService.updateSuspect(updatedSuspect);
       MySwal.fire({
         icon: 'success',
         title: 'Updated!',
         text: 'Suspect updated successfully!',
         confirmButtonText: 'OK',
       });
-      setUpdateModalOpen(false); // Close modal after updating
-      fetchSuspects(); // Refresh the suspects list
+      setUpdateModalOpen(false);
+      fetchSuspects();
     } catch (error) {
       console.error('Error updating suspect:', error);
       toast.error('Failed to update suspect: ' + error.message);
@@ -141,7 +136,7 @@ const Suspects = () => {
           text: 'Suspect has been deleted.',
           confirmButtonText: 'OK',
         });
-        fetchSuspects(); // Refresh the suspects list
+        fetchSuspects();
       } catch (error) {
         console.error('Error deleting suspect:', error);
         toast.error('Failed to delete suspect: ' + error.message);
@@ -152,111 +147,87 @@ const Suspects = () => {
   return (
     <div className="container">
       <Sidebar />
-      <div className="content">
-        <h2 className="header">SUSPECTS</h2>
+      <div className="content" style={{ padding: '20px' }}>
+        <Typography variant="h4" className="header" style={{ fontWeight: '700', marginLeft: '40px', marginTop: '20px' }}>SUSPECTS</Typography>
 
-        <div className="tabs">
-          <ul className="tab-list">
-            {[
-              { label: 'Crime Reports', path: '/crimereports' },
-              { label: 'Suspects', path: '/suspects' },
-              { label: 'Victims', path: '/victims' },
-            ].map((tab, index) => (
-              <li key={index} onClick={() => handleTabClick(tab.path)} className="tab">
-                {tab.label}
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        <div className="button-container">
-          <button className="new-record-button" onClick={handleNewSuspect}>
+        <div className="button-container" style={{ display: 'flex', justifyContent: 'flex-end', gap: '30px' }}>
+          <Button variant="contained" color="primary" style={{ height: '56px' }} onClick={handleNewSuspect}>
             + New Suspect
-          </button>
-          <input
-            type="text"
+          </Button>
+          <TextField
+            style={{ width: '300px', marginRight: '40px' }}
+            variant="outlined"
             placeholder="Search suspects"
             className="search-input"
           />
         </div>
 
-        <div className="table-container">
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Suspect ID</th>
-                <th>Full Name</th>
-                <th>Alias</th>
-                <th>Last Known Address</th>
-                <th>Status</th>
-                <th className="actions">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
+        <TableContainer style={{ maxWidth: '95%', margin: '30px auto', overflowX: 'auto' }}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                {['Suspect ID', 'Full Name', 'Alias', 'Last Known Address', 'Status', 'Actions'].map((header) => (
+                  <TableCell key={header} style={{ backgroundColor: '#0B8769', color: 'white', padding: '10px', textAlign: 'center' }}>
+                    {header}
+                  </TableCell>
+                ))}
+              </TableRow>
+            </TableHead>
+            <TableBody>
               {Array.isArray(suspects) && suspects.length > 0 ? (
                 suspects.map((suspect) => (
-                  <tr key={suspect.SuspectID}>
-                    <td>{suspect.SuspectID}</td>
-                    <td>{suspect.FullName}</td>
-                    <td>{suspect.Alias}</td>
-                    <td>{suspect.LastKnownAddress}</td>
-                    <td>{suspect.Status}</td>
-                    <td className="actions">
-                      <button className="view-button" onClick={() => handleView(suspect)}>
+                  <TableRow key={suspect.SuspectID}>
+                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>{suspect.SuspectID}</TableCell>
+                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>{suspect.FullName}</TableCell>
+                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>{suspect.Alias}</TableCell>
+                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>{suspect.LastKnownAddress}</TableCell>
+                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>{suspect.Status}</TableCell>
+                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>
+                      <Button variant="contained" color="primary" style={{ marginRight: '10px' }} onClick={() => handleView(suspect)}>
                         View
-                      </button>
-                      <button className="update-button" onClick={() => handleUpdate(suspect)}>
+                      </Button>
+                      <Button variant="contained" color="secondary" style={{ marginRight: '10px' }} onClick={() => handleUpdate(suspect)}>
                         Update
-                      </button>
-                      <button
-                        className="delete-button"
-                        onClick={() => handleDelete(suspect.SuspectID)}
-                      >
+                      </Button>
+                      <Button variant="contained" color="error" onClick={() => handleDelete(suspect.SuspectID)}>
                         Delete
-                      </button>
-                    </td>
-                  </tr>
+                      </Button>
+                    </TableCell>
+                  </TableRow>
                 ))
               ) : (
-                <tr>
-                  <td colSpan="6" style={{ textAlign: 'center' }}>
+                <TableRow>
+                  <TableCell colSpan={6} style={{ textAlign: 'center' }}>
                     No suspects found.
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               )}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Modal for New Suspect */}
-        {isCreateModalOpen && (
-          <SuspectModal
-            isOpen={isCreateModalOpen}
-            onClose={handleCreateModalClose}
-            onSubmit={handleCreateSubmit}
-          />
-        )}
-
-        {/* Modal for Viewing Suspect */}
-        {isViewModalOpen && (
-          <SuspectViewModal
-            isOpen={isViewModalOpen}
-            onClose={handleViewModalClose}
-            suspect={selectedSuspect} // Pass the selected suspect
-          />
-        )}
-
-
-        {isUpdateModalOpen && (
-          <SuspectUpdateModal
-            isOpen={isUpdateModalOpen}
-            onClose={handleUpdateModalClose}
-            onSave={handleUpdateSubmit} // Ensure this is correctly passed
-            suspect={selectedSuspect} // Pass the selected suspect for updating
-          />
-        )}
-
+            </TableBody>
+          </Table>
+        </TableContainer>
       </div>
+
+      {/* Modal for New Suspect */}
+      <SuspectModal
+        isOpen={isCreateModalOpen}
+        onClose={handleCreateModalClose}
+        onSubmit={handleCreateSubmit}
+      />
+
+      {/* Modal for Viewing Suspect */}
+      <SuspectViewModal
+        isOpen={isViewModalOpen}
+        onClose={handleViewModalClose}
+        suspect={selectedSuspect}
+      />
+
+      {/* Modal for Updating Suspect */}
+      <SuspectUpdateModal
+        isOpen={isUpdateModalOpen}
+        onClose={handleUpdateModalClose}
+        onSave={handleUpdateSubmit}
+        suspect={selectedSuspect}
+      />
     </div>
   );
 };

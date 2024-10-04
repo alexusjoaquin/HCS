@@ -27,10 +27,15 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import PeopleIcon from '@mui/icons-material/People';
 import HomeIcon from '@mui/icons-material/Home'; // Icon for Residents
 import HealthRecordsIcon from '@mui/icons-material/Folder'; // Icon for Health Records
+import CrimeReportIcon from '@mui/icons-material/Report'; // Icon for Crime Reports
+import SuspectIcon from '@mui/icons-material/PersonSearch'; // Icon for Suspects
+import VictimIcon from '@mui/icons-material/AccessibilityNew'; // Icon for Victims
 
 const Sidebar = () => {
   const [open, setOpen] = useState(false);
   const [openHealthMenu, setOpenHealthMenu] = useState(false); // State for Health dropdown
+  const [openCrimeMenu, setOpenCrimeMenu] = useState(false); // State for Crime dropdown
+  const [openFamilyMenu, setOpenFamilyMenu] = useState(false); // State for Family Concern dropdown
   const navigate = useNavigate();
 
   const handleLogoutClick = () => {
@@ -53,6 +58,16 @@ const Sidebar = () => {
   // Function to toggle the Health dropdown
   const handleHealthMenuClick = () => {
     setOpenHealthMenu(!openHealthMenu);
+  };
+
+  // Function to toggle the Crime dropdown
+  const handleCrimeMenuClick = () => {
+    setOpenCrimeMenu(!openCrimeMenu);
+  };
+
+  // Function to toggle the Family Concern dropdown
+  const handleFamilyMenuClick = () => {
+    setOpenFamilyMenu(!openFamilyMenu);
   };
 
   return (
@@ -114,7 +129,7 @@ const Sidebar = () => {
 
         <Collapse in={openHealthMenu} timeout="auto" unmountOnExit>
           <List component="div" disablePadding>
-            <ListItem button sx={{ pl: 4 }} onClick={() => handleNavigation('/patientmanagement')}>
+            <ListItem button sx={{ pl: 4 }} onClick={() => handleNavigation('/patients')}>
               <ListItemIcon sx={{ color: '#e0f7fa' }}>
                 <PeopleIcon />
               </ListItemIcon>
@@ -122,7 +137,7 @@ const Sidebar = () => {
             </ListItem>
 
             {/* New Submenu for Health Records */}
-            <ListItem button sx={{ pl: 4 }} onClick={() => handleNavigation('/healthrecords')}>
+            <ListItem button sx={{ pl: 4 }} onClick={() => handleNavigation('/medicine')}>
               <ListItemIcon sx={{ color: '#e0f7fa' }}>
                 <HealthRecordsIcon />
               </ListItemIcon>
@@ -131,25 +146,79 @@ const Sidebar = () => {
           </List>
         </Collapse>
 
-        <ListItem button onClick={() => handleNavigation('/crime')}>
+        {/* Crime Menu with Dropdown */}
+        <ListItem button onClick={handleCrimeMenuClick}>
           <ListItemIcon sx={{ color: '#bbbbbb' }}>
             <CalendarTodayIcon />
           </ListItemIcon>
           <ListItemText primary="Crime" />
+          {openCrimeMenu ? <ExpandLessIcon sx={{ color: '#e0f7fa' }} /> : <ExpandMoreIcon sx={{ color: '#e0f7fa' }} />}
         </ListItem>
+
+        <Collapse in={openCrimeMenu} timeout="auto" unmountOnExit>
+          <List component="div" disablePadding>
+            <ListItem button sx={{ pl: 4 }} onClick={() => handleNavigation('/crimereports')}>
+              <ListItemIcon sx={{ color: '#e0f7fa' }}>
+                <CrimeReportIcon />
+              </ListItemIcon>
+              <ListItemText primary="Crime Reports" />
+            </ListItem>
+
+            <ListItem button sx={{ pl: 4 }} onClick={() => handleNavigation('/suspects')}>
+              <ListItemIcon sx={{ color: '#e0f7fa' }}>
+                <SuspectIcon />
+              </ListItemIcon>
+              <ListItemText primary="Suspects" />
+            </ListItem>
+
+            <ListItem button sx={{ pl: 4 }} onClick={() => handleNavigation('/victims')}>
+              <ListItemIcon sx={{ color: '#e0f7fa' }}>
+                <VictimIcon />
+              </ListItemIcon>
+              <ListItemText primary="Victims" />
+            </ListItem>
+          </List>
+        </Collapse>
+
+        {/* Family Concern Menu with Dropdown */}
+        <ListItem button onClick={handleFamilyMenuClick}>
+          <ListItemIcon sx={{ color: '#bbbbbb' }}>
+            <FamilyRestroomIcon />
+          </ListItemIcon>
+          <ListItemText primary="Family Concern" />
+          {openFamilyMenu ? <ExpandLessIcon sx={{ color: '#e0f7fa' }} /> : <ExpandMoreIcon sx={{ color: '#e0f7fa' }} />}
+        </ListItem>
+
+        <Collapse in={openFamilyMenu} timeout="auto" unmountOnExit>
+          <List component="div" disablePadding>
+            <ListItem button sx={{ pl: 4 }} onClick={() => handleNavigation('/familyprofiles')}>
+              <ListItemIcon sx={{ color: '#e0f7fa' }}>
+                <PeopleIcon />
+              </ListItemIcon>
+              <ListItemText primary="Family Profiles" />
+            </ListItem>
+
+            <ListItem button sx={{ pl: 4 }} onClick={() => handleNavigation('/counsellingsupport')}>
+              <ListItemIcon sx={{ color: '#e0f7fa' }}>
+                <FamilyRestroomIcon />
+              </ListItemIcon>
+              <ListItemText primary="Family Counseling" />
+            </ListItem>
+
+            <ListItem button sx={{ pl: 4 }} onClick={() => handleNavigation('/familyplanning')}>
+              <ListItemIcon sx={{ color: '#e0f7fa' }}>
+                <FamilyRestroomIcon />
+              </ListItemIcon>
+              <ListItemText primary="Family Planning" />
+            </ListItem>
+          </List>
+        </Collapse>
 
         <ListItem button onClick={() => handleNavigation('/seniorcitizen')}>
           <ListItemIcon sx={{ color: '#bbbbbb' }}>
             <LocalHospitalIcon />
           </ListItemIcon>
           <ListItemText primary="Senior Citizen" />
-        </ListItem>
-
-        <ListItem button onClick={() => handleNavigation('/familyconcern')}>
-          <ListItemIcon sx={{ color: '#bbbbbb' }}>
-            <FamilyRestroomIcon />
-          </ListItemIcon>
-          <ListItemText primary="Family Concern" />
         </ListItem>
 
         <ListItem button onClick={() => handleNavigation('/settings')}>
@@ -160,41 +229,27 @@ const Sidebar = () => {
         </ListItem>
       </List>
 
-      <Divider sx={{ bgcolor: '#444444', margin: '1rem 0' }} /> {/* Darker gray divider */}
+      <Divider sx={{ bgcolor: '#555555' }} />
 
-      <Box sx={{ padding: '1rem' }}>
-        <Button
-          variant="contained"
-          startIcon={<LogoutIcon />}
-          sx={{ 
-            width: '100%', 
-            bgcolor: '#555555', // Medium gray button color
-            color: '#ffffff', // White text color
-            '&:hover': { bgcolor: '#444444' } // Darker gray on hover
-          }}
-          onClick={handleLogoutClick}
-        >
-          Logout
-        </Button>
-      </Box>
+      {/* Logout Button */}
+      <ListItem button onClick={handleLogoutClick}>
+        <ListItemIcon sx={{ color: '#bbbbbb' }}>
+          <LogoutIcon />
+        </ListItemIcon>
+        <ListItemText primary="Logout" />
+      </ListItem>
 
-      <Dialog
-        open={open}
-        onClose={handleCancelLogout}
-        aria-labelledby="alert-dialog-title"
-        aria-describedby="alert-dialog-description"
-      >
-        <DialogTitle id="alert-dialog-title">{"Confirm Logout"}</DialogTitle>
+      {/* Logout Confirmation Dialog */}
+      <Dialog open={open} onClose={handleCancelLogout}>
+        <DialogTitle>Logout</DialogTitle>
         <DialogContent>
-          <DialogContentText id="alert-dialog-description">
-            Are you sure you want to log out?
-          </DialogContentText>
+          <DialogContentText>Are you sure you want to logout?</DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCancelLogout} sx={{ color: '#333333' }}> {/* Dark gray text */}
+          <Button onClick={handleCancelLogout} color="primary">
             Cancel
           </Button>
-          <Button onClick={handleConfirmLogout} sx={{ color: '#555555' }} autoFocus> {/* Medium gray text */}
+          <Button onClick={handleConfirmLogout} color="primary">
             Logout
           </Button>
         </DialogActions>

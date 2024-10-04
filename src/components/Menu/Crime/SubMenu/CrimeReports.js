@@ -1,24 +1,23 @@
 // src/components/CrimeReports/CrimeReports.js
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import Sidebar from '../../../templates/Sidebar';
 import CrimeReportModal from '../Modals/CrimeReportModal/CrimeReportModal';
 import CrimeReportViewModal from '../Modals/CrimeReportViewModal/CrimeReportViewModal';
-import CrimeReportUpdateModal from '../Modals/CrimeReportUpdateModal/CrimeReportUpdateModal'; // Import update modal
+import CrimeReportUpdateModal from '../Modals/CrimeReportUpdateModal/CrimeReportUpdateModal';
 import crimeReportService from '../../../services/crimeReportService';
 import { toast } from 'react-toastify';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
+import { Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography } from '@mui/material';
 
 const MySwal = withReactContent(Swal);
 
 const CrimeReports = () => {
   const [isCreateModalOpen, setCreateModalOpen] = useState(false);
   const [isViewModalOpen, setViewModalOpen] = useState(false);
-  const [isUpdateModalOpen, setUpdateModalOpen] = useState(false); // State to control update modal
+  const [isUpdateModalOpen, setUpdateModalOpen] = useState(false);
   const [selectedReport, setSelectedReport] = useState(null);
   const [crimeReports, setCrimeReports] = useState([]);
-  const navigate = useNavigate();
 
   useEffect(() => {
     fetchCrimeReports();
@@ -26,22 +25,19 @@ const CrimeReports = () => {
 
   const fetchCrimeReports = async () => {
     try {
-      const response = await crimeReportService.getAllCrimeReports();
-      if (response && response.crimeReports && Array.isArray(response.crimeReports)) {
-        setCrimeReports(response.crimeReports);
-      } else {
-        console.warn('Fetched data is not an array:', response);
-        setCrimeReports([]);
-      }
+        const response = await crimeReportService.getAllCrimeReports();
+        if (response && response.crimeReports) {
+            setCrimeReports(response.crimeReports);
+        } else {
+            console.warn('Fetched data is not valid:', response);
+            setCrimeReports([]);
+        }
     } catch (error) {
-      console.error('Failed to fetch crime reports:', error);
-      toast.error('Failed to fetch crime reports. ' + error.message);
+        console.error('Failed to fetch crime reports:', error);
+        toast.error('Failed to fetch crime reports.');
     }
-  };
+};
 
-  const handleTabClick = (path) => {
-    navigate(path);
-  };
 
   const handleNewReport = () => {
     setSelectedReport(null);
@@ -54,29 +50,27 @@ const CrimeReports = () => {
 
   const handleCreateSubmit = async (data) => {
     try {
-      const crimeReportData = {
-        ReportID: `CR${Math.floor(Date.now() / 1000)}`,
-        Location: data.Location,
-        Description: data.Description,
-        Date: data.Date, // Ensure this field is included
-        OfficerInCharge: data.OfficerInCharge,
-      };
-
-      await crimeReportService.createCrimeReport(crimeReportData);
-      MySwal.fire({
-        icon: 'success',
-        title: 'Success',
-        text: 'Crime report created successfully!',
-        confirmButtonText: 'OK',
-      });
-      setCreateModalOpen(false);
-      fetchCrimeReports();
+        const reportData = {
+            ReportID: `CR${Math.floor(Date.now() / 1000)}`,
+            Location: data.Location,
+            Description: data.Description,
+            Date: data.Date,
+            OfficerInCharge: data.OfficerInCharge,
+        };
+        await crimeReportService.createCrimeReport(reportData);
+        MySwal.fire({
+            icon: 'success',
+            title: 'Success',
+            text: 'Crime report created successfully!',
+            confirmButtonText: 'OK',
+        });
+        setCreateModalOpen(false);
+        fetchCrimeReports();
     } catch (error) {
-      console.error('Error creating crime report:', error);
-      toast.error('Failed to create crime report: ' + error.message);
+        console.error('Error creating crime report:', error);
+        toast.error('Failed to create crime report.');
     }
-  };
-
+};
   const handleView = (report) => {
     setSelectedReport(report);
     setViewModalOpen(true);
@@ -99,28 +93,27 @@ const CrimeReports = () => {
 
   const handleUpdateSave = async (data) => {
     try {
-      const updatedReportData = {
-        ReportID: data.ReportID,
-        Location: data.Location,
-        Description: data.Description,
-        Date: data.Date,
-        OfficerInCharge: data.OfficerInCharge,
-      };
-
-      await crimeReportService.updateCrimeReport(updatedReportData);
-      MySwal.fire({
-        icon: 'success',
-        title: 'Success',
-        text: 'Crime report updated successfully!',
-        confirmButtonText: 'OK',
-      });
-      setUpdateModalOpen(false);
-      fetchCrimeReports();
+        const reportData = {
+            ReportID: data.ReportID,
+            Location: data.Location,
+            Description: data.Description,
+            Date: data.Date,
+            OfficerInCharge: data.OfficerInCharge,
+        };
+        await crimeReportService.updateCrimeReport(reportData);
+        MySwal.fire({
+            icon: 'success',
+            title: 'Success',
+            text: 'Crime report updated successfully!',
+            confirmButtonText: 'OK',
+        });
+        setUpdateModalOpen(false);
+        fetchCrimeReports();
     } catch (error) {
-      console.error('Error updating crime report:', error);
-      toast.error('Failed to update crime report: ' + error.message);
+        console.error('Error updating crime report:', error);
+        toast.error('Failed to update crime report.');
     }
-  };
+};
 
   const handleDelete = async (reportID) => {
     const result = await MySwal.fire({
@@ -131,6 +124,7 @@ const CrimeReports = () => {
       confirmButtonColor: '#d33',
       cancelButtonColor: '#3085d6',
       confirmButtonText: 'Yes, delete it!',
+      reverseButtons: true,
     });
 
     if (result.isConfirmed) {
@@ -145,7 +139,7 @@ const CrimeReports = () => {
         fetchCrimeReports();
       } catch (error) {
         console.error('Error deleting crime report:', error);
-        toast.error('Failed to delete crime report: ' + error.message);
+        toast.error('Failed to delete crime report.');
       }
     }
   };
@@ -153,81 +147,64 @@ const CrimeReports = () => {
   return (
     <div className="container">
       <Sidebar />
-      <div className="content">
-        <h2 className="header">CRIME REPORTS</h2>
+      <div className="content" style={{ padding: '20px' }}>
+        <Typography variant="h4" className="header" style={{ fontWeight: '700', marginLeft: '40px', marginTop: '20px' }}>CRIME REPORTS</Typography>
 
-        <div className="tabs">
-          <ul className="tab-list">
-            {[
-              { label: 'Crime Reports', path: '/crimereports' },
-              { label: 'Suspects', path: '/suspects' },
-              { label: 'Victims', path: '/victims' },
-            ].map((tab, index) => (
-              <li key={index} onClick={() => handleTabClick(tab.path)} className="tab">
-                {tab.label}
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        <div className="button-container">
-          <button className="new-record-button" onClick={handleNewReport}>
-            + New Crime Report
-          </button>
-          <input
-            type="text"
+        <div className="button-container" style={{ display: 'flex', justifyContent: 'flex-end', gap: '30px' }}>
+          <Button variant="contained" color="primary" style={{ height: '56px' }} onClick={handleNewReport}>
+            + New Report
+          </Button>
+          <TextField
+            style={{ width: '300px', marginRight: '40px' }}
+            variant="outlined"
             placeholder="Search reports"
             className="search-input"
           />
         </div>
 
-        <div className="table-container">
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Report ID</th>
-                <th>Description</th>
-                <th>Location</th>
-                <th>Date Reported</th>
-                <th>Officer In Charge</th>
-                <th className="actions">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
+        <TableContainer style={{ maxWidth: '95%', margin: '30px auto', overflowX: 'auto' }}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                {['Report ID', 'Description', 'Location', 'Date', 'Officer In Charge', 'Actions'].map((header) => (
+                  <TableCell key={header} style={{ backgroundColor: '#0B8769', color: 'white', padding: '10px', textAlign: 'center' }}>
+                    {header}
+                  </TableCell>
+                ))}
+              </TableRow>
+            </TableHead>
+            <TableBody>
               {Array.isArray(crimeReports) && crimeReports.length > 0 ? (
                 crimeReports.map((report) => (
-                  <tr key={report.ReportID}>
-                    <td>{report.ReportID}</td>
-                    <td>{report.Description}</td>
-                    <td>{report.Location}</td>
-                    <td>{report.Date}</td>
-                    <td>{report.OfficerInCharge}</td>
-                    <td className="actions">
-                      <button className="view-button" onClick={() => handleView(report)}>
+                  <TableRow key={report.ReportID}>
+                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>{report.ReportID}</TableCell>
+                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>{report.Description}</TableCell>
+                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>{report.Location}</TableCell>
+                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>{report.Date}</TableCell>
+                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>{report.OfficerInCharge}</TableCell>
+                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>
+                      <Button variant="contained" color="primary" style={{ marginRight: '10px' }} onClick={() => handleView(report)}>
                         View
-                      </button>
-                      <button className="update-button" onClick={() => handleUpdate(report)}>
+                      </Button>
+                      <Button variant="contained" color="secondary" style={{ marginRight: '10px' }} onClick={() => handleUpdate(report)}>
                         Update
-                      </button>
-                      <button
-                        className="delete-button"
-                        onClick={() => handleDelete(report.ReportID)}
-                      >
+                      </Button>
+                      <Button variant="contained" color="error" onClick={() => handleDelete(report.ReportID)}>
                         Delete
-                      </button>
-                    </td>
-                  </tr>
+                      </Button>
+                    </TableCell>
+                  </TableRow>
                 ))
               ) : (
-                <tr>
-                  <td colSpan="6" style={{ textAlign: 'center' }}>
+                <TableRow>
+                  <TableCell colSpan={6} style={{ textAlign: 'center' }}>
                     No crime reports found.
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               )}
-            </tbody>
-          </table>
-        </div>
+            </TableBody>
+          </Table>
+        </TableContainer>
       </div>
 
       {/* Modal for New Crime Report */}
@@ -241,17 +218,16 @@ const CrimeReports = () => {
       <CrimeReportViewModal
         isOpen={isViewModalOpen}
         onClose={handleViewModalClose}
-        crimeReport={selectedReport} // Pass the selected report
+        crimeReport={selectedReport}  // Change "report" to "crimeReport"
       />
 
-      {/* Other modals */}
 
       {/* Modal for Updating Crime Report */}
       <CrimeReportUpdateModal
         isOpen={isUpdateModalOpen}
         onClose={handleUpdateModalClose}
         onSave={handleUpdateSave}
-        report={selectedReport || {}}
+        report={selectedReport}
       />
     </div>
   );

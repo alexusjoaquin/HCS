@@ -1,4 +1,4 @@
-// src/components/Modals/SuspectViewModal/SuspectViewModal.js
+// src/components/Modals/MedicineViewModal/MedicineViewModal.js
 import React from 'react';
 import {
   Box,
@@ -10,8 +10,8 @@ import {
   TextField,
 } from '@mui/material';
 
-const SuspectViewModal = ({ isOpen, onClose, suspect }) => {
-  if (!isOpen || !suspect) return null;
+const MedicineViewModal = ({ isOpen, onClose, medicine }) => {
+  if (!isOpen || !medicine) return null;
 
   return (
     <Box
@@ -31,7 +31,7 @@ const SuspectViewModal = ({ isOpen, onClose, suspect }) => {
       <Container maxWidth="sm">
         <Paper elevation={10} sx={{ padding: 4, borderRadius: '16px', position: 'relative' }}>
           <Typography variant="h5" component="h2" align="center" gutterBottom>
-            Suspect Details
+            Medicine Details
           </Typography>
           <span
             style={{
@@ -49,8 +49,8 @@ const SuspectViewModal = ({ isOpen, onClose, suspect }) => {
             <Grid item xs={12}>
               <TextField
                 fullWidth
-                label="Suspect ID"
-                value={suspect.SuspectID || ''}
+                label="Transaction ID"
+                value={medicine.TransactionID}
                 variant="outlined"
                 InputProps={{
                   readOnly: true,
@@ -60,8 +60,8 @@ const SuspectViewModal = ({ isOpen, onClose, suspect }) => {
             <Grid item xs={12}>
               <TextField
                 fullWidth
-                label="Full Name"
-                value={suspect.FullName || ''}
+                label="Resident ID"
+                value={medicine.ResidentID}
                 variant="outlined"
                 InputProps={{
                   readOnly: true,
@@ -71,30 +71,8 @@ const SuspectViewModal = ({ isOpen, onClose, suspect }) => {
             <Grid item xs={12}>
               <TextField
                 fullWidth
-                label="Alias"
-                value={suspect.Alias || ''}
-                variant="outlined"
-                InputProps={{
-                  readOnly: true,
-                }}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Last Known Address"
-                value={suspect.LastKnownAddress || ''}
-                variant="outlined"
-                InputProps={{
-                  readOnly: true,
-                }}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Status"
-                value={suspect.Status || ''}
+                label="Medicine Name"
+                value={medicine.MedicineName}
                 variant="outlined"
                 InputProps={{
                   readOnly: true,
@@ -116,4 +94,4 @@ const SuspectViewModal = ({ isOpen, onClose, suspect }) => {
   );
 };
 
-export default SuspectViewModal;
+export default MedicineViewModal;

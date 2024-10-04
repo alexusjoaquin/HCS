@@ -160,15 +160,6 @@ const CounsellingSupport = () => {
         <div className="tabs">
           <ul className="tab-list">
             {[
-              { label: <><span>Family</span><br /><span>Profiles</span></>, path: '/familyprofiles' },
-              { label: <><span>Member</span><br /><span>Management</span></>, path: '/membermanagement' },
-              { label: <><span>Health</span><br /><span>& Well Being</span></>, path: '/healthandwellbeing' },
-              { label: <><span>Education</span><br /><span>Financial</span></>, path: '/education' },
-              { label: <><span>Financial</span><br /><span>Assistance</span></>, path: '/financialassistance' },
-              { label: <><span>Social</span><br /><span>Services</span></>, path: '/familysocialservices' },
-              { label: <><span>Counselling</span><br /><span>& Support</span></>, path: '/counsellingsupport' },
-              { label: <><span>Events</span><br /><span>& Activities</span></>, path: '/familyeventsandactivities' },
-              { label: <><span>Report</span><br /><span>& Analytics</span></>, path: '/familyreportsandanalytics' },
             ].map((tab, index) => (
               <li key={index} onClick={() => handleTabClick(tab.path)} className="tab">
                 {tab.label}

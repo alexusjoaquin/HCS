@@ -9,44 +9,39 @@ import {
   Grid,
 } from '@mui/material';
 
-const SuspectUpdateModal = ({ isOpen, onClose, onSave, suspect }) => {
-  // Initialize the form data state based on the suspect prop
+const VaccineUpdateModal = ({ isOpen, onClose, onSave, vaccine }) => {
   const [formData, setFormData] = React.useState({
-    SuspectID: '',
-    FullName: '',
-    Alias: '',
-    LastKnownAddress: '',
-    Status: '',
+    TransactionID: vaccine?.TransactionID || '',
+    ResidentID: vaccine?.ResidentID || '',
+    VaccineName: vaccine?.VaccineName || '',
   });
 
-  // Update the form data state when the suspect prop changes
   React.useEffect(() => {
-    if (suspect) {
+    if (vaccine) {
       setFormData({
-        SuspectID: suspect.SuspectID || '',
-        FullName: suspect.FullName || '',
-        Alias: suspect.Alias || '',
-        LastKnownAddress: suspect.LastKnownAddress || '',
-        Status: suspect.Status || '',
+        TransactionID: vaccine.TransactionID || '',
+        ResidentID: vaccine.ResidentID || '',
+        VaccineName: vaccine.VaccineName || '',
       });
     }
-  }, [suspect]);
+  }, [vaccine]);
 
-  // Handle changes to form inputs
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
 
-  // Handle form submission
   const handleSave = (e) => {
     e.preventDefault();
-    onSave(formData); // Call the onSave prop function with the form data
-    onClose(); // Close the modal after saving
+    if (typeof onSave === 'function') {
+      onSave(formData);
+    } else {
+      console.error('onSave is not a function:', onSave);
+    }
+    onClose();
   };
 
-  // Prevent rendering if the modal is not open or suspect is null
-  if (!isOpen || !suspect) return null;
+  if (!isOpen || !vaccine) return null; // Ensure modal is only shown if open and vaccine data is provided
 
   return (
     <Box
@@ -66,61 +61,39 @@ const SuspectUpdateModal = ({ isOpen, onClose, onSave, suspect }) => {
       <Container maxWidth="sm">
         <Paper elevation={10} sx={{ padding: 4, borderRadius: '16px' }}>
           <Typography variant="h5" component="h2" align="center" gutterBottom>
-            Update Suspect
+            Update Vaccine Information
           </Typography>
           <form onSubmit={handleSave}>
             <Grid container spacing={2}>
               <Grid item xs={12}>
                 <TextField
                   type="text"
-                  name="SuspectID"
-                  value={formData.SuspectID}
+                  name="TransactionID"
+                  value={formData.TransactionID}
                   readOnly
-                  label="Suspect ID"
+                  label="Transaction ID"
                   sx={{ width: '100%' }}
                 />
               </Grid>
               <Grid item xs={12}>
                 <TextField
                   fullWidth
-                  name="FullName"
-                  label="Full Name"
-                  value={formData.FullName}
+                  name="ResidentID"
+                  label="Resident ID"
+                  value={formData.ResidentID}
                   onChange={handleChange}
-                  placeholder="Enter Full Name"
+                  placeholder="Enter Resident ID"
                   required
                 />
               </Grid>
               <Grid item xs={12}>
                 <TextField
                   fullWidth
-                  name="Alias"
-                  label="Alias"
-                  value={formData.Alias}
+                  name="VaccineName"
+                  label="Vaccine Name"
+                  value={formData.VaccineName}
                   onChange={handleChange}
-                  placeholder="Enter Alias"
-                  required
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  name="LastKnownAddress"
-                  label="Last Known Address"
-                  value={formData.LastKnownAddress}
-                  onChange={handleChange}
-                  placeholder="Enter Last Known Address"
-                  required
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  name="Status"
-                  label="Status"
-                  value={formData.Status}
-                  onChange={handleChange}
-                  placeholder="Enter Status"
+                  placeholder="Enter Vaccine Name"
                   required
                 />
               </Grid>
@@ -146,4 +119,4 @@ const SuspectUpdateModal = ({ isOpen, onClose, onSave, suspect }) => {
   );
 };
 
-export default SuspectUpdateModal;
+export default VaccineUpdateModal;

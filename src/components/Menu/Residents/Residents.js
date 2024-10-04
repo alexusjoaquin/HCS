@@ -4,10 +4,11 @@ import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
 import residentsService from '../../services/residentsService';
 import { toast } from 'react-toastify';
-import ResidentCreateModal from './Modals/ResidentCreateModal'
-import ResidentViewModal from './Modals/ResidentViewModal'
-import ResidentUpdateModal from './Modals/ResidentUpdateModal'
-import '../Health/CssFiles/Appointment.css'
+import ResidentCreateModal from './Modals/ResidentCreateModal';
+import ResidentViewModal from './Modals/ResidentViewModal';
+import ResidentUpdateModal from './Modals/ResidentUpdateModal';
+import { Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography } from '@mui/material';
+import '../Health/CssFiles/Appointment.css';
 
 const MySwal = withReactContent(Swal);
 
@@ -150,77 +151,78 @@ const Residents = () => {
   return (
     <div className="container">
       <Sidebar />
-      <div className="content">
-        <h2 className="header">RESIDENTS</h2>
+      <div className="content" style={{ padding: '20px'}}>
+        <Typography variant="h4" className="header" style={{fontWeight: '700', marginLeft: '40px', marginTop: '20PX'}}>RESIDENTS</Typography>
 
-        <div className="button-container">
-          <button className="new-record-button" onClick={handleNewResident}>
+        <div className="button-container" style={{ display:'flex',justifyContent: 'flex-end', gap: '30px'}}>
+          <Button variant="contained" color="primary" style={{height: '56px'}} onClick={handleNewResident} >
             + New Resident
-          </button>
-          <input
-            type="text"
+          </Button>
+          <TextField
+            style={{ width: '300px', marginRight: '40px'}}
+            variant="outlined"
             placeholder="Search residents"
             className="search-input"
             // Implement search functionality if desired
           />
         </div>
 
-        <div className="table-container">
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Age</th>
-                <th>Birthday</th>
-                <th>Address</th>
-                <th>Gender</th>
-                <th>Status</th>
-                <th>BMI</th>
-                <th>Height</th>
-                <th>Weight</th>
-                <th>Blood Type</th>
-                <th>Is Senior</th>
-                <th className="actions">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
+        <TableContainer style={{ maxWidth: '95%', margin: '30px auto', overflowX: 'auto' }}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell style={{ backgroundColor: '#0B8769', color: 'white' }}>NAME</TableCell>
+                <TableCell style={{ backgroundColor: '#0B8769', color: 'white' }}>AGE</TableCell>
+                <TableCell style={{ backgroundColor: '#0B8769', color: 'white' }}>BIRTHDATE</TableCell>
+                <TableCell style={{ backgroundColor: '#0B8769', color: 'white' }}>ADDRESS</TableCell>
+                <TableCell style={{ backgroundColor: '#0B8769', color: 'white' }}>GENDER</TableCell>
+                <TableCell style={{ backgroundColor: '#0B8769', color: 'white' }}>STATUS</TableCell>
+                <TableCell style={{ backgroundColor: '#0B8769', color: 'white' }}>BMI</TableCell>
+                <TableCell style={{ backgroundColor: '#0B8769', color: 'white' }}>HEIGHT</TableCell>
+                <TableCell style={{ backgroundColor: '#0B8769', color: 'white' }}>WEIGHT</TableCell>
+                <TableCell style={{ backgroundColor: '#0B8769', color: 'white' }}>BLOOD TYPE</TableCell>
+                <TableCell style={{ backgroundColor: '#0B8769', color: 'white' }}>IF SENIOR</TableCell>
+                <TableCell style={{ backgroundColor: '#0B8769', color: 'white' }}>ACTIONS</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
               {Array.isArray(residents) && residents.length > 0 ? (
                 residents.map((resident) => (
-                  <tr key={resident.id}>
-                    <td>{resident.Name}</td>
-                    <td>{resident.Age}</td>
-                    <td>{resident.Birthday}</td>
-                    <td>{resident.Address}</td>
-                    <td>{resident.Gender}</td>
-                    <td>{resident.Status}</td>
-                    <td>{resident.BMI}</td>
-                    <td>{resident.Height}</td>
-                    <td>{resident.Weight}</td>
-                    <td>{resident.BloodType}</td>
-                    <td>{resident.is_senior ? 'Yes' : 'No'}</td>
-                    <td className="actions">
-                      <button className="view-button" onClick={() => handleView(resident)}>
+                  <TableRow key={resident.id}>
+                    <TableCell>{resident.Name}</TableCell>
+                    <TableCell>{resident.Age}</TableCell>
+                    <TableCell>{resident.Birthday}</TableCell>
+                    <TableCell>{resident.Address}</TableCell>
+                    <TableCell>{resident.Gender}</TableCell>
+                    <TableCell>{resident.Status}</TableCell>
+                    <TableCell>{resident.BMI}</TableCell>
+                    <TableCell>{resident.Height}</TableCell>
+                    <TableCell>{resident.Weight}</TableCell>
+                    <TableCell>{resident.BloodType}</TableCell>
+                    <TableCell>{resident.is_senior ? 'Yes' : 'No'}</TableCell>
+                    <TableCell>
+                      <Button variant="contained" color="primary" onClick={() => handleView(resident)}>
                         View
-                      </button>
-                      <button className="update-button" onClick={() => handleUpdate(resident)}>
+                      </Button>
+                      <Button variant="contained" color="secondary" onClick={() => handleUpdate(resident)}>
                         Update
-                      </button>
-                      <button className="delete-button" onClick={() => handleDelete(resident.id)}>
+                      </Button>
+                      <Button variant="contained" color="error" onClick={() => handleDelete(resident.id)}>
                         Delete
-                      </button>
-                    </td>
-                  </tr>
+                      </Button>
+                    </TableCell>
+                  </TableRow>
                 ))
               ) : (
-                <tr>
-                  <td colSpan="12" style={{ textAlign: 'center' }}>
+                <TableRow>
+                  <TableCell colSpan={12} style={{ textAlign: 'center' }}>
                     No residents found.
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               )}
-            </tbody>
-          </table>
-        </div>
+            </TableBody>
+          </Table>
+        </TableContainer>
       </div>
 
       {/* Modal for New Resident */}
@@ -241,8 +243,8 @@ const Residents = () => {
       <ResidentUpdateModal
         isOpen={isUpdateModalOpen}
         onClose={handleUpdateModalClose}
-        onSave={handleUpdateSubmit}
-        resident={selectedResident || {}}
+        resident={selectedResident}
+        onSubmit={handleUpdateSubmit}
       />
     </div>
   );

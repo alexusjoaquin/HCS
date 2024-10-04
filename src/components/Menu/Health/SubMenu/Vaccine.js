@@ -1,16 +1,36 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../../../templates/Sidebar';
-import vaccineService from '../../../services/vaccineService'; // Service to handle fetching data
-import { toast } from 'react-toastify'; // For notifications
+import VaccineModal from '../Modals/VaccineModal/VaccineModal'; // For adding new records
+import VaccineViewModal from '../Modals/VaccineViewModal/VaccineViewModal'; // For viewing records
+import VaccineUpdateModal from '../Modals/VaccineUpdateModal/VaccineUpdateModal'; // For updating records
+import vaccineService from '../../../services/vaccineService';
+import { toast } from 'react-toastify';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
+import { Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography, Tabs, Tab, Box } from '@mui/material';
+import LocalPharmacyIcon from '@mui/icons-material/LocalPharmacy';
+import VaccinesIcon from '@mui/icons-material/Vaccines';
 
 const MySwal = withReactContent(Swal);
 
 const Vaccine = () => {
   const [transactions, setTransactions] = useState([]);
+  const [activeTab, setActiveTab] = useState(1); // Set Vaccine tab as active
+  const [selectedTransaction, setSelectedTransaction] = useState(null); // For viewing and updating
+  const [isVaccineModalOpen, setIsVaccineModalOpen] = useState(false);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const navigate = useNavigate();
+
+  const handleTabChange = (event, newValue) => {
+    setActiveTab(newValue);
+    if (newValue === 0) {
+      navigate('/medicine');
+    } else {
+      navigate('/vaccine');
+    }
+  };
 
   useEffect(() => {
     fetchTransactions();
@@ -31,59 +51,18 @@ const Vaccine = () => {
     }
   };
 
-  const handleTabClick = (path) => {
-    navigate(path);
+  const handleNewRecord = () => {
+    setIsVaccineModalOpen(true); // Open the add modal
   };
 
-  const handleNewRecord = () => {
-    MySwal.fire({
-      icon: 'info',
-      title: 'New Record',
-      text: 'Functionality for adding new records will go here!',
-      confirmButtonText: 'OK',
-    });
+  const handleView = (transaction) => {
+    setSelectedTransaction(transaction);
+    setIsViewModalOpen(true); // Open the view modal
   };
 
   const handleUpdate = (transaction) => {
-    MySwal.fire({
-      title: 'Update Transaction',
-      html: `
-        <label for="resident-id">Resident ID:</label>
-        <input id="resident-id" class="swal2-input" value="${transaction.ResidentID}"/>
-        <label for="medicine-name">Medicine Name:</label>
-        <input id="medicine-name" class="swal2-input" value="${transaction.MedicineName}"/>
-      `,
-      showCancelButton: true,
-      confirmButtonText: 'Update',
-      cancelButtonText: 'Cancel',
-      preConfirm: async () => {
-        const updatedResidentID = document.getElementById('resident-id').value;
-        const updatedMedicineName = document.getElementById('medicine-name').value;
-
-        if (!updatedResidentID || !updatedMedicineName) {
-          Swal.showValidationMessage('Please fill out all fields');
-          return false;
-        }
-
-        return { updatedResidentID, updatedMedicineName };
-      },
-    }).then(async (result) => {
-      if (result.isConfirmed) {
-        try {
-          const updatedTransaction = {
-            ...transaction,
-            ResidentID: result.value.updatedResidentID,
-            MedicineName: result.value.updatedMedicineName,
-          };
-          await vaccineService.updateTransaction(transaction.TransactionID, updatedTransaction);
-          MySwal.fire('Updated!', 'Transaction has been updated.', 'success');
-          fetchTransactions(); // Refresh the list after update
-        } catch (error) {
-          console.error('Error updating transaction:', error);
-          toast.error('Failed to update transaction.');
-        }
-      }
-    });
+    setSelectedTransaction(transaction);
+    setIsUpdateModalOpen(true); // Open the update modal
   };
 
   const handleDelete = async (transactionID) => {
@@ -118,71 +97,126 @@ const Vaccine = () => {
   return (
     <div className="container">
       <Sidebar />
-      <div className="content">
-        <h2 className="header">VACCINE MANAGEMENT</h2>
+      <div className="content" style={{ padding: '20px' }}>
+        <Typography 
+          variant="h4" 
+          className="header" 
+          style={{ 
+            marginLeft: '40px', 
+            marginTop: '20px', 
+            marginBottom: '40px', 
+            fontWeight: '700'
+          }}
+        >
+          VACCINE MANAGEMENT
+        </Typography>
 
-        <div className="tabs">
-          <ul className="tab-list">
-            {[{ name: 'Medicine', path: '/medicine' }, { name: 'Vaccine', path: '/vaccine' }].map((tab, index) => (
-              <li key={index} onClick={() => handleTabClick(tab.path)} className="tab">
-                {tab.name}
-              </li>
-            ))}
-          </ul>
-        </div>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', marginLeft: '40px' }}>
+          <Tabs 
+            value={activeTab}
+            onChange={handleTabChange}
+            aria-label="vaccine tabs"
+            indicatorColor="primary"
+            textColor="primary"
+            sx={{
+              '.MuiTab-root': {
+                minWidth: '150px',
+                fontWeight: 'bold',
+                '&:hover': {
+                  borderBottom: '3px solid #0B8769',
+                },
+              },
+              '.Mui-selected': {
+                borderBottom: '3px solid #0B8769',
+                color: '#0B8769',
+              },
+            }}
+          >
+            <Tab icon={<LocalPharmacyIcon />} label="Medicine" />
+            <Tab icon={<VaccinesIcon />} label="Vaccine" />
+          </Tabs>
 
-        <div className="button-container">
-          <button className="new-record-button" onClick={handleNewRecord}>
-            + New Record
-          </button>
-          <input
-            type="text"
-            placeholder="Search transactions"
-            className="search-input"
-            // Implement search functionality if desired
-          />
-        </div>
+          <Box sx={{ display: 'flex', gap: '20px' }}>
+            <Button variant="contained" color="primary" style={{ height: '56px' }} onClick={handleNewRecord}>
+              + New Record
+            </Button>
 
-        <div className="table-container">
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Transaction ID</th>
-                <th>Resident ID</th>
-                <th>Medicine Name</th>
-                <th className="actions">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
+            <TextField
+              style={{ width: '300px', marginRight: '40px' }}
+              variant="outlined"
+              placeholder="Search transactions"
+              className="search-input"
+            />
+          </Box>
+        </Box>
+
+        <TableContainer style={{ maxWidth: '95%', margin: '30px auto', overflowX: 'auto' }}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                {['Transaction ID', 'Resident ID', 'Vaccine Name', 'Actions'].map((header) => (
+                  <TableCell key={header} style={{ backgroundColor: '#0B8769', color: 'white', padding: '10px', textAlign: 'center' }}>
+                    {header}
+                  </TableCell>
+                ))}
+              </TableRow>
+            </TableHead>
+            <TableBody>
               {Array.isArray(transactions) && transactions.length > 0 ? (
                 transactions.map((transaction) => (
-                  <tr key={transaction.TransactionID}>
-                    <td>{transaction.TransactionID}</td>
-                    <td>{transaction.ResidentID}</td>
-                    <td>{transaction.MedicineName}</td>
-                    <td className="actions">
-                      <button className="update-button" onClick={() => handleUpdate(transaction)}>
+                  <TableRow key={transaction.TransactionID}>
+                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>{transaction.TransactionID}</TableCell>
+                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>{transaction.ResidentID}</TableCell>
+                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>{transaction.VaccineName}</TableCell>
+                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>
+                      <Button variant="contained" color="primary" style={{ marginRight: '10px' }} onClick={() => handleView(transaction)}>
+                        View
+                      </Button>
+                      <Button variant="contained" color="primary" style={{ marginRight: '10px' }} onClick={() => handleUpdate(transaction)}>
                         Update
-                      </button>
-                      <button
-                        className="delete-button"
-                        onClick={() => handleDelete(transaction.TransactionID)}
-                      >
+                      </Button>
+                      <Button variant="contained" color="error" onClick={() => handleDelete(transaction.TransactionID)}>
                         Delete
-                      </button>
-                    </td>
-                  </tr>
+                      </Button>
+                    </TableCell>
+                  </TableRow>
                 ))
               ) : (
-                <tr>
-                  <td colSpan="4" style={{ textAlign: 'center' }}>
+                <TableRow>
+                  <TableCell colSpan={4} style={{ textAlign: 'center' }}>
                     No transactions found.
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               )}
-            </tbody>
-          </table>
-        </div>
+            </TableBody>
+          </Table>
+        </TableContainer>
+        
+        {/* Modals for Add, View, Update */}
+        {isVaccineModalOpen && (
+          <VaccineModal
+            isOpen={isVaccineModalOpen}
+            onClose={() => setIsVaccineModalOpen(false)}
+            onSave={fetchTransactions} // Fetch transactions after save
+          />
+        )}
+
+        {isViewModalOpen && selectedTransaction && (
+          <VaccineViewModal
+            isOpen={isViewModalOpen}
+            onClose={() => setIsViewModalOpen(false)}
+            transaction={selectedTransaction}
+          />
+        )}
+
+        {isUpdateModalOpen && selectedTransaction && (
+          <VaccineUpdateModal
+            isOpen={isUpdateModalOpen}
+            onClose={() => setIsUpdateModalOpen(false)}
+            transaction={selectedTransaction}
+            onSave={fetchTransactions} // Fetch transactions after update
+          />
+        )}
       </div>
     </div>
   );
