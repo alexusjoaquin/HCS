@@ -60,8 +60,8 @@ const Sidebar = () => {
       sx={{
         width: 250,
         height: '100vh',
-        bgcolor: '#00796b',
-        color: '#fff',
+        bgcolor: '#333333', // Dark gray background
+        color: '#ffffff', // White text color
         display: 'flex',
         flexDirection: 'column',
         padding: '1rem',
@@ -71,12 +71,25 @@ const Sidebar = () => {
         zIndex: 1000,
       }}
     >
-      <Typography variant="h6" sx={{ fontWeight: 'bold', marginBottom: '1rem', color: '#e0f7fa' }}>
+      {/* Logo Container */}
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          marginBottom: '1rem',
+        }}
+      >
+        {/* Use the logo from the public directory */}
+        <img src={`${process.env.PUBLIC_URL}/logo.jpg`} alt="Healthcare System Logo" style={{ width: 100, height: 100, borderRadius: '50%' }} />
+      </Box>
+
+      <Typography variant="h6" sx={{ fontWeight: 'bold', marginBottom: '1rem', color: '#ffffff' }}>
         Healthcare System
       </Typography>
       <List component="nav" sx={{ flexGrow: 1 }}>
-        <ListItem button onClick={() => handleNavigation('/dashboard')}>
-          <ListItemIcon sx={{ color: '#e0f7fa' }}>
+        <ListItem button onClick={() => handleNavigation('/landing')}>
+          <ListItemIcon sx={{ color: '#bbbbbb' }}> {/* Light gray icon color */}
             <DashboardIcon />
           </ListItemIcon>
           <ListItemText primary="Dashboard" />
@@ -92,7 +105,7 @@ const Sidebar = () => {
 
         {/* Health Menu with Dropdown */}
         <ListItem button onClick={handleHealthMenuClick}>
-          <ListItemIcon sx={{ color: '#e0f7fa' }}>
+          <ListItemIcon sx={{ color: '#bbbbbb' }}>
             <LocalHospitalIcon />
           </ListItemIcon>
           <ListItemText primary="Health" />
@@ -119,42 +132,46 @@ const Sidebar = () => {
         </Collapse>
 
         <ListItem button onClick={() => handleNavigation('/crime')}>
-          <ListItemIcon sx={{ color: '#e0f7fa' }}>
+          <ListItemIcon sx={{ color: '#bbbbbb' }}>
             <CalendarTodayIcon />
           </ListItemIcon>
           <ListItemText primary="Crime" />
         </ListItem>
 
         <ListItem button onClick={() => handleNavigation('/seniorcitizen')}>
-          <ListItemIcon sx={{ color: '#e0f7fa' }}>
+          <ListItemIcon sx={{ color: '#bbbbbb' }}>
             <LocalHospitalIcon />
           </ListItemIcon>
           <ListItemText primary="Senior Citizen" />
         </ListItem>
 
         <ListItem button onClick={() => handleNavigation('/familyconcern')}>
-          <ListItemIcon sx={{ color: '#e0f7fa' }}>
+          <ListItemIcon sx={{ color: '#bbbbbb' }}>
             <FamilyRestroomIcon />
           </ListItemIcon>
           <ListItemText primary="Family Concern" />
         </ListItem>
 
         <ListItem button onClick={() => handleNavigation('/settings')}>
-          <ListItemIcon sx={{ color: '#e0f7fa' }}>
+          <ListItemIcon sx={{ color: '#bbbbbb' }}>
             <SettingsIcon />
           </ListItemIcon>
           <ListItemText primary="Settings" />
         </ListItem>
       </List>
 
-      <Divider sx={{ bgcolor: '#e0f7fa', margin: '1rem 0' }} />
+      <Divider sx={{ bgcolor: '#444444', margin: '1rem 0' }} /> {/* Darker gray divider */}
 
       <Box sx={{ padding: '1rem' }}>
         <Button
           variant="contained"
-          color="secondary"
           startIcon={<LogoutIcon />}
-          sx={{ width: '100%', bgcolor: '#d32f2f', '&:hover': { bgcolor: '#b71c1c' } }}
+          sx={{ 
+            width: '100%', 
+            bgcolor: '#555555', // Medium gray button color
+            color: '#ffffff', // White text color
+            '&:hover': { bgcolor: '#444444' } // Darker gray on hover
+          }}
           onClick={handleLogoutClick}
         >
           Logout
@@ -174,10 +191,10 @@ const Sidebar = () => {
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCancelLogout} color="primary">
+          <Button onClick={handleCancelLogout} sx={{ color: '#333333' }}> {/* Dark gray text */}
             Cancel
           </Button>
-          <Button onClick={handleConfirmLogout} color="secondary" autoFocus>
+          <Button onClick={handleConfirmLogout} sx={{ color: '#555555' }} autoFocus> {/* Medium gray text */}
             Logout
           </Button>
         </DialogActions>
