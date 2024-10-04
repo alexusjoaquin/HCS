@@ -40,14 +40,7 @@ const FamilyConcern = () => {
           }}>
             {[
               { label: 'Family Profiles', path: '/familyprofiles' },
-              { label: 'Member Management', path: '/membermanagement' },
-              { label: 'Health and Well Being', path: '/healthandwellbeing' },
-              { label: 'Education', path: '/education' },
-              { label: 'Financial Assistance', path: '/financialassistance' },
-              { label: 'Social Services', path: '/familysocialservices' },
               { label: 'Counselling and Support', path: '/counsellingsupport' },
-              { label: 'Events and Activities', path: '/familyeventsandactivities' },
-              { label: 'Report and Analytics', path: '/familyreportsandanalytics' }
             ].map((tab, index) => (
               <li 
                 key={index} 
@@ -92,14 +85,7 @@ const FamilyConcern = () => {
             <h3 style={{ fontSize: '24px', color: "#0B8769", marginBottom: '10px' }}>Featured Resources</h3>
             <ul style={{ listStyleType: 'disc', marginLeft: '20px' }}>
               <li><a href="/familyprofiles">Family Profiles: Learn about family backgrounds and histories.</a></li>
-              <li><a href="/membermanagement">Member Management: Tools for managing family members.</a></li>
-              <li><a href="/healthandwellbeing">Health and Well Being: Access resources for maintaining health.</a></li>
-              <li><a href="/education">Education: Information about educational resources and programs.</a></li>
-              <li><a href="/financialassistance">Financial Assistance: Get help with financial support.</a></li>
-              <li><a href="/familysocialservices">Social Services: Access to various social services.</a></li>
               <li><a href="/counsellingsupport">Counselling and Support: Find support and counselling services.</a></li>
-              <li><a href="/familyeventsandactivities">Events and Activities: Upcoming family events and activities.</a></li>
-              <li><a href="/familyreportsandanalytics">Report and Analytics: Review reports and analytics on family data.</a></li>
             </ul>
           </section>
         </div>

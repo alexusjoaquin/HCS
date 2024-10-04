@@ -1,164 +1,269 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom'; // Import useNavigate
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Sidebar from '../../../templates/Sidebar';
+import CounsellingModal from '../Modals/CounsellingModal/CounsellingModal';
+import CounsellingViewModal from '../Modals/CounsellingViewModal/CounsellingViewModal';
+import CounsellingUpdateModal from '../Modals/CounsellingUpdateModal/CounsellingUpdateModal';
+import familycounsellingService from '../../../services/familycounsellingService';
+import { toast } from 'react-toastify';
+import Swal from 'sweetalert2';
+import withReactContent from 'sweetalert2-react-content';
+
+const MySwal = withReactContent(Swal);
 
 const CounsellingSupport = () => {
-  const navigate = useNavigate(); // Create navigate function
+  const [isCreateModalOpen, setCreateModalOpen] = useState(false);
+  const [isViewModalOpen, setViewModalOpen] = useState(false);
+  const [isUpdateModalOpen, setUpdateModalOpen] = useState(false);
+  const [selectedCounselling, setSelectedCounselling] = useState(null);
+  const [counsellingRecords, setCounsellingRecords] = useState([]);
+  const navigate = useNavigate();
 
-  // Handler function for tab clicks
+  useEffect(() => {
+    fetchCounsellingRecords();
+  }, []);
+
+  const fetchCounsellingRecords = async () => {
+    try {
+      const response = await familycounsellingService.getAllFamilyCounselling();
+      if (response && Array.isArray(response.counselingRecords)) {
+        setCounsellingRecords(response.counselingRecords);
+      } else {
+        console.warn('Fetched data is not an array:', response);
+        setCounsellingRecords([]);
+      }
+    } catch (error) {
+      console.error('Failed to fetch counselling records:', error);
+      toast.error('Failed to fetch counselling records. ' + error.message);
+    }
+  };
+
   const handleTabClick = (path) => {
-    navigate(path); // Navigate to the specified path
+    navigate(path);
+  };
+
+  const handleNewRecord = () => {
+    setSelectedCounselling(null);
+    setCreateModalOpen(true);
+  };
+
+  const handleCreateModalClose = () => {
+    setCreateModalOpen(false);
+  };
+
+  const handleCreateSubmit = async (data) => {
+    try {
+      const counsellingData = {
+        ServiceID: `S-${Math.floor(Date.now() / 1000)}`,
+        ClientName: data.ClientName,
+        Counselor: data.Counselor,
+        DateOfSession: data.DateOfSession,
+        Location: data.Location,
+      };
+
+      await familycounsellingService.createFamilyCounselling(counsellingData);
+      MySwal.fire({
+        icon: 'success',
+        title: 'Success',
+        text: 'Counselling record created successfully!',
+        confirmButtonText: 'OK',
+      });
+      setCreateModalOpen(false);
+      fetchCounsellingRecords();
+    } catch (error) {
+      console.error('Error creating counselling record:', error);
+      toast.error('Failed to create counselling record: ' + error.message);
+    }
+  };
+
+  const handleView = (record) => {
+    setSelectedCounselling(record);
+    setViewModalOpen(true);
+  };
+
+  const handleViewModalClose = () => {
+    setViewModalOpen(false);
+    setSelectedCounselling(null);
+  };
+
+  const handleUpdate = (record) => {
+    if (record) {
+      setSelectedCounselling(record);
+      setUpdateModalOpen(true);
+    }
+  };
+
+  const handleUpdateModalClose = () => {
+    setUpdateModalOpen(false);
+    setSelectedCounselling(null);
+  };
+
+  const handleUpdateSubmit = async (data) => {
+    try {
+      const updatedRecord = {
+        ServiceID: selectedCounselling.ServiceID,
+        ClientName: data.ClientName,
+        Counselor: data.Counselor,
+        DateOfSession: data.DateOfSession,
+        Location: data.Location,
+      };
+
+      await familycounsellingService.updateFamilyCounselling(updatedRecord);
+      MySwal.fire({
+        icon: 'success',
+        title: 'Updated!',
+        text: 'Counselling record updated successfully!',
+        confirmButtonText: 'OK',
+      });
+      setUpdateModalOpen(false);
+      fetchCounsellingRecords();
+    } catch (error) {
+      console.error('Error updating counselling record:', error);
+      toast.error('Failed to update counselling record: ' + error.message);
+    }
+  };
+
+  const handleDelete = async (serviceID) => {
+    const result = await MySwal.fire({
+      title: 'Are you sure?',
+      text: 'Do you want to delete this counselling record?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Yes, delete it!',
+    });
+
+    if (result.isConfirmed) {
+      try {
+        await familycounsellingService.deleteFamilyCounselling(serviceID);
+        MySwal.fire({
+          icon: 'success',
+          title: 'Deleted!',
+          text: 'Counselling record has been deleted.',
+          confirmButtonText: 'OK',
+        });
+        fetchCounsellingRecords();
+      } catch (error) {
+        console.error('Error deleting counselling record:', error);
+        toast.error('Failed to delete counselling record: ' + error.message);
+      }
+    }
   };
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh' }}>
+    <div className="container">
       <Sidebar />
-      <div style={{ 
-        flex: 1, 
-        padding: '20px', 
-        marginLeft: '250px', 
-        boxSizing: 'border-box', 
-        overflow: 'hidden' 
-      }}>
-        <h2 style={{ marginBottom: '20px', fontSize: '30px', color: "#0B8769", marginLeft: '50px' }}>COUNSELLING AND SUPPORT</h2>
-        
-        {/* Tabs Section */}
-        <div style={{ 
-          marginBottom: '20px', 
-          display: 'flex', 
-          alignItems: 'center', 
-          marginLeft: '50px', 
-          flexWrap: 'wrap' // Wrap tabs to the next line if they overflow
-        }}>
-          <ul style={{ 
-            listStyle: 'none', 
-            padding: 0, 
-            margin: 0, 
-            display: 'flex', 
-            alignItems: 'center',
-            marginRight: 'auto', // Push tabs to the left
-          }}>
+      <div className="content">
+        <h2 className="header">COUNSELLING AND SUPPORT</h2>
+
+        <div className="tabs">
+          <ul className="tab-list">
             {[
-              { label: 'Family Profiles', path: '/familyprofiles' },
-              { label: 'Member Management', path: '/membermanagement' },
-              { label: 'Health and Well Being', path: '/healthandwellbeing' },
-              { label: 'Education', path: '/education' },
-              { label: 'Financial Assistance', path: '/financialassistance' },
-              { label: 'Social Services', path: '/familysocialservices' },
-              { label: 'Counselling and Support', path: '/counsellingsupport' },
-              { label: 'Events and Activities', path: '/familyeventsandactivities' },
-              { label: 'Report and Analytics', path: '/familyreportsandanalytics' }
+              { label: <><span>Family</span><br /><span>Profiles</span></>, path: '/familyprofiles' },
+              { label: <><span>Member</span><br /><span>Management</span></>, path: '/membermanagement' },
+              { label: <><span>Health</span><br /><span>& Well Being</span></>, path: '/healthandwellbeing' },
+              { label: <><span>Education</span><br /><span>Financial</span></>, path: '/education' },
+              { label: <><span>Financial</span><br /><span>Assistance</span></>, path: '/financialassistance' },
+              { label: <><span>Social</span><br /><span>Services</span></>, path: '/familysocialservices' },
+              { label: <><span>Counselling</span><br /><span>& Support</span></>, path: '/counsellingsupport' },
+              { label: <><span>Events</span><br /><span>& Activities</span></>, path: '/familyeventsandactivities' },
+              { label: <><span>Report</span><br /><span>& Analytics</span></>, path: '/familyreportsandanalytics' },
             ].map((tab, index) => (
-              <li 
-                key={index} 
-                onClick={() => handleTabClick(tab.path)} // Attach click handler
-                style={{ 
-                  marginRight: '10px', 
-                  cursor: 'pointer', 
-                  padding: '10px 20px', 
-                  borderRadius: '5px', 
-                  backgroundColor: '#0B8769', // Updated background color
-                  color: 'white', // Updated text color
-                  textAlign: 'center', 
-                  fontWeight: 'bold',
-                  minHeight: '50px', // Ensures a minimum height for the tabs
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center',
-                  flexBasis: '120px', // Ensures the width is consistent
-                  wordWrap: 'break-word', // Allows text to wrap within the tab
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'normal' // Ensures text wraps instead of overflowing
-                }}
-                onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#0A6B5F'} // Hover effect
-                onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#0B8769'} // Reset hover effect
-              >
+              <li key={index} onClick={() => handleTabClick(tab.path)} className="tab">
                 {tab.label}
               </li>
             ))}
           </ul>
         </div>
 
-        <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'center' }}>
-          <button style={{ 
-            marginLeft: 'auto', // Aligns button to the right
-            padding: '10px 20px', 
-            backgroundColor: '#4CAF50', 
-            color: 'white', 
-            border: 'none', 
-            borderRadius: '5px', 
-            cursor: 'pointer' 
-          }}>
+        <div className="button-container">
+          <button className="new-record-button" onClick={handleNewRecord}>
             + New Record
           </button>
-          <input 
-            type="text" 
-            placeholder="Search records" 
-            style={{ padding: '10px', width: '200px', borderRadius: '5px', border: '1px solid #ccc', marginLeft: '20px' }} 
+          <input
+            type="text"
+            placeholder="Search records"
+            className="search-input"
           />
         </div>
-        
-        <div style={{ 
-          overflowX: 'auto', 
-          backgroundColor: '#fff', 
-          borderRadius: '5px', 
-          boxShadow: '0 2px 4px rgba(0,0,0,0.1)', 
-          maxWidth: 'calc(100% - 30px)', // Adjusted to prevent overflow
-          marginLeft: '50px' // Align with tabs and header
-        }}>
-          <table style={{ 
-            width: '100%', 
-            borderCollapse: 'collapse', 
-            minWidth: '600px', // Ensures the table is not too narrow
-            marginLeft: '0' // Align the table with its container
-          }}>
+
+        <div className="table-container">
+          <table className="table">
             <thead>
-              <tr style={{ backgroundColor: '#f2f2f2', textAlign: 'left' }}>
-                <th style={{ padding: '12px', borderBottom: '1px solid #ddd' }}>Case ID</th>
-                <th style={{ padding: '12px', borderBottom: '1px solid #ddd' }}>Client Name</th>
-                <th style={{ padding: '12px', borderBottom: '1px solid #ddd' }}>Counselor</th>
-                <th style={{ padding: '12px', borderBottom: '1px solid #ddd' }}>Date of Session</th>
-                <th style={{ padding: '12px', borderBottom: '1px solid #ddd', textAlign: 'center' }}>Actions</th>
+              <tr>
+                <th>Service ID</th>
+                <th>Client Name</th>
+                <th>Counselor</th>
+                <th>Date of Session</th>
+                <th>Location</th>
+                <th className="actions">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {[...Array(8)].map((_, index) => (
-                <tr key={index} style={{ borderBottom: '1px solid #ddd' }}>
-                  <td style={{ padding: '12px' }}>C-000000{index + 1}</td>
-                  <td style={{ padding: '12px' }}>Jane Doe</td>
-                  <td style={{ padding: '12px' }}>Dr. Smith</td>
-                  <td style={{ padding: '12px' }}>2024-09-0{index + 1}</td>
-                  <td style={{ padding: '12px', textAlign: 'center' }}>
-                    <button 
-                      style={{ 
-                        padding: '8px 12px', 
-                        backgroundColor: '#4CAF50', 
-                        color: 'white', 
-                        border: 'none', 
-                        borderRadius: '5px', 
-                        marginRight: '8px', 
-                        cursor: 'pointer' 
-                      }}>
-                      Update
-                    </button>
-                    <button 
-                      style={{ 
-                        padding: '8px 12px', 
-                        backgroundColor: '#f44336', 
-                        color: 'white', 
-                        border: 'none', 
-                        borderRadius: '5px', 
-                        cursor: 'pointer' 
-                      }}>
-                      Delete
-                    </button>
+              {Array.isArray(counsellingRecords) && counsellingRecords.length > 0 ? (
+                counsellingRecords.map((record) => (
+                  <tr key={record.ServiceID}>
+                    <td>{record.ServiceID}</td>
+                    <td>{record.ClientName}</td>
+                    <td>{record.Counselor}</td>
+                    <td>{record.DateOfSession}</td>
+                    <td>{record.Location}</td>
+                    <td className="actions">
+                      <button className="view-button" onClick={() => handleView(record)}>
+                        View
+                      </button>
+                      <button className="update-button" onClick={() => handleUpdate(record)}>
+                        Update
+                      </button>
+                      <button
+                        className="delete-button"
+                        onClick={() => handleDelete(record.ServiceID)}
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="6" style={{ textAlign: 'center' }}>
+                    No counselling records found.
                   </td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>
       </div>
+
+      {/* Modal for New Counselling Record */}
+      {isCreateModalOpen && (
+        <CounsellingModal
+          isOpen={isCreateModalOpen}
+          onClose={handleCreateModalClose}
+          onSubmit={handleCreateSubmit}
+        />
+      )}
+
+      {/* Modal for Viewing Counselling Record */}
+      {isViewModalOpen && (
+        <CounsellingViewModal
+          isOpen={isViewModalOpen}
+          onClose={handleViewModalClose}
+          record={selectedCounselling}
+        />
+      )}
+
+      {/* Modal for Updating Counselling Record */}
+      {isUpdateModalOpen && (
+        <CounsellingUpdateModal
+          isOpen={isUpdateModalOpen}
+          onClose={handleUpdateModalClose}
+          onSubmit={handleUpdateSubmit}
+          record={selectedCounselling}
+        />
+      )}
     </div>
   );
 };

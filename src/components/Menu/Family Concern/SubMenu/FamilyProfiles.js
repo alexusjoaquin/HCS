@@ -1,163 +1,270 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom'; // Import useNavigate
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Sidebar from '../../../templates/Sidebar';
+import FamilyProfilesModal from '../Modals/FamilyProfilesModal/FamilyProfilesModal';
+import FamilyProfilesUpdateModal from '../Modals/FamilyProfilesUpdateModal/FamilyProfilesUpdateModal';
+import FamilyProfilesViewModal from '../Modals/FamilyProfilesViewModal/FamilyProfilesViewModal';
+import familyprofilesService from '../../../services/familyprofilesService';
+import { toast } from 'react-toastify';
+import Swal from 'sweetalert2';
+import withReactContent from 'sweetalert2-react-content';
+
+const MySwal = withReactContent(Swal);
 
 const FamilyProfiles = () => {
-  const navigate = useNavigate(); // Create navigate function
+  const [isCreateModalOpen, setCreateModalOpen] = useState(false);
+  const [isViewModalOpen, setViewModalOpen] = useState(false);
+  const [isUpdateModalOpen, setUpdateModalOpen] = useState(false);
+  const [selectedProfile, setSelectedProfile] = useState(null);
+  const [familyProfiles, setFamilyProfiles] = useState([]);
+  const navigate = useNavigate();
 
-  // Handler function for tab clicks
+  useEffect(() => {
+    fetchFamilyProfiles();
+  }, []);
+
+  const fetchFamilyProfiles = async () => {
+    try {
+      const response = await familyprofilesService.getAllFamilyProfiles();
+      if (response && Array.isArray(response)) {
+        setFamilyProfiles(response);
+      } else {
+        console.warn('Fetched data is not an array:', response);
+        setFamilyProfiles([]);
+      }
+    } catch (error) {
+      console.error('Failed to fetch family profiles:', error);
+      toast.error('Failed to fetch family profiles. ' + error.message);
+    }
+  };
+
   const handleTabClick = (path) => {
-    navigate(path); // Navigate to the specified path
+    navigate(path);
+  };
+
+  const handleNewProfile = () => {
+    setSelectedProfile(null);
+    setCreateModalOpen(true);
+  };
+
+  const handleCreateModalClose = () => {
+    setCreateModalOpen(false);
+  };
+
+  const handleCreateSubmit = async (data) => {
+    try {
+      const familyProfileData = {
+        FamilyID: `FAM-${Math.floor(Date.now() / 1000)}`,
+        FamilyName: data.FamilyName,
+        Members: data.Members, // Ensure this matches the expected structure in the backend
+        Address: data.Address,
+        ContactNo: data.ContactNo,
+      };
+
+      await familyprofilesService.createFamilyProfile(familyProfileData);
+      MySwal.fire({
+        icon: 'success',
+        title: 'Success',
+        text: 'Family profile created successfully!',
+        confirmButtonText: 'OK',
+      });
+      setCreateModalOpen(false);
+      fetchFamilyProfiles();
+    } catch (error) {
+      console.error('Error creating family profile:', error);
+      toast.error('Failed to create family profile: ' + error.message);
+    }
+  };
+
+  const handleView = (profile) => {
+    setSelectedProfile(profile);
+    setViewModalOpen(true);
+  };
+
+  const handleViewModalClose = () => {
+    setViewModalOpen(false);
+    setSelectedProfile(null);
+  };
+
+  const handleUpdate = (profile) => {
+    if (profile) {
+      setSelectedProfile(profile);
+      setUpdateModalOpen(true);
+    }
+  };
+
+  const handleUpdateModalClose = () => {
+    setUpdateModalOpen(false);
+    setSelectedProfile(null);
+  };
+
+  const handleUpdateSubmit = async (data) => {
+    try {
+        const updatedProfile = {
+            FamilyID: selectedProfile.FamilyID,  // Ensure selectedProfile is valid
+            FamilyName: data.FamilyName,
+            Members: data.Members,  // Make sure this is sent correctly
+            Address: data.Address,
+            ContactNo: data.ContactNo,
+        };
+
+        await familyprofilesService.updateFamilyProfile(updatedProfile);
+        MySwal.fire({
+            icon: 'success',
+            title: 'Updated!',
+            text: 'Family profile updated successfully!',
+            confirmButtonText: 'OK',
+        });
+        setUpdateModalOpen(false);
+        fetchFamilyProfiles();
+    } catch (error) {
+        console.error('Error updating family profile:', error);
+        toast.error('Failed to update family profile: ' + error.message);
+    }
+};
+
+
+  const handleDelete = async (familyID) => {
+    const result = await MySwal.fire({
+      title: 'Are you sure?',
+      text: 'Do you want to delete this family profile?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Yes, delete it!',
+    });
+
+    if (result.isConfirmed) {
+      try {
+        await familyprofilesService.deleteFamilyProfile(familyID);
+        MySwal.fire({
+          icon: 'success',
+          title: 'Deleted!',
+          text: 'Family profile has been deleted.',
+          confirmButtonText: 'OK',
+        });
+        fetchFamilyProfiles();
+      } catch (error) {
+        console.error('Error deleting family profile:', error);
+        toast.error('Failed to delete family profile: ' + error.message);
+      }
+    }
   };
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh' }}>
+    <div className="container">
       <Sidebar />
-      <div style={{ 
-        flex: 1, 
-        padding: '20px', 
-        marginLeft: '250px', 
-        boxSizing: 'border-box', 
-        overflow: 'hidden' 
-      }}>
-        <h2 style={{ marginBottom: '20px', fontSize: '30px', color: "#0B8769", marginLeft: '50px' }}>FAMILY PROFILES</h2>
-        
-        {/* Tabs Section */}
-        <div style={{ 
-          marginBottom: '20px', 
-          display: 'flex', 
-          alignItems: 'center', 
-          marginLeft: '50px', 
-          flexWrap: 'wrap' // Wrap tabs to the next line if they overflow
-        }}>
-          <ul style={{ 
-            listStyle: 'none', 
-            padding: 0, 
-            margin: 0, 
-            display: 'flex', 
-            alignItems: 'center',
-            marginRight: 'auto', // Push tabs to the left
-          }}>
+      <div className="content">
+        <h2 className="header">FAMILY PROFILES</h2>
+
+        <div className="tabs">
+          <ul className="tab-list">
             {[
-              { label: 'Family Profiles', path: '/familyprofiles' },
-              { label: 'Member Management', path: '/membermanagement' },
-              { label: 'Health and Well Being', path: '/healthandwellbeing' },
-              { label: 'Education', path: '/education' },
-              { label: 'Financial Assistance', path: '/financialassistance' },
-              { label: 'Social Services', path: '/familysocialservices' },
-              { label: 'Counselling and Support', path: '/counsellingsupport' },
-              { label: 'Events and Activities', path: '/familyeventsandactivities' },
-              { label: 'Report and Analytics', path: '/familyreportsandanalytics' }
+            { label: <><span>Family</span><br /><span>Profiles</span></>, path: '/familyprofiles' },
+            { label: <><span>Member</span><br /><span>Management</span></>, path: '/membermanagement' },
+            { label: <><span>Health</span><br /><span>& Well Being</span></>, path: '/healthandwellbeing' },
+            { label: <><span>Member</span><br /><span>Education</span></>, path: '/education' },
+            { label: <><span>Financial</span><br /><span>Assistance</span></>, path: '/financialassistance' },
+            { label: <><span>Social</span><br /><span>Services</span></>, path: '/familysocialservices' },
+            { label: <><span>Counselling</span><br /><span>& Support</span></>, path: '/counsellingsupport' },
+            { label: <><span>Events</span><br /><span>& Activities</span></>, path: '/familyeventsandactivities' },
+            { label: <><span>Report</span><br /><span>& Analytics</span></>, path: '/familyreportsandanalytics' },
             ].map((tab, index) => (
-              <li 
-                key={index} 
-                onClick={() => handleTabClick(tab.path)} // Attach click handler
-                style={{ 
-                  marginRight: '10px', 
-                  cursor: 'pointer', 
-                  padding: '10px 20px', 
-                  borderRadius: '5px', 
-                  backgroundColor: '#0B8769', // Updated background color
-                  color: 'white', // Updated text color
-                  textAlign: 'center', 
-                  fontWeight: 'bold',
-                  minHeight: '50px', // Ensures a minimum height for the tabs
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center',
-                  flexBasis: '120px', // Ensures the width is consistent
-                  wordWrap: 'break-word', // Allows text to wrap within the tab
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'normal', // Ensures text wraps instead of overflowing
-                  transition: 'background-color 0.3s, transform 0.3s', // Transition effect
-                }}
-                onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#0A6B5F'} // Hover effect
-                onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#0B8769'} // Reset hover effect
-              >
+              <li key={index} onClick={() => handleTabClick(tab.path)} className="tab">
                 {tab.label}
               </li>
             ))}
           </ul>
         </div>
 
-        <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'center' }}>
-          <button style={{ 
-            marginLeft: 'auto', // Aligns button to the right
-            padding: '10px 20px', 
-            backgroundColor: '#4CAF50', 
-            color: 'white', 
-            border: 'none', 
-            borderRadius: '5px', 
-            cursor: 'pointer' 
-          }}>
+        <div className="button-container">
+          <button className="new-record-button" onClick={handleNewProfile}>
             + New Record
           </button>
-          <input 
-            type="text" 
-            placeholder="Search records" 
-            style={{ padding: '10px', width: '200px', borderRadius: '5px', border: '1px solid #ccc', marginLeft: '20px' }} 
+          <input
+            type="text"
+            placeholder="Search records"
+            className="search-input"
           />
         </div>
-        
-        <div style={{ 
-          overflowX: 'auto', 
-          backgroundColor: '#fff', 
-          borderRadius: '5px', 
-          boxShadow: '0 2px 4px rgba(0,0,0,0.1)', 
-          maxWidth: 'calc(100% - 30px)', // Adjusted to prevent overflow
-          marginLeft: '50px' // Align with tabs and header
-        }}>
-          <table style={{ 
-            width: '100%', 
-            borderCollapse: 'collapse', 
-            minWidth: '600px', // Ensures the table is not too narrow
-            marginLeft: '0' // Align the table with its container
-          }}>
+
+        <div className="table-container">
+          <table className="table">
             <thead>
-              <tr style={{ backgroundColor: '#f2f2f2', textAlign: 'left' }}>
-                <th style={{ padding: '12px', borderBottom: '1px solid #ddd' }}>Family ID</th>
-                <th style={{ padding: '12px', borderBottom: '1px solid #ddd' }}>Family Name</th>
-                <th style={{ padding: '12px', borderBottom: '1px solid #ddd' }}>Address</th>
-                <th style={{ padding: '12px', borderBottom: '1px solid #ddd', textAlign: 'center' }}>Actions</th>
+              <tr>
+                <th>Family ID</th>
+                <th>Family Name</th>
+                <th>Members</th>
+                <th>Address</th>
+                <th>Contact No.</th>
+                <th className="actions">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {[...Array(8)].map((_, index) => (
-                <tr key={index} style={{ borderBottom: '1px solid #ddd' }}>
-                  <td style={{ padding: '12px' }}>F-0000001</td>
-                  <td style={{ padding: '12px' }}>The Smith Family</td>
-                  <td style={{ padding: '12px' }}>123 Elm Street, Springfield</td>
-                  <td style={{ padding: '12px', textAlign: 'center' }}>
-                    <button 
-                      style={{ 
-                        padding: '8px 12px', 
-                        backgroundColor: '#4CAF50', 
-                        color: 'white', 
-                        border: 'none', 
-                        borderRadius: '5px', 
-                        marginRight: '8px', 
-                        cursor: 'pointer' 
-                      }}>
-                      Update
-                    </button>
-                    <button 
-                      style={{ 
-                        padding: '8px 12px', 
-                        backgroundColor: '#f44336', 
-                        color: 'white', 
-                        border: 'none', 
-                        borderRadius: '5px', 
-                        cursor: 'pointer' 
-                      }}>
-                      Delete
-                    </button>
+              {Array.isArray(familyProfiles) && familyProfiles.length > 0 ? (
+                familyProfiles.map((profile) => (
+                  <tr key={profile.FamilyID}>
+                    <td>{profile.FamilyID}</td>
+                    <td>{profile.FamilyName}</td>
+                    <td>{profile.Members}</td>
+                    <td>{profile.Address}</td>
+                    <td>{profile.ContactNo}</td>
+                    <td className="actions">
+                      <button className="view-button" onClick={() => handleView(profile)}>
+                        View
+                      </button>
+                      <button className="update-button" onClick={() => handleUpdate(profile)}>
+                        Update
+                      </button>
+                      <button
+                        className="delete-button"
+                        onClick={() => handleDelete(profile.FamilyID)}
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="6" style={{ textAlign: 'center' }}>
+                    No family profiles found.
                   </td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>
       </div>
+
+      {/* Modal for New Family Profile */}
+      {isCreateModalOpen && (
+        <FamilyProfilesModal
+          isOpen={isCreateModalOpen}
+          onClose={handleCreateModalClose}
+          onSubmit={handleCreateSubmit}
+        />
+      )}
+
+      {/* Modal for Viewing Family Profile */}
+      {isViewModalOpen && (
+        <FamilyProfilesViewModal
+          isOpen={isViewModalOpen}
+          onClose={handleViewModalClose}
+          profile={selectedProfile}
+        />
+      )}
+
+      {/* Modal for Updating Family Profile */}
+      {isUpdateModalOpen && (
+        <FamilyProfilesUpdateModal
+          isOpen={isUpdateModalOpen}
+          onClose={handleUpdateModalClose}
+          onSave={handleUpdateSubmit}
+          family={selectedProfile}
+        />
+      )}
     </div>
   );
 };

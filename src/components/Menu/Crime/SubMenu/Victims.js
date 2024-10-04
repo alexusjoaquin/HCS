@@ -1,41 +1,163 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom'; 
+// src/components/Victims/Victims.js
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Sidebar from '../../../templates/Sidebar';
+import VictimsModal from '../Modals/VictimsModal/VictimsModal'; // Ensure this modal is created
+import VictimsViewModal from '../Modals/VictimsViewModal/VictimsViewModal'; // Ensure this modal is created
+import VictimsUpdateModal from '../Modals/VictimsUpdateModal/VictimsUpdateModal'; // Ensure this modal is created
+import victimsService from '../../../services/victimsService'; // Ensure this service is created
+import { toast } from 'react-toastify';
+import Swal from 'sweetalert2';
+import withReactContent from 'sweetalert2-react-content';
+
+const MySwal = withReactContent(Swal);
 
 const Victims = () => {
-  const navigate = useNavigate(); 
+  const [isCreateModalOpen, setCreateModalOpen] = useState(false);
+  const [isViewModalOpen, setViewModalOpen] = useState(false);
+  const [isUpdateModalOpen, setUpdateModalOpen] = useState(false);
+  const [selectedVictim, setSelectedVictim] = useState(null);
+  const [victims, setVictims] = useState([]);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    fetchVictims();
+  }, []);
+
+  const fetchVictims = async () => {
+    try {
+      const response = await victimsService.getAllVictims(); // Fetch victims from the service
+      if (response && Array.isArray(response)) {
+        setVictims(response);
+      } else {
+        console.warn('Fetched data is not an array:', response);
+        setVictims([]);
+      }
+    } catch (error) {
+      console.error('Failed to fetch victims:', error);
+      toast.error('Failed to fetch victims. ' + error.message);
+    }
+  };
 
   const handleTabClick = (path) => {
-    navigate(path); 
+    navigate(path);
+  };
+
+  const handleNewVictim = () => {
+    setSelectedVictim(null);
+    setCreateModalOpen(true); // Open the create modal
+  };
+
+  const handleCreateModalClose = () => {
+    setCreateModalOpen(false); // Close the create modal
+  };
+
+  const handleCreateSubmit = async (data) => {
+    try {
+      const victimData = {
+        VictimID: `V-${Math.floor(Date.now() / 1000)}`, // Example ID generation
+        FullName: data.FullName,
+        LastKnownAddress: data.LastKnownAddress,
+        IncidentDate: data.IncidentDate,
+        CaseStatus: data.CaseStatus,
+      };
+
+      await victimsService.createVictim(victimData);
+      MySwal.fire({
+        icon: 'success',
+        title: 'Success',
+        text: 'Victim created successfully!',
+        confirmButtonText: 'OK',
+      });
+      setCreateModalOpen(false); // Close the modal after submission
+      fetchVictims(); // Refresh the victims list
+    } catch (error) {
+      console.error('Error creating victim:', error);
+      toast.error('Failed to create victim: ' + error.message);
+    }
+  };
+
+  const handleView = (victim) => {
+    setSelectedVictim(victim);
+    setViewModalOpen(true); // Open the view modal
+  };
+
+  const handleViewModalClose = () => {
+    setViewModalOpen(false); // Close the view modal
+    setSelectedVictim(null); // Reset selected victim
+  };
+
+  const handleUpdate = (victim) => {
+    setSelectedVictim(victim);
+    setUpdateModalOpen(true); // Open the update modal
+  };
+
+  const handleUpdateModalClose = () => {
+    setUpdateModalOpen(false); // Close the update modal
+    setSelectedVictim(null); // Reset selected victim
+  };
+
+  const handleUpdateSubmit = async (data) => {
+    try {
+      const updatedVictim = {
+        VictimID: selectedVictim.VictimID,  // Use the selected record's ID
+        FullName: data.FullName,
+        LastKnownAddress: data.LastKnownAddress,
+        IncidentDate: data.IncidentDate,
+        CaseStatus: data.CaseStatus,
+      };
+
+      await victimsService.updateVictim(updatedVictim); // Send to service
+      MySwal.fire({
+        icon: 'success',
+        title: 'Updated!',
+        text: 'Victim updated successfully!',
+        confirmButtonText: 'OK',
+      });
+      setUpdateModalOpen(false); // Close modal after updating
+      fetchVictims(); // Refresh the victims list
+    } catch (error) {
+      console.error('Error updating victim:', error);
+      toast.error('Failed to update victim: ' + error.message);
+    }
+  };
+
+  const handleDelete = async (victimID) => {
+    const result = await MySwal.fire({
+      title: 'Are you sure?',
+      text: 'Do you want to delete this victim?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Yes, delete it!',
+    });
+
+    if (result.isConfirmed) {
+      try {
+        await victimsService.deleteVictim(victimID);
+        MySwal.fire({
+          icon: 'success',
+          title: 'Deleted!',
+          text: 'Victim has been deleted.',
+          confirmButtonText: 'OK',
+        });
+        fetchVictims(); // Refresh the victims list
+      } catch (error) {
+        console.error('Error deleting victim:', error);
+        toast.error('Failed to delete victim: ' + error.message);
+      }
+    }
   };
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh' }}>
+    <div className="container">
       <Sidebar />
-      <div style={{ 
-        flex: 1, 
-        padding: '20px', 
-        marginLeft: '250px', 
-        boxSizing: 'border-box', 
-        overflow: 'hidden' 
-      }}>
-        <h2 style={{ marginBottom: '20px', fontSize: '30px', color: "#0B8769", marginLeft: '50px' }}>VICTIMS</h2>
-        
-        {/* Tabs Section */}
-        <div style={{ 
-          marginBottom: '20px', 
-          display: 'flex', 
-          alignItems: 'center', 
-          marginLeft: '50px' 
-        }}>
-          <ul style={{ 
-            listStyle: 'none', 
-            padding: 0, 
-            margin: 0, 
-            display: 'flex', 
-            alignItems: 'center',
-            marginRight: 'auto' 
-          }}>
+      <div className="content">
+        <h2 className="header">VICTIMS</h2>
+
+        <div className="tabs">
+          <ul className="tab-list">
             {[
               { label: 'Crime Reports', path: '/crimereports' },
               { label: 'Incident Management', path: '/incidentmanagement' },
@@ -43,117 +165,101 @@ const Victims = () => {
               { label: 'Suspects', path: '/suspects' },
               { label: 'Victims', path: '/victims' },
               { label: 'Court Cases', path: '/courtcases' },
-              { label: 'Report and Analytics', path: '/crimereportsandanalytics' }
+              { label: 'Report and Analytics', path: '/crimereportsandanalytics' },
             ].map((tab, index) => (
-              <li 
-                key={index} 
-                onClick={() => handleTabClick(tab.path)} 
-                style={{ 
-                  marginRight: '10px', 
-                  cursor: 'pointer', 
-                  padding: '10px 20px', 
-                  borderRadius: '5px', 
-                  backgroundColor: '#0B8769', 
-                  color: 'white', 
-                  textAlign: 'center', 
-                  transition: 'background-color 0.3s, transform 0.3s', 
-                  fontWeight: 'bold',
-                  minWidth: '150px', 
-                  textOverflow: 'ellipsis', 
-                  whiteSpace: 'nowrap', 
-                  overflow: 'hidden'
-                }}
-                onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#0A6B5F'} 
-                onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#0B8769'} 
-              >
+              <li key={index} onClick={() => handleTabClick(tab.path)} className="tab">
                 {tab.label}
               </li>
             ))}
           </ul>
         </div>
 
-        <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'center' }}>
-          <button style={{ 
-            marginLeft: 'auto', 
-            padding: '10px 20px', 
-            backgroundColor: '#4CAF50', 
-            color: 'white', 
-            border: 'none', 
-            borderRadius: '5px', 
-            cursor: 'pointer' 
-          }}>
+        <div className="button-container">
+          <button className="new-record-button" onClick={handleNewVictim}>
             + New Victim
           </button>
-          <input 
-            type="text" 
-            placeholder="Search victims" 
-            style={{ padding: '10px', width: '200px', borderRadius: '5px', border: '1px solid #ccc', marginLeft: '20px' }} 
+          <input
+            type="text"
+            placeholder="Search victims"
+            className="search-input"
           />
         </div>
-        
-        <div style={{ 
-          overflowX: 'auto', 
-          backgroundColor: '#fff', 
-          borderRadius: '5px', 
-          boxShadow: '0 2px 4px rgba(0,0,0,0.1)', 
-          maxWidth: 'calc(100% - 30px)', 
-          marginLeft: '50px' 
-        }}>
-          <table style={{ 
-            width: '100%', 
-            borderCollapse: 'collapse', 
-            minWidth: '600px', 
-            marginLeft: '0' 
-          }}>
+
+        <div className="table-container">
+          <table className="table">
             <thead>
-              <tr style={{ backgroundColor: '#f2f2f2', textAlign: 'left' }}>
-                <th style={{ padding: '12px', borderBottom: '1px solid #ddd' }}>Victim ID</th>
-                <th style={{ padding: '12px', borderBottom: '1px solid #ddd' }}>Full Name</th>
-                <th style={{ padding: '12px', borderBottom: '1px solid #ddd' }}>Last Known Address</th>
-                <th style={{ padding: '12px', borderBottom: '1px solid #ddd' }}>Incident Date</th>
-                <th style={{ padding: '12px', borderBottom: '1px solid #ddd' }}>Case Status</th>
-                <th style={{ padding: '12px', borderBottom: '1px solid #ddd', textAlign: 'center' }}>Actions</th>
+              <tr>
+                <th>Victim ID</th>
+                <th>Full Name</th>
+                <th>Last Known Address</th>
+                <th>Incident Date</th>
+                <th>Case Status</th>
+                <th className="actions">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {[...Array(8)].map((_, index) => (
-                <tr key={index} style={{ borderBottom: '1px solid #ddd' }}>
-                  <td style={{ padding: '12px' }}>V-0000001</td>
-                  <td style={{ padding: '12px' }}>Jonard Matados</td>
-                  <td style={{ padding: '12px' }}>Quezon City</td>
-                  <td style={{ padding: '12px' }}>2024-08-15</td>
-                  <td style={{ padding: '12px' }}>Open</td>
-                  <td style={{ padding: '12px', textAlign: 'center' }}>
-                    <button 
-                      style={{ 
-                        padding: '8px 12px', 
-                        backgroundColor: '#4CAF50', 
-                        color: 'white', 
-                        border: 'none', 
-                        borderRadius: '5px', 
-                        marginRight: '8px', 
-                        cursor: 'pointer' 
-                      }}>
-                      View
-                    </button>
-                    <button 
-                      style={{ 
-                        padding: '8px 12px', 
-                        backgroundColor: '#f44336', 
-                        color: 'white', 
-                        border: 'none', 
-                        borderRadius: '5px', 
-                        cursor: 'pointer' 
-                      }}>
-                      Delete
-                    </button>
+              {Array.isArray(victims) && victims.length > 0 ? (
+                victims.map((victim) => (
+                  <tr key={victim.VictimID}>
+                    <td>{victim.VictimID}</td>
+                    <td>{victim.FullName}</td>
+                    <td>{victim.LastKnownAddress}</td>
+                    <td>{victim.IncidentDate}</td>
+                    <td>{victim.CaseStatus}</td>
+                    <td className="actions">
+                      <button className="view-button" onClick={() => handleView(victim)}>
+                        View
+                      </button>
+                      <button className="update-button" onClick={() => handleUpdate(victim)}>
+                        Update
+                      </button>
+                      <button
+                        className="delete-button"
+                        onClick={() => handleDelete(victim.VictimID)}
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="6" style={{ textAlign: 'center' }}>
+                    No victims found.
                   </td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>
       </div>
+
+      {/* Modal for New Victim */}
+      {isCreateModalOpen && (
+        <VictimsModal
+          isOpen={isCreateModalOpen}
+          onClose={handleCreateModalClose}
+          onSubmit={handleCreateSubmit}
+        />
+      )}
+
+      {/* Modal for Viewing Victim */}
+      {isViewModalOpen && (
+        <VictimsViewModal
+          isOpen={isViewModalOpen}
+          onClose={handleViewModalClose}
+          victim={selectedVictim} // Pass the selected victim
+        />
+      )}
+
+      {isUpdateModalOpen && (
+        <VictimsUpdateModal
+          isOpen={isUpdateModalOpen}
+          onClose={handleUpdateModalClose}
+          onSave={handleUpdateSubmit}  // Change from onSubmit to onSave
+          victim={selectedVictim} // Pass the selected victim for editing
+        />
+      )}
     </div>
   );
 };

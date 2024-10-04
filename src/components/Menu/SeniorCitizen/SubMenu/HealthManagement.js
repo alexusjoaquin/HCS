@@ -1,42 +1,157 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../../../templates/Sidebar';
+import healthManagementService from '../../../services/healthManagemetService';
+import HealthManagementModal from '../Modals/HealthManagementModal/HealthManagementModal';
+import HealthManagementViewModal from '../Modals/HealthManagementViewModal/HealthManagementViewModal';
+import HealthManagementUpdateModal from '../Modals/HealthManagementUpdateModal/HealthManagementUpdateModal';
+import { toast } from 'react-toastify';
+import Swal from 'sweetalert2';
+import withReactContent from 'sweetalert2-react-content';
+
+const MySwal = withReactContent(Swal);
 
 const HealthManagement = () => {
-  const navigate = useNavigate(); // Create navigate function
+  const [isModalOpen, setModalOpen] = useState(false);
+  const [isViewModalOpen, setViewModalOpen] = useState(false);
+  const [isUpdateModalOpen, setUpdateModalOpen] = useState(false);
+  const [healthRecords, setHealthRecords] = useState([]);
+  const [selectedRecord, setSelectedRecord] = useState(null);
+  const navigate = useNavigate();
 
-  // Handler function for tab clicks
-  const handleTabClick = (path) => {
-    navigate(path); // Navigate to the specified path
+  useEffect(() => {
+    fetchHealthRecords();
+  }, []);
+
+  const fetchHealthRecords = async () => {
+    try {
+      const response = await healthManagementService.getAllRecords();
+      if (response && Array.isArray(response)) {
+        setHealthRecords(response);
+      } else {
+        console.warn('Fetched data is not an array:', response);
+        setHealthRecords([]);
+      }
+    } catch (error) {
+      console.error('Failed to fetch health records:', error);
+      toast.error('Failed to fetch health records: ' + error.message);
+    }
   };
 
+  const handleTabClick = (path) => {
+    navigate(path);
+  };
+
+  const handleNewRecord = () => {
+    setSelectedRecord(null);
+    setModalOpen(true);
+  };
+
+  const handleViewModalClose = () => {
+    setViewModalOpen(false);
+  };
+
+  const handleUpdateModalClose = () => {
+    setUpdateModalOpen(false);
+  };
+
+  const handleUpdateSubmit = async (data) => {
+    try {
+      const updatedRecord = {
+        RecordID: selectedRecord.RecordID,
+        SeniorName: data.SeniorName,
+        ChronicCondition: data.ChronicCondition,
+        Medication: data.Medication,
+        LastCheckUp: data.LastCheckUp,
+      };
+
+      await healthManagementService.updateRecord(updatedRecord);
+      MySwal.fire({
+        icon: 'success',
+        title: 'Updated!',
+        text: 'Health record updated successfully!',
+        confirmButtonText: 'OK',
+      });
+      setUpdateModalOpen(false);
+      fetchHealthRecords();
+    } catch (error) {
+      console.error('Error updating health record:', error);
+      toast.error('Failed to update health record: ' + error.message);
+    }
+  };
+
+  const handleCreateSubmit = async (data) => {
+    try {
+      const newRecordData = {
+        RecordID: `R-${Math.floor(Date.now() / 1000)}`,
+        SeniorName: data.SeniorName,
+        ChronicCondition: data.ChronicCondition,
+        Medication: data.Medication,
+        LastCheckUp: data.LastCheckUp,
+      };
+
+      await healthManagementService.createRecord(newRecordData);
+      MySwal.fire({
+        icon: 'success',
+        title: 'Success',
+        text: 'Health record created successfully!',
+        confirmButtonText: 'OK',
+      });
+      setModalOpen(false);
+      fetchHealthRecords();
+    } catch (error) {
+      console.error('Error creating health record:', error);
+      toast.error('Failed to create health record: ' + error.message);
+    }
+  };
+
+  const handleView = (record) => {
+    setSelectedRecord(record);
+    setViewModalOpen(true);
+  };
+
+  const handleUpdate = (record) => {
+    setSelectedRecord(record);
+    setUpdateModalOpen(true);
+  };
+
+  const handleDelete = async (recordID) => {
+    const result = await MySwal.fire({
+      title: 'Are you sure?',
+      text: 'Do you want to delete this health record?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Yes, delete it!',
+    });
+  
+    if (result.isConfirmed) {
+      try {
+        await healthManagementService.deleteRecord(recordID);
+        MySwal.fire({
+          icon: 'success',
+          title: 'Deleted!',
+          text: 'Health record has been deleted.',
+          confirmButtonText: 'OK',
+        });
+        fetchHealthRecords();
+      } catch (error) {
+        console.error('Error deleting health record:', error);
+        toast.error('Failed to delete health record: ' + error.message);
+      }
+    }
+  };
+  
+
   return (
-    <div style={{ display: 'flex', minHeight: '100vh' }}>
+    <div className="container">
       <Sidebar />
-      <div style={{ 
-        flex: 1, 
-        padding: '20px', 
-        marginLeft: '250px', 
-        boxSizing: 'border-box', 
-        overflow: 'hidden' 
-      }}>
-        <h2 style={{ marginBottom: '20px', fontSize: '30px', color: "#0B8769", marginLeft: '50px' }}>SENIOR CITIZEN HEALTH MANAGEMENT</h2>
-        
-        {/* Tabs Section */}
-        <div style={{ 
-          marginBottom: '20px', 
-          display: 'flex', 
-          alignItems: 'center', 
-          marginLeft: '50px' // Align with header
-        }}>
-          <ul style={{ 
-            listStyle: 'none', 
-            padding: 0, 
-            margin: 0, 
-            display: 'flex', 
-            alignItems: 'center',
-            marginRight: 'auto' // Push tabs to the left
-          }}>
+      <div className="content">
+        <h2 className="header">SENIOR CITIZEN HEALTH MANAGEMENT</h2>
+
+        <div className="tabs">
+          <ul className="tab-list">
             {[
               { label: 'Senior Citizen', path: '/seniorcitizen' },
               { label: 'Health Management', path: '/healthmanagement' },
@@ -46,115 +161,101 @@ const HealthManagement = () => {
               { label: 'Without Pension', path: '/benifitswithoutpension' },
               { label: 'Report and Analytics', path: '/seniorreportsandanalytics' }
             ].map((tab, index) => (
-              <li
-                key={index}
-                onClick={() => handleTabClick(tab.path)}
-                style={{ 
-                  marginRight: '10px', 
-                  cursor: 'pointer', 
-                  padding: '10px 20px', 
-                  borderRadius: '5px', 
-                  backgroundColor: '#0B8769', // Updated background color
-                  color: 'white', // Updated text color
-                  textAlign: 'center', 
-                  transition: 'background-color 0.3s, transform 0.3s', 
-                  fontWeight: 'bold',
-                  minWidth: '150px', // Uniform width
-                  textOverflow: 'ellipsis', 
-                  whiteSpace: 'nowrap', 
-                  overflow: 'hidden'
-                }}
-                onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#0A6B5F'} // Hover effect
-                onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#0B8769'} // Reset hover effect
-              >
+              <li key={index} onClick={() => handleTabClick(tab.path)} className="tab">
                 {tab.label}
               </li>
             ))}
           </ul>
         </div>
 
-        <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'center' }}>
-          <button style={{ 
-            marginLeft: 'auto', // Aligns button to the right
-            padding: '10px 20px', 
-            backgroundColor: '#4CAF50', 
-            color: 'white', 
-            border: 'none', 
-            borderRadius: '5px', 
-            cursor: 'pointer' 
-          }}>
+        <div className="button-container">
+          <button className="new-record-button" onClick={handleNewRecord}>
             + New Record
           </button>
-          <input 
-            type="text" 
-            placeholder="Search records" 
-            style={{ padding: '10px', width: '200px', borderRadius: '5px', border: '1px solid #ccc', marginLeft: '20px' }} 
+          <input
+            type="text"
+            placeholder="Search records"
+            className="search-input"
           />
         </div>
-        
-        <div style={{ 
-          overflowX: 'auto', 
-          backgroundColor: '#fff', 
-          borderRadius: '5px', 
-          boxShadow: '0 2px 4px rgba(0,0,0,0.1)', 
-          maxWidth: 'calc(100% - 30px)', // Adjusted to prevent overflow
-          marginLeft: '50px' // Align with tabs and header
-        }}>
-          <table style={{ 
-            width: '100%', 
-            borderCollapse: 'collapse', 
-            minWidth: '600px', // Ensures the table is not too narrow
-            marginLeft: '0' // Align the table with its container
-          }}>
+
+        <div className="table-container">
+          <table className="table">
             <thead>
-              <tr style={{ backgroundColor: '#f2f2f2', textAlign: 'left' }}>
-                <th style={{ padding: '12px', borderBottom: '1px solid #ddd' }}>Record ID</th>
-                <th style={{ padding: '12px', borderBottom: '1px solid #ddd' }}>Senior Name</th>
-                <th style={{ padding: '12px', borderBottom: '1px solid #ddd' }}>Chronic Condition</th>
-                <th style={{ padding: '12px', borderBottom: '1px solid #ddd' }}>Medication</th>
-                <th style={{ padding: '12px', borderBottom: '1px solid #ddd' }}>Last Check-Up</th>
-                <th style={{ padding: '12px', borderBottom: '1px solid #ddd', textAlign: 'center' }}>Actions</th>
+              <tr>
+                <th>Record ID</th>
+                <th>Senior Name</th>
+                <th>Chronic Condition</th>
+                <th>Medication</th>
+                <th>Last Check-Up</th>
+                <th className="actions">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {[...Array(8)].map((_, index) => (
-                <tr key={index} style={{ borderBottom: '1px solid #ddd' }}>
-                  <td style={{ padding: '12px' }}>S-000000{index + 1}</td>
-                  <td style={{ padding: '12px' }}>John Smith</td>
-                  <td style={{ padding: '12px' }}>Diabetes</td>
-                  <td style={{ padding: '12px' }}>Metformin</td>
-                  <td style={{ padding: '12px' }}>2024-07-15</td>
-                  <td style={{ padding: '12px', textAlign: 'center' }}>
-                    <button 
-                      style={{ 
-                        padding: '8px 12px', 
-                        backgroundColor: '#4CAF50', 
-                        color: 'white', 
-                        border: 'none', 
-                        borderRadius: '5px', 
-                        marginRight: '8px', 
-                        cursor: 'pointer' 
-                      }}>
-                      Update
-                    </button>
-                    <button 
-                      style={{ 
-                        padding: '8px 12px', 
-                        backgroundColor: '#f44336', 
-                        color: 'white', 
-                        border: 'none', 
-                        borderRadius: '5px', 
-                        cursor: 'pointer' 
-                      }}>
-                      Delete
-                    </button>
+              {healthRecords.length > 0 ? (
+                healthRecords.map((record) => (
+                  <tr key={record.RecordID}>
+                    <td>{record.RecordID}</td>
+                    <td>{record.SeniorName}</td>
+                    <td>{record.ChronicCondition}</td>
+                    <td>{record.Medication}</td>
+                    <td>{record.LastCheckUp}</td>
+                    <td className="actions">
+                      <button className="view-button" onClick={() => handleView(record)}>
+                        View
+                      </button>
+                      <button className="update-button" onClick={() => handleUpdate(record)}>
+                        Update
+                      </button>
+                      <button
+                        className="delete-button"
+                        onClick={() => handleDelete(record.RecordID)}
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="6" style={{ textAlign: 'center' }}>
+                    No health records found.
                   </td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>
       </div>
+
+      {/* Modal for New Health Record */}
+      {isModalOpen && (
+        <HealthManagementModal
+          isOpen={isModalOpen}
+          onClose={() => setModalOpen(false)}
+          onSubmit={handleCreateSubmit}
+        />
+      )}
+
+      {/* Modal for Viewing Health Record */}
+      {isViewModalOpen && (
+        <HealthManagementViewModal
+          isOpen={isViewModalOpen}
+          onClose={handleViewModalClose}
+          healthRecord={selectedRecord} // Pass the selected record here
+        />
+      )}
+
+
+      {/* Modal for Updating Health Record */}
+      {isUpdateModalOpen && (
+        <HealthManagementUpdateModal
+          isOpen={isUpdateModalOpen}
+          onClose={handleUpdateModalClose}
+          onSave={handleUpdateSubmit}
+          healthRecord={selectedRecord} // Ensure this is passed correctly
+        />
+      )}
     </div>
   );
 };

@@ -39,12 +39,8 @@ const Crime = () => {
           }}>
             {[
               { label: 'Crime Reports', path: '/crimereports' },
-              { label: 'Incident Management', path: '/incidentmanagement' },
-              { label: 'Investigation', path: '/investigation' },
               { label: 'Suspects', path: '/suspects' },
               { label: 'Victims', path: '/victims' },
-              { label: 'Court Cases', path: '/courtcases' },
-              { label: 'Report and Analytics', path: '/crimereportsandanalytics' }
             ].map((tab, index) => (
               <li 
                 key={index} 
@@ -85,12 +81,8 @@ const Crime = () => {
             <h3 style={{ fontSize: '24px', color: "#0B8769", marginBottom: '10px' }}>Featured Resources</h3>
             <ul style={{ listStyleType: 'disc', marginLeft: '20px' }}>
               <li><a href="/crimereports">Crime Reports: View detailed reports on various crime incidents.</a></li>
-              <li><a href="/incidentmanagement">Incident Management: Tools for managing and tracking incidents.</a></li>
-              <li><a href="/investigation">Investigation: Access resources and tools for crime investigations.</a></li>
               <li><a href="/suspects">Suspects: Information on suspects involved in crimes.</a></li>
               <li><a href="/victims">Victims: Support and resources for crime victims.</a></li>
-              <li><a href="/courtcases">Court Cases: Track ongoing and past court cases.</a></li>
-              <li><a href="/crimereportsandanalytics">Report and Analytics: Review crime data and analytics reports.</a></li>
             </ul>
           </section>
         </div>

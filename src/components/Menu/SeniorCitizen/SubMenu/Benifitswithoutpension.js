@@ -1,158 +1,272 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import NoPensionModal from '../Modals/NoPensionModal/NoPensionModal';
+import NoPensionViewModal from '../Modals/NoPensionViewModal/NoPensionViewModal';
+import NoPensionUpdateModal from '../Modals/NoPensionUpdateModal/NoPensionUpdateModal';
+import nopensionBenefitsService from '../../../services/nopensionBenefitsService';
 import Sidebar from '../../../templates/Sidebar';
+import { toast } from 'react-toastify';
+import Swal from 'sweetalert2';
+import withReactContent from 'sweetalert2-react-content';
+
+const MySwal = withReactContent(Swal);
 
 const BenefitsWithoutPension = () => {
-  const navigate = useNavigate(); // Create navigate function
+  const [isCreateModalOpen, setCreateModalOpen] = useState(false);
+  const [isViewModalOpen, setViewModalOpen] = useState(false);
+  const [isUpdateModalOpen, setUpdateModalOpen] = useState(false);
+  const [selectedBenefit, setSelectedBenefit] = useState(null);
+  const [benefits, setBenefits] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const navigate = useNavigate();
 
-  // Handler function for tab clicks
-  const handleTabClick = (path) => {
-    navigate(path); // Navigate to the specified path
+  useEffect(() => {
+    fetchBenefits();
+  }, []);
+
+  const fetchBenefits = async () => {
+    try {
+      const response = await nopensionBenefitsService.getAllBenefits();
+      if (response && Array.isArray(response)) {
+        setBenefits(response);
+      } else {
+        console.warn('Fetched data is not an array:', response);
+        setBenefits([]);
+      }
+    } catch (error) {
+      console.error('Failed to fetch benefits:', error);
+      toast.error('Failed to fetch benefits. ' + error.message);
+    }
   };
 
+  const handleTabClick = (path) => {
+    navigate(path);
+  };
+
+  const handleNewBenefit = () => {
+    setSelectedBenefit(null);
+    setCreateModalOpen(true);
+  };
+
+  const handleCreateModalClose = () => {
+    setCreateModalOpen(false);
+  };
+
+  const handleCreateSubmit = async (data) => {
+    try {
+      const newBenefit = {
+        BenefitID: `BEN-${Math.floor(Date.now() / 1000)}`,
+        BenefitName: data.BenefitName,
+        Description: data.Description,
+        Eligibility: data.Eligibility,
+      };
+
+      await nopensionBenefitsService.createBenefit(newBenefit);
+      MySwal.fire({
+        icon: 'success',
+        title: 'Success',
+        text: 'Benefit created successfully!',
+        confirmButtonText: 'OK',
+      });
+      setCreateModalOpen(false);
+      fetchBenefits();
+    } catch (error) {
+      console.error('Error creating benefit:', error);
+      toast.error('Failed to create benefit: ' + error.message);
+    }
+  };
+
+  const handleView = (benefit) => {
+    setSelectedBenefit(benefit);
+    setViewModalOpen(true);
+  };
+
+  const handleViewModalClose = () => {
+    setViewModalOpen(false);
+    setSelectedBenefit(null);
+  };
+
+  const handleUpdate = (benefit) => {
+    if (benefit) {
+      setSelectedBenefit(benefit);
+      setUpdateModalOpen(true);
+    }
+  };
+
+  const handleUpdateModalClose = () => {
+    setUpdateModalOpen(false);
+    setSelectedBenefit(null);
+  };
+
+  const handleUpdateSubmit = async (data) => {
+    try {
+      const updatedBenefit = {
+        BenefitID: selectedBenefit.BenefitID,
+        BenefitName: data.BenefitName,
+        Description: data.Description,
+        Eligibility: data.Eligibility,
+      };
+
+      await nopensionBenefitsService.updateBenefit(updatedBenefit);
+      MySwal.fire({
+        icon: 'success',
+        title: 'Updated!',
+        text: 'Benefit updated successfully!',
+        confirmButtonText: 'OK',
+      });
+      setUpdateModalOpen(false);
+      fetchBenefits();
+    } catch (error) {
+      console.error('Error updating benefit:', error);
+      toast.error('Failed to update benefit: ' + error.message);
+    }
+  };
+
+  const handleDelete = async (benefitID) => {
+    const result = await MySwal.fire({
+      title: 'Are you sure?',
+      text: 'Do you want to delete this benefit?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Yes, delete it!',
+    });
+
+    if (result.isConfirmed) {
+      try {
+        await nopensionBenefitsService.deleteBenefit(benefitID);
+        MySwal.fire({
+          icon: 'success',
+          title: 'Deleted!',
+          text: 'Benefit has been deleted.',
+          confirmButtonText: 'OK',
+        });
+        fetchBenefits();
+      } catch (error) {
+        console.error('Error deleting benefit:', error);
+        toast.error('Failed to delete benefit: ' + error.message);
+      }
+    }
+  };
+
+  const filteredBenefits = benefits.filter(
+    (benefit) =>
+      benefit.BenefitName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      benefit.Description.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
-    <div style={{ display: 'flex', minHeight: '100vh' }}>
+    <div className="container">
       <Sidebar />
-      <div style={{ 
-        flex: 1, 
-        padding: '20px', 
-        marginLeft: '250px', 
-        boxSizing: 'border-box', 
-        overflow: 'hidden' 
-      }}>
-        <h2 style={{ marginBottom: '20px', fontSize: '30px', color: "#0B8769", marginLeft: '50px' }}>BENEFITS WITHOUT PENSION</h2>
-        
-        {/* Tabs Section */}
-        <div style={{ 
-          marginBottom: '20px', 
-          display: 'flex', 
-          alignItems: 'center', 
-          marginLeft: '50px' // Align with header
-        }}>
-          <ul style={{ 
-            listStyle: 'none', 
-            padding: 0, 
-            margin: 0, 
-            display: 'flex', 
-            alignItems: 'center',
-            marginRight: 'auto' // Push tabs to the left
-          }}>
+      <div className="content">
+        <h2 className="header">BENEFITS WITHOUT PENSION</h2>
+
+        <div className="tabs">
+          <ul className="tab-list">
             {[
               { label: 'Senior Citizen', path: '/seniorcitizen' },
               { label: 'Health Management', path: '/healthmanagement' },
               { label: 'Events & Activities', path: '/eventsandactivities' },
               { label: 'Social Service', path: '/socialservice' },
-              { label: 'Benefits & Entitlements w/ Pension', path: '/benifitswithpension' },
-              { label: 'Without Pension', path: '/benifitswithoutpension' },
-              { label: 'Report and Analytics', path: '/seniorreportsandanalytics' }
+              { label: 'Benefits & Entitlements w/ Pension', path: '/benefitswithpension' },
+              { label: 'Without Pension', path: '/benefitswithoutpension' },
+              { label: 'Report and Analytics', path: '/seniorreportsandanalytics' },
             ].map((tab, index) => (
-              <li
-                key={index}
-                onClick={() => handleTabClick(tab.path)}
-                style={{ 
-                  marginRight: '10px', 
-                  cursor: 'pointer', 
-                  padding: '10px 20px', 
-                  borderRadius: '5px', 
-                  backgroundColor: '#0B8769', // Updated background color
-                  color: 'white', // Updated text color
-                  textAlign: 'center', 
-                  transition: 'background-color 0.3s, transform 0.3s', 
-                  fontWeight: 'bold',
-                  minWidth: '150px', // Uniform width
-                  textOverflow: 'ellipsis', 
-                  whiteSpace: 'nowrap', 
-                  overflow: 'hidden'
-                }}
-                onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#0A6B5F'} // Hover effect
-                onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#0B8769'} // Reset hover effect
-              >
+              <li key={index} onClick={() => handleTabClick(tab.path)} className="tab">
                 {tab.label}
               </li>
             ))}
           </ul>
         </div>
 
-        <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'center' }}>
-          <button style={{ 
-            marginLeft: 'auto', // Aligns button to the right
-            padding: '10px 20px', 
-            backgroundColor: '#4CAF50', 
-            color: 'white', 
-            border: 'none', 
-            borderRadius: '5px', 
-            cursor: 'pointer' 
-          }}>
+        <div className="button-container">
+          <button className="new-record-button" onClick={handleNewBenefit}>
             + New Record
           </button>
-          <input 
-            type="text" 
-            placeholder="Search records" 
-            style={{ padding: '10px', width: '200px', borderRadius: '5px', border: '1px solid #ccc', marginLeft: '20px' }} 
+          <input
+            type="text"
+            placeholder="Search records"
+            className="search-input"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
-        
-        <div style={{ 
-          overflowX: 'auto', 
-          backgroundColor: '#fff', 
-          borderRadius: '5px', 
-          boxShadow: '0 2px 4px rgba(0,0,0,0.1)', 
-          maxWidth: 'calc(100% - 30px)', // Adjusted to prevent overflow
-          marginLeft: '50px' // Align with tabs and header
-        }}>
-          <table style={{ 
-            width: '100%', 
-            borderCollapse: 'collapse', 
-            minWidth: '600px', // Ensures the table is not too narrow
-            marginLeft: '0' // Align the table with its container
-          }}>
+
+        <div className="table-container">
+          <table className="table">
             <thead>
-              <tr style={{ backgroundColor: '#f2f2f2', textAlign: 'left' }}>
-                <th style={{ padding: '12px', borderBottom: '1px solid #ddd' }}>Record ID</th>
-                <th style={{ padding: '12px', borderBottom: '1px solid #ddd' }}>Benefit Name</th>
-                <th style={{ padding: '12px', borderBottom: '1px solid #ddd' }}>Description</th>
-                <th style={{ padding: '12px', borderBottom: '1px solid #ddd' }}>Eligibility</th>
-                <th style={{ padding: '12px', borderBottom: '1px solid #ddd', textAlign: 'center' }}>Actions</th>
+              <tr>
+                <th>Record ID</th>
+                <th>Benefit Name</th>
+                <th>Description</th>
+                <th>Eligibility</th>
+                <th className="actions">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {[...Array(8)].map((_, index) => (
-                <tr key={index} style={{ borderBottom: '1px solid #ddd' }}>
-                  <td style={{ padding: '12px' }}>B-000000{index + 1}</td>
-                  <td style={{ padding: '12px' }}>Utility Subsidy</td>
-                  <td style={{ padding: '12px' }}>Subsidy for utility bills for eligible seniors.</td>
-                  <td style={{ padding: '12px' }}>No pension required</td>
-                  <td style={{ padding: '12px', textAlign: 'center' }}>
-                    <button 
-                      style={{ 
-                        padding: '8px 12px', 
-                        backgroundColor: '#4CAF50', 
-                        color: 'white', 
-                        border: 'none', 
-                        borderRadius: '5px', 
-                        marginRight: '8px', 
-                        cursor: 'pointer' 
-                      }}>
-                      Update
-                    </button>
-                    <button 
-                      style={{ 
-                        padding: '8px 12px', 
-                        backgroundColor: '#f44336', 
-                        color: 'white', 
-                        border: 'none', 
-                        borderRadius: '5px', 
-                        cursor: 'pointer' 
-                      }}>
-                      Delete
-                    </button>
+              {Array.isArray(filteredBenefits) && filteredBenefits.length > 0 ? (
+                filteredBenefits.map((benefit) => (
+                  <tr key={benefit.BenefitID}>
+                    <td>{benefit.BenefitID}</td>
+                    <td>{benefit.BenefitName}</td>
+                    <td>{benefit.Description}</td>
+                    <td>{benefit.Eligibility}</td>
+                    <td className="actions">
+                      <button className="view-button" onClick={() => handleView(benefit)}>
+                        View
+                      </button>
+                      <button className="update-button" onClick={() => handleUpdate(benefit)}>
+                        Update
+                      </button>
+                      <button
+                        className="delete-button"
+                        onClick={() => handleDelete(benefit.BenefitID)}
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="5" style={{ textAlign: 'center' }}>
+                    No records found.
                   </td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>
       </div>
+
+      {/* Modal for New Benefit */}
+      {isCreateModalOpen && (
+        <NoPensionModal
+          isOpen={isCreateModalOpen}
+          onClose={handleCreateModalClose}
+          onSubmit={handleCreateSubmit}
+        />
+      )}
+
+      {/* Modal for Viewing Benefit */}
+      {isViewModalOpen && (
+        <NoPensionViewModal
+          isOpen={isViewModalOpen}
+          onClose={handleViewModalClose}
+          benefit={selectedBenefit}
+        />
+      )}
+
+      {/* Modal for Updating Benefit */}
+        {isUpdateModalOpen && (
+          <NoPensionUpdateModal
+            isOpen={isUpdateModalOpen}
+            onClose={handleUpdateModalClose}
+            onSave={handleUpdateSubmit}
+            benefit={selectedBenefit} // This should correctly pass the selectedBenefit
+          />
+        )}
     </div>
   );
 };

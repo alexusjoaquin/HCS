@@ -39,10 +39,6 @@ const Health = () => {
             {[
               { label: 'Patient Management', path: '/patientmanagement' },
               { label: 'Appointments', path: '/appointment' },
-              { label: 'Medical Records', path: '/medicalrecords' },
-              { label: 'Laboratory Test', path: '/laboratorytest' },
-              { label: 'Bills and Payments', path: '/billspayment' },
-              { label: 'Report and Analytics', path: '/reportsandanalytics' }
             ].map((tab, index) => (
               <li 
                 key={index} 

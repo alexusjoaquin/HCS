@@ -160,12 +160,8 @@ const CrimeReports = () => {
           <ul className="tab-list">
             {[
               { label: 'Crime Reports', path: '/crimereports' },
-              { label: 'Incident Management', path: '/incidentmanagement' },
-              { label: 'Investigation', path: '/investigation' },
               { label: 'Suspects', path: '/suspects' },
               { label: 'Victims', path: '/victims' },
-              { label: 'Court Cases', path: '/courtcases' },
-              { label: 'Report and Analytics', path: '/crimereportsandanalytics' },
             ].map((tab, index) => (
               <li key={index} onClick={() => handleTabClick(tab.path)} className="tab">
                 {tab.label}

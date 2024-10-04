@@ -1,163 +1,253 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../../../templates/Sidebar';
+import educationService from '../../../services/educationService';
+import EducationModal from '../Modals/EducationModal/EducationModal';
+import EducationViewModal from '../Modals/EducationViewModal/EducationViewModal';
+import EducationUpdateModal from '../Modals/EducationUpdateModal/EducationUpdateModal';
+import { toast } from 'react-toastify';
+import Swal from 'sweetalert2';
+import withReactContent from 'sweetalert2-react-content';
+
+const MySwal = withReactContent(Swal);
 
 const Education = () => {
+  const [isCreateModalOpen, setCreateModalOpen] = useState(false);
+  const [isViewModalOpen, setViewModalOpen] = useState(false);
+  const [isUpdateModalOpen, setUpdateModalOpen] = useState(false);
+  const [selectedStudent, setSelectedStudent] = useState(null);
+  const [students, setStudents] = useState([]);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    fetchStudents();
+  }, []);
+
+  const fetchStudents = async () => {
+    try {
+      const response = await educationService.getAllEducationRecords();
+      if (response && Array.isArray(response)) {
+        setStudents(response);
+      } else {
+        console.warn('Fetched data is not an array:', response);
+        setStudents([]);
+      }
+    } catch (error) {
+      console.error('Failed to fetch students:', error);
+      toast.error('Failed to fetch students. ' + error.message);
+    }
+  };
 
   const handleTabClick = (path) => {
     navigate(path);
   };
 
+  const handleNewRecord = () => {
+    setSelectedStudent(null);
+    setCreateModalOpen(true);
+  };
+
+  const handleCreateModalClose = () => {
+    setCreateModalOpen(false);
+  };
+
+  const handleCreateSubmit = async (data) => {
+    try {
+      await educationService.createEducationRecord(data);
+      MySwal.fire({
+        icon: 'success',
+        title: 'Success',
+        text: 'Student record created successfully!',
+        confirmButtonText: 'OK',
+      });
+      setCreateModalOpen(false);
+      fetchStudents();
+    } catch (error) {
+      console.error('Error creating student record:', error);
+      toast.error('Failed to create student record: ' + error.message);
+    }
+  };
+
+  const handleView = (student) => {
+    setSelectedStudent(student);
+    setViewModalOpen(true);
+  };
+
+  const handleViewModalClose = () => {
+    setViewModalOpen(false);
+    setSelectedStudent(null);
+  };
+
+  const handleUpdate = (student) => {
+    if (student) {
+      setSelectedStudent(student);
+      setUpdateModalOpen(true);
+    }
+  };
+
+  const handleUpdateModalClose = () => {
+    setUpdateModalOpen(false);
+    setSelectedStudent(null);
+  };
+
+  const handleUpdateSubmit = async (data) => {
+    try {
+      await educationService.updateEducationRecord({ ...selectedStudent, ...data });
+      MySwal.fire({
+        icon: 'success',
+        title: 'Updated!',
+        text: 'Student record updated successfully!',
+        confirmButtonText: 'OK',
+      });
+      setUpdateModalOpen(false);
+      fetchStudents();
+    } catch (error) {
+      console.error('Error updating student record:', error);
+      toast.error('Failed to update student record: ' + error.message);
+    }
+  };
+
+  const handleDelete = async (studentID) => {
+    const result = await MySwal.fire({
+      title: 'Are you sure?',
+      text: 'Do you want to delete this student record?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Yes, delete it!',
+    });
+
+    if (result.isConfirmed) {
+      try {
+        await educationService.deleteEducationRecord(studentID);
+        MySwal.fire({
+          icon: 'success',
+          title: 'Deleted!',
+          text: 'Student record has been deleted.',
+          confirmButtonText: 'OK',
+        });
+        fetchStudents();
+      } catch (error) {
+        console.error('Error deleting student record:', error);
+        toast.error('Failed to delete student record: ' + error.message);
+      }
+    }
+  };
+
   return (
-    <div style={{ display: 'flex', minHeight: '100vh' }}>
+    <div className="container">
       <Sidebar />
-      <div style={{ 
-        flex: 1, 
-        padding: '20px', 
-        marginLeft: '250px', 
-        boxSizing: 'border-box', 
-        overflow: 'hidden' 
-      }}>
-        <h2 style={{ marginBottom: '20px', fontSize: '30px', color: "#0B8769", marginLeft: '50px' }}>EDUCATION</h2>
-        
-        <div style={{ 
-          marginBottom: '20px', 
-          display: 'flex', 
-          alignItems: 'center', 
-          marginLeft: '50px', 
-          flexWrap: 'wrap' 
-        }}>
-          <ul style={{ 
-            listStyle: 'none', 
-            padding: 0, 
-            margin: 0, 
-            display: 'flex', 
-            alignItems: 'center',
-            marginRight: 'auto', 
-          }}>
-            {[
-              { label: 'Family Profiles', path: '/familyprofiles' },
-              { label: 'Member Management', path: '/membermanagement' },
-              { label: 'Health and Well Being', path: '/healthandwellbeing' },
-              { label: 'Education', path: '/education' },
-              { label: 'Financial Assistance', path: '/financialassistance' },
-              { label: 'Social Services', path: '/familysocialservices' },
-              { label: 'Counselling and Support', path: '/counsellingsupport' },
-              { label: 'Events and Activities', path: '/familyeventsandactivities' },
-              { label: 'Report and Analytics', path: '/familyreportsandanalytics' }
+      <div className="content">
+        <h2 className="header">EDUCATION</h2>
+
+        <div className="tabs">
+          <ul className="tab-list">
+            {[ 
+              { label: <><span>Family</span><br /><span>Profiles</span></>, path: '/familyprofiles' },
+              { label: <><span>Member</span><br /><span>Management</span></>, path: '/membermanagement' },
+              { label: <><span>Health</span><br /><span>& Well Being</span></>, path: '/healthandwellbeing' },
+              { label: <><span>Member</span><br /><span>Education</span></>, path: '/education' },
+              { label: <><span>Financial</span><br /><span>Assistance</span></>, path: '/financialassistance' },
+              { label: <><span>Social</span><br /><span>Services</span></>, path: '/familysocialservices' },
+              { label: <><span>Counselling</span><br /><span>& Support</span></>, path: '/counsellingsupport' },
+              { label: <><span>Events</span><br /><span>& Activities</span></>, path: '/familyeventsandactivities' },
+              { label: <><span>Report</span><br /><span>& Analytics</span></>, path: '/familyreportsandanalytics' },
             ].map((tab, index) => (
-              <li 
-                key={index} 
-                onClick={() => handleTabClick(tab.path)}
-                style={{ 
-                  marginRight: '10px', 
-                  cursor: 'pointer', 
-                  padding: '10px 20px', 
-                  borderRadius: '5px', 
-                  backgroundColor: '#0B8769',
-                  color: 'white', 
-                  textAlign: 'center', 
-                  fontWeight: 'bold',
-                  minHeight: '50px',
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center',
-                  flexBasis: '120px',
-                  wordWrap: 'break-word',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'normal',
-                  transition: 'background-color 0.3s, transform 0.3s',
-                }}
-                onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#0A6B5F'}
-                onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#0B8769'}
-              >
+              <li key={index} onClick={() => handleTabClick(tab.path)} className="tab">
                 {tab.label}
               </li>
             ))}
           </ul>
         </div>
 
-        <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'center' }}>
-          <button style={{ 
-            marginLeft: 'auto', 
-            padding: '10px 20px', 
-            backgroundColor: '#4CAF50', 
-            color: 'white', 
-            border: 'none', 
-            borderRadius: '5px', 
-            cursor: 'pointer' 
-          }}>
+        <div className="button-container">
+          <button className="new-record-button" onClick={handleNewRecord}>
             + New Record
           </button>
-          <input 
-            type="text" 
-            placeholder="Search records" 
-            style={{ padding: '10px', width: '200px', borderRadius: '5px', border: '1px solid #ccc', marginLeft: '20px' }} 
+          <input
+            type="text"
+            placeholder="Search records"
+            className="search-input"
           />
         </div>
-        
-        <div style={{ 
-          overflowX: 'auto', 
-          backgroundColor: '#fff', 
-          borderRadius: '5px', 
-          boxShadow: '0 2px 4px rgba(0,0,0,0.1)', 
-          maxWidth: 'calc(100% - 30px)', 
-          marginLeft: '50px' 
-        }}>
-          <table style={{ 
-            width: '100%', 
-            borderCollapse: 'collapse', 
-            minWidth: '600px', 
-            marginLeft: '0' 
-          }}>
+
+        <div className="table-container">
+          <table className="table">
             <thead>
-              <tr style={{ backgroundColor: '#f2f2f2', textAlign: 'left' }}>
-                <th style={{ padding: '12px', borderBottom: '1px solid #ddd' }}>Student ID</th>
-                <th style={{ padding: '12px', borderBottom: '1px solid #ddd' }}>Full Name</th>
-                <th style={{ padding: '12px', borderBottom: '1px solid #ddd' }}>Course</th>
-                <th style={{ padding: '12px', borderBottom: '1px solid #ddd' }}>Enrollment Status</th>
-                <th style={{ padding: '12px', borderBottom: '1px solid #ddd', textAlign: 'center' }}>Actions</th>
+              <tr>
+                <th>Student ID</th>
+                <th>Full Name</th>
+                <th>Course</th>
+                <th>Enrollment Status</th>
+                <th>School Name</th>
+                <th className="actions">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {[...Array(8)].map((_, index) => (
-                <tr key={index} style={{ borderBottom: '1px solid #ddd' }}>
-                  <td style={{ padding: '12px' }}>S-000000{index + 1}</td>
-                  <td style={{ padding: '12px' }}>Alex Johnson</td>
-                  <td style={{ padding: '12px' }}>Computer Science</td>
-                  <td style={{ padding: '12px' }}>Enrolled</td>
-                  <td style={{ padding: '12px', textAlign: 'center' }}>
-                    <button 
-                      style={{ 
-                        padding: '8px 12px', 
-                        backgroundColor: '#4CAF50', 
-                        color: 'white', 
-                        border: 'none', 
-                        borderRadius: '5px', 
-                        marginRight: '8px', 
-                        cursor: 'pointer' 
-                      }}>
-                      Update
-                    </button>
-                    <button 
-                      style={{ 
-                        padding: '8px 12px', 
-                        backgroundColor: '#f44336', 
-                        color: 'white', 
-                        border: 'none', 
-                        borderRadius: '5px', 
-                        cursor: 'pointer' 
-                      }}>
-                      Delete
-                    </button>
+              {Array.isArray(students) && students.length > 0 ? (
+                students.map((student) => (
+                  <tr key={student.StudentID}>
+                    <td>{student.StudentID}</td>
+                    <td>{student.FullName}</td>
+                    <td>{student.Course}</td>
+                    <td>{student.EnrollmentStatus}</td>
+                    <td>{student.SchoolName}</td>
+                    <td className="actions">
+                      <button className="view-button" onClick={() => handleView(student)}>
+                        View
+                      </button>
+                      <button className="update-button" onClick={() => handleUpdate(student)}>
+                        Update
+                      </button>
+                      <button
+                        className="delete-button"
+                        onClick={() => handleDelete(student.StudentID)}
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="6" style={{ textAlign: 'center' }}>
+                    No student records found.
                   </td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>
       </div>
+
+      {/* Modal for New Student Record */}
+      {isCreateModalOpen && (
+        <EducationModal
+          isOpen={isCreateModalOpen}
+          onClose={handleCreateModalClose}
+          onSubmit={handleCreateSubmit}
+        />
+      )}
+
+      {/* Modal for Viewing Student Record */}
+      {isViewModalOpen && (
+        <EducationViewModal
+          isOpen={isViewModalOpen}
+          onClose={handleViewModalClose}
+          student={selectedStudent}
+        />
+      )}
+
+      {/* Modal for Updating Student Record */}
+      {isUpdateModalOpen && (
+        <EducationUpdateModal
+          isOpen={isUpdateModalOpen}
+          onClose={handleUpdateModalClose}
+          onSave={handleUpdateSubmit}
+          student={selectedStudent}
+        />
+      )}
     </div>
   );
 };

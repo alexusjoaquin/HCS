@@ -370,17 +370,9 @@ const PatientManagement = () => {
           }}>
             {[{
               name: 'Patient Management', path: '/patientmanagement'
-            }, {
-              name: 'Appointments', path: '/appointment'
-            }, {
-              name: 'Medical Records', path: '/medicalrecords'
-            }, {
-              name: 'Laboratory Test', path: '/laboratorytest'
-            }, {
-              name: 'Bills and Payments', path: '/billspayment'
-            }, {
-              name: 'Report and Analytics', path: '/reportsandanalytics'
-            }].map((tab, index) => (
+            }
+
+            ].map((tab, index) => (
               <li 
                 key={index} 
                 onClick={() => handleTabClick(tab.path)}
