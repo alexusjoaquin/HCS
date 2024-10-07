@@ -155,7 +155,7 @@ const Residents = () => {
         <Typography variant="h4" className="header" style={{fontWeight: '700', marginLeft: '40px', marginTop: '20PX'}}>RESIDENTS</Typography>
 
         <div className="button-container" style={{ display:'flex',justifyContent: 'flex-end', gap: '30px'}}>
-          <Button variant="contained" color="primary" style={{height: '56px'}} onClick={handleNewResident} >
+          <Button variant="contained" color="primary" style={{height: '56px'}} onClick={handleNewResident}>
             + New Resident
           </Button>
           <TextField
@@ -171,16 +171,12 @@ const Residents = () => {
           <Table>
             <TableHead>
               <TableRow>
+                <TableCell style={{ backgroundColor: '#0B8769', color: 'white' }}>RESIDENT ID</TableCell>
                 <TableCell style={{ backgroundColor: '#0B8769', color: 'white' }}>NAME</TableCell>
                 <TableCell style={{ backgroundColor: '#0B8769', color: 'white' }}>AGE</TableCell>
                 <TableCell style={{ backgroundColor: '#0B8769', color: 'white' }}>BIRTHDATE</TableCell>
-                <TableCell style={{ backgroundColor: '#0B8769', color: 'white' }}>ADDRESS</TableCell>
                 <TableCell style={{ backgroundColor: '#0B8769', color: 'white' }}>GENDER</TableCell>
-                <TableCell style={{ backgroundColor: '#0B8769', color: 'white' }}>STATUS</TableCell>
-                <TableCell style={{ backgroundColor: '#0B8769', color: 'white' }}>BMI</TableCell>
-                <TableCell style={{ backgroundColor: '#0B8769', color: 'white' }}>HEIGHT</TableCell>
-                <TableCell style={{ backgroundColor: '#0B8769', color: 'white' }}>WEIGHT</TableCell>
-                <TableCell style={{ backgroundColor: '#0B8769', color: 'white' }}>BLOOD TYPE</TableCell>
+                <TableCell style={{ backgroundColor: '#0B8769', color: 'white' }}>ADDRESS</TableCell>
                 <TableCell style={{ backgroundColor: '#0B8769', color: 'white' }}>IF SENIOR</TableCell>
                 <TableCell style={{ backgroundColor: '#0B8769', color: 'white' }}>ACTIONS</TableCell>
               </TableRow>
@@ -189,16 +185,12 @@ const Residents = () => {
               {Array.isArray(residents) && residents.length > 0 ? (
                 residents.map((resident) => (
                   <TableRow key={resident.id}>
+                    <TableCell>{resident.ResidentID}</TableCell> {/* Display ResidentID */}
                     <TableCell>{resident.Name}</TableCell>
                     <TableCell>{resident.Age}</TableCell>
                     <TableCell>{resident.Birthday}</TableCell>
-                    <TableCell>{resident.Address}</TableCell>
                     <TableCell>{resident.Gender}</TableCell>
-                    <TableCell>{resident.Status}</TableCell>
-                    <TableCell>{resident.BMI}</TableCell>
-                    <TableCell>{resident.Height}</TableCell>
-                    <TableCell>{resident.Weight}</TableCell>
-                    <TableCell>{resident.BloodType}</TableCell>
+                    <TableCell>{resident.Address}</TableCell>
                     <TableCell>{resident.is_senior ? 'Yes' : 'No'}</TableCell>
                     <TableCell>
                       <Button variant="contained" color="primary" onClick={() => handleView(resident)}>
@@ -215,7 +207,7 @@ const Residents = () => {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={12} style={{ textAlign: 'center' }}>
+                  <TableCell colSpan={8} style={{ textAlign: 'center' }}>
                     No residents found.
                   </TableCell>
                 </TableRow>
