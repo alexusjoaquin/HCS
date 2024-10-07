@@ -206,6 +206,14 @@ const apiconfig = {
     getById: (id) => `${API_BASE_URL}/Members/${id}`, // GET /{id}
     getAll: `${API_BASE_URL}/Members/all`, // GET /all
   },
+
+  residents: {
+    create: `${API_BASE_URL}/Residents`, // POST
+    update: `${API_BASE_URL}/Residents`, // PUT
+    delete: `${API_BASE_URL}/Residents`, // DELETE
+    getById: (id) => `${API_BASE_URL}/Residents/${id}`, // GET /{id}
+    getAll: `${API_BASE_URL}/Residents/all`, // GET /all
+  },
 };
 
 export default apiconfig;

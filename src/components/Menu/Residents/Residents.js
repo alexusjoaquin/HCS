@@ -14,6 +14,8 @@ const MySwal = withReactContent(Swal);
 
 const Residents = () => {
   const [residents, setResidents] = useState([]);
+  const [filteredResidents, setFilteredResidents] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const [isCreateModalOpen, setCreateModalOpen] = useState(false);
   const [isViewModalOpen, setViewModalOpen] = useState(false);
   const [isUpdateModalOpen, setUpdateModalOpen] = useState(false);
@@ -23,14 +25,25 @@ const Residents = () => {
     fetchResidents();
   }, []);
 
+  useEffect(() => {
+    // Filter residents based on search term
+    const results = residents.filter(resident =>
+      resident.ResidentID.toString().includes(searchTerm) ||
+      resident.Name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    setFilteredResidents(results);
+  }, [searchTerm, residents]);
+
   const fetchResidents = async () => {
     try {
-      const response = await residentsService.getAllResidents(); // Fetch residents data
+      const response = await residentsService.getAllResidents();
       if (response && Array.isArray(response)) {
         setResidents(response);
+        setFilteredResidents(response); // Initialize filtered residents
       } else {
         console.warn('Fetched data is not an array:', response);
         setResidents([]);
+        setFilteredResidents([]);
       }
     } catch (error) {
       console.error('Failed to fetch residents:', error);
@@ -101,8 +114,8 @@ const Residents = () => {
   const handleUpdateSubmit = async (data) => {
     try {
       const updatedResident = {
-        ...selectedResident, // Keep the existing resident details
-        ...data, // Overwrite with the new form data
+        ...selectedResident,
+        ...data,
       };
 
       await residentsService.updateResident(updatedResident);
@@ -151,19 +164,20 @@ const Residents = () => {
   return (
     <div className="container">
       <Sidebar />
-      <div className="content" style={{ padding: '20px'}}>
-        <Typography variant="h4" className="header" style={{fontWeight: '700', marginLeft: '40px', marginTop: '20PX'}}>RESIDENTS</Typography>
+      <div className="content" style={{ padding: '20px' }}>
+        <Typography variant="h4" className="header" style={{ fontWeight: '700', marginLeft: '40px', marginTop: '20px' }}>RESIDENTS</Typography>
 
-        <div className="button-container" style={{ display:'flex',justifyContent: 'flex-end', gap: '30px'}}>
-          <Button variant="contained" color="primary" style={{height: '56px'}} onClick={handleNewResident}>
+        <div className="button-container" style={{ display: 'flex', justifyContent: 'flex-end', gap: '30px' }}>
+          <Button variant="contained" color="primary" style={{ height: '56px' }} onClick={handleNewResident}>
             + New Resident
           </Button>
           <TextField
-            style={{ width: '300px', marginRight: '40px'}}
+            style={{ width: '300px', marginRight: '40px' }}
             variant="outlined"
             placeholder="Search residents"
             className="search-input"
-            // Implement search functionality if desired
+            value={searchTerm} // Bind search input to state
+            onChange={(e) => setSearchTerm(e.target.value)} // Update state on change
           />
         </div>
 
@@ -171,35 +185,32 @@ const Residents = () => {
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell style={{ backgroundColor: '#0B8769', color: 'white' }}>RESIDENT ID</TableCell>
-                <TableCell style={{ backgroundColor: '#0B8769', color: 'white' }}>NAME</TableCell>
-                <TableCell style={{ backgroundColor: '#0B8769', color: 'white' }}>AGE</TableCell>
-                <TableCell style={{ backgroundColor: '#0B8769', color: 'white' }}>BIRTHDATE</TableCell>
-                <TableCell style={{ backgroundColor: '#0B8769', color: 'white' }}>GENDER</TableCell>
-                <TableCell style={{ backgroundColor: '#0B8769', color: 'white' }}>ADDRESS</TableCell>
-                <TableCell style={{ backgroundColor: '#0B8769', color: 'white' }}>IF SENIOR</TableCell>
-                <TableCell style={{ backgroundColor: '#0B8769', color: 'white' }}>ACTIONS</TableCell>
+                {['Resident ID', 'Name', 'Age', 'Birthdate', 'Gender', 'Address', 'If Senior', 'Actions'].map((header) => (
+                  <TableCell key={header} style={{ backgroundColor: '#0B8769', color: 'white', padding: '10px', textAlign: 'center' }}>
+                    {header}
+                  </TableCell>
+                ))}
               </TableRow>
             </TableHead>
             <TableBody>
-              {Array.isArray(residents) && residents.length > 0 ? (
-                residents.map((resident) => (
-                  <TableRow key={resident.id}>
-                    <TableCell>{resident.ResidentID}</TableCell> {/* Display ResidentID */}
-                    <TableCell>{resident.Name}</TableCell>
-                    <TableCell>{resident.Age}</TableCell>
-                    <TableCell>{resident.Birthday}</TableCell>
-                    <TableCell>{resident.Gender}</TableCell>
-                    <TableCell>{resident.Address}</TableCell>
-                    <TableCell>{resident.is_senior ? 'Yes' : 'No'}</TableCell>
-                    <TableCell>
-                      <Button variant="contained" color="primary" onClick={() => handleView(resident)}>
+              {Array.isArray(filteredResidents) && filteredResidents.length > 0 ? (
+                filteredResidents.map((resident) => (
+                  <TableRow key={resident.ResidentID}>
+                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>{resident.ResidentID}</TableCell>
+                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>{resident.Name}</TableCell>
+                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>{resident.Age}</TableCell>
+                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>{resident.Birthday}</TableCell>
+                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>{resident.Gender}</TableCell>
+                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>{resident.Address}</TableCell>
+                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>{resident.is_senior ? 'Yes' : 'No'}</TableCell>
+                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>
+                      <Button variant="contained" color="primary" style={{ marginRight: '10px' }} onClick={() => handleView(resident)}>
                         View
                       </Button>
-                      <Button variant="contained" color="secondary" onClick={() => handleUpdate(resident)}>
+                      <Button variant="contained" color="secondary" style={{ marginRight: '10px' }} onClick={() => handleUpdate(resident)}>
                         Update
                       </Button>
-                      <Button variant="contained" color="error" onClick={() => handleDelete(resident.id)}>
+                      <Button variant="contained" color="error" onClick={() => handleDelete(resident.ResidentID)}>
                         Delete
                       </Button>
                     </TableCell>

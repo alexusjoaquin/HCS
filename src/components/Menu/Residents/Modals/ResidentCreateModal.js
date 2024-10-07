@@ -38,8 +38,22 @@ const ResidentCreateModal = ({ isOpen, onClose, onSubmit }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await onSubmit(formData);
-    onClose();
+    await onSubmit(formData); // Wait for the submission to complete
+    // Reset form fields after successful submission
+    setFormData({
+      Name: '',
+      Age: '',
+      Birthday: '',
+      Address: '',
+      Gender: '',
+      Status: '',
+      BMI: '',
+      Height: '',
+      Weight: '',
+      BloodType: '',
+      is_senior: false,
+    });
+    onClose(); // Close modal after submission and reset
   };
 
   if (!isOpen) return null;
@@ -105,6 +119,7 @@ const ResidentCreateModal = ({ isOpen, onClose, onSubmit }) => {
                   </Grid>
                 </Grid>
               </Grid>
+
               <Grid item xs={12}>
                 <Select
                   fullWidth
@@ -150,6 +165,7 @@ const ResidentCreateModal = ({ isOpen, onClose, onSubmit }) => {
                   <MenuItem value="Female">Female</MenuItem>
                 </Select>
               </Grid>
+
               <Grid item xs={6}>
                 <Select
                   fullWidth
@@ -182,6 +198,7 @@ const ResidentCreateModal = ({ isOpen, onClose, onSubmit }) => {
                   required
                 />
               </Grid>
+
               <Grid item xs={4}>
                 <TextField
                   type="number"
@@ -193,6 +210,7 @@ const ResidentCreateModal = ({ isOpen, onClose, onSubmit }) => {
                   required
                 />
               </Grid>
+
               <Grid item xs={4}>
                 <TextField
                   type="number"
