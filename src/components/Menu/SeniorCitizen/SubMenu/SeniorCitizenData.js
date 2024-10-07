@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import Sidebar from '../../../templates/Sidebar';
 import SeniorCitizenModal from '../Modals/SeniorCitizenModal/SeniorCitizenModal';
 import SeniorCitizenViewModal from '../Modals/SeniorCitizenViewModal/SeniorCitizenViewModal';
@@ -7,6 +6,7 @@ import SeniorCitizenUpdateModal from '../Modals/SeniorCitizenUpdateModal/SeniorC
 import seniorcitizenService from '../../../services/seniorcitizenService';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
+import { Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, TextField } from '@mui/material';
 
 const MySwal = withReactContent(Swal);
 
@@ -16,48 +16,41 @@ const SeniorCitizenData = () => {
   const [isUpdateModalOpen, setUpdateModalOpen] = useState(false);
   const [selectedSeniorCitizen, setSelectedSeniorCitizen] = useState(null);
   const [seniorCitizens, setSeniorCitizens] = useState([]);
-  const navigate = useNavigate();
+
 
   // Fetch senior citizens data when component loads
   useEffect(() => {
     fetchSeniorCitizens();
   }, []);
 
-  // In SeniorCitizenData.js
-const fetchSeniorCitizens = async () => {
-  try {
-    const response = await seniorcitizenService.getAllSeniorCitizens();
-    console.log('Fetched senior citizens:', response); // Log the response
-    setSeniorCitizens(response);
-  } catch (error) {
-    console.error('Failed to fetch senior citizens:', error);
-  }
-};
-
-
-  // Tab navigation
-  const handleTabClick = (path) => {
-    navigate(path);
+  const fetchSeniorCitizens = async () => {
+    try {
+      const response = await seniorcitizenService.getAllSeniorCitizens();
+      console.log('Fetched senior citizens:', response); // Log the response
+      setSeniorCitizens(response);
+    } catch (error) {
+      console.error('Failed to fetch senior citizens:', error);
+    }
   };
 
   // Handlers for Modals
   const handleNewRecord = () => {
     setSelectedSeniorCitizen(null);
-    setCreateModalOpen(true); // Open create modal
+    setCreateModalOpen(true);
   };
 
   const handleCreateModalClose = () => {
-    setCreateModalOpen(false); // Close create modal
+    setCreateModalOpen(false);
   };
 
   const handleCreateSubmit = async (data) => {
     try {
       const seniorCitizenData = {
-        SeniorID: `S-${Math.floor(Date.now() / 1000)}`, // Example ID generation
+        SeniorID: `S-${Math.floor(Date.now() / 1000)}`,
         FullName: data.FullName,
         Address: data.Address,
         DateOfBirth: data.DateOfBirth,
-        ContactInfo: data.ContactInfo, // Use the object directly
+        ContactInfo: data.ContactInfo,
         Gender: data.Gender,
         MedicalHistory: data.MedicalHistory,
       };
@@ -69,60 +62,58 @@ const fetchSeniorCitizens = async () => {
         text: 'Senior Citizen record created successfully!',
         confirmButtonText: 'OK',
       });
-      setCreateModalOpen(false); // Close modal after submit
-      fetchSeniorCitizens(); // Refresh the list
+      setCreateModalOpen(false);
+      fetchSeniorCitizens();
     } catch (error) {
       console.error('Error creating record:', error);
     }
   };
-  
 
   const handleView = (seniorCitizen) => {
     setSelectedSeniorCitizen(seniorCitizen);
-    setViewModalOpen(true); // Open view modal
+    setViewModalOpen(true);
   };
 
   const handleViewModalClose = () => {
-    setViewModalOpen(false); // Close view modal
+    setViewModalOpen(false);
     setSelectedSeniorCitizen(null);
   };
 
   const handleUpdate = (seniorCitizen) => {
     setSelectedSeniorCitizen(seniorCitizen);
-    setUpdateModalOpen(true); // Open update modal
+    setUpdateModalOpen(true);
   };
 
   const handleUpdateModalClose = () => {
-    setUpdateModalOpen(false); // Close update modal
+    setUpdateModalOpen(false);
     setSelectedSeniorCitizen(null);
   };
 
   const handleUpdateSubmit = async (data) => {
     try {
-        const updatedSeniorCitizen = {
-            SeniorID: selectedSeniorCitizen.SeniorID, // Use existing ID
-            FullName: data.FullName,
-            Address: data.Address,
-            DateOfBirth: data.DateOfBirth,
-            ContactInfo: { Phone: data.ContactInfo.Phone }, // Make sure to include Phone
-            Gender: data.Gender,
-            MedicalHistory: data.MedicalHistory,
-        };
+      const updatedSeniorCitizen = {
+        SeniorID: selectedSeniorCitizen.SeniorID,
+        FullName: data.FullName,
+        Address: data.Address,
+        DateOfBirth: data.DateOfBirth,
+        ContactInfo: { Phone: data.ContactInfo.Phone },
+        Gender: data.Gender,
+        MedicalHistory: data.MedicalHistory,
+      };
 
-        await seniorcitizenService.updateSeniorCitizen(updatedSeniorCitizen);
-        MySwal.fire({
-            icon: 'success',
-            title: 'Updated!',
-            text: 'Senior Citizen record updated successfully!',
-            confirmButtonText: 'OK',
-        });
-        setUpdateModalOpen(false); // Close modal after updating
-        fetchSeniorCitizens(); // Refresh the list
+      await seniorcitizenService.updateSeniorCitizen(updatedSeniorCitizen);
+      MySwal.fire({
+        icon: 'success',
+        title: 'Updated!',
+        text: 'Senior Citizen record updated successfully!',
+        confirmButtonText: 'OK',
+      });
+      setUpdateModalOpen(false);
+      fetchSeniorCitizens();
     } catch (error) {
-        console.error('Error updating record:', error);
+      console.error('Error updating record:', error);
     }
-};
-
+  };
 
   const handleDelete = async (seniorCitizenID) => {
     const result = await MySwal.fire({
@@ -144,7 +135,7 @@ const fetchSeniorCitizens = async () => {
           text: 'Record has been deleted.',
           confirmButtonText: 'OK',
         });
-        fetchSeniorCitizens(); // Refresh the list
+        fetchSeniorCitizens();
       } catch (error) {
         console.error('Error deleting record:', error);
       }
@@ -152,133 +143,93 @@ const fetchSeniorCitizens = async () => {
   };
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh' }}>
+    <div className="container">
       <Sidebar />
-      <div style={{ flex: 1, padding: '20px', marginLeft: '250px' }}>
-        <h2 style={{ marginBottom: '20px', fontSize: '30px', color: "#0B8769", marginLeft: '50px' }}>
+      <div className="content" style={{ padding: '20px' }}>
+        <Typography variant="h4" className="header" style={{ fontWeight: '700', marginLeft: '40px', marginTop: '20px' }}>
           SENIOR CITIZEN DATA
-        </h2>
+        </Typography>
 
-        {/* Tabs */}
-        <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', marginLeft: '50px' }}>
-          <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', alignItems: 'center' }}>
-            {[
-              { label: 'Senior Citizen', path: '/seniorcitizendata' },
-              { label: 'Health Management', path: '/healthmanagement' },
-              { label: 'Events & Activities', path: '/eventsandactivities' },
-              { label: 'Social Service', path: '/socialservice' },
-              { label: 'Benefits & Entitlements w/ Pension', path: '/benifitswithpension' },
-              { label: 'Without Pension', path: '/benifitswithoutpension' },
-              { label: 'Report and Analytics', path: '/seniorreportsandanalytics' },
-            ].map((tab, index) => (
-              <li
-                key={index}
-                onClick={() => handleTabClick(tab.path)}
-                style={{
-                  marginRight: '10px',
-                  cursor: 'pointer',
-                  padding: '10px 20px',
-                  borderRadius: '5px',
-                  backgroundColor: '#0B8769',
-                  color: 'white',
-                  textAlign: 'center',
-                  fontWeight: 'bold',
-                  minWidth: '150px',
-                  overflow: 'hidden',
-                  whiteSpace: 'nowrap',
-                  textOverflow: 'ellipsis',
-                }}
-              >
-                {tab.label}
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        {/* Search and Add */}
-        <div style={{ display: 'flex', marginBottom: '20px' }}>
-          <button onClick={handleNewRecord} style={{ marginLeft: 'auto', padding: '10px 20px', backgroundColor: '#4CAF50', color: 'white', border: 'none', borderRadius: '5px' }}>
+        <div className="button-container" style={{ display: 'flex', justifyContent: 'flex-end', gap: '30px' }}>
+          <Button variant="contained" color="primary" style={{ height: '56px' }} onClick={handleNewRecord}>
             + New Record
-          </button>
-          <input type="text" placeholder="Search records" style={{ padding: '10px', width: '200px', borderRadius: '5px', border: '1px solid #ccc', marginLeft: '20px' }} />
+          </Button>
+          <TextField
+            style={{ width: '300px', marginRight: '40px' }}
+            variant="outlined"
+            placeholder="Search senior citizens"
+            className="search-input"
+          />
         </div>
 
-        <div style={{ overflowX: 'auto', backgroundColor: '#fff', borderRadius: '5px', marginLeft: '50px' }}>
-  <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '600px' }}>
-    <thead>
-      <tr style={{ backgroundColor: '#f2f2f2', textAlign: 'center' }}>
-        <th style={{ padding: '12px', borderBottom: '1px solid #ddd' }}>SeniorID</th>
-        <th style={{ padding: '12px', borderBottom: '1px solid #ddd' }}>FullName</th>
-        <th style={{ padding: '12px', borderBottom: '1px solid #ddd' }}>Address</th>
-        <th style={{ padding: '12px', borderBottom: '1px solid #ddd' }}>Date of Birth</th>
-        <th style={{ padding: '12px', borderBottom: '1px solid #ddd' }}>Contact no.</th>
-        <th style={{ padding: '12px', borderBottom: '1px solid #ddd' }}>Gender</th>
-        <th style={{ padding: '12px', borderBottom: '1px solid #ddd' }}>MedicalHistory</th>
-        <th style={{ padding: '12px', borderBottom: '1px solid #ddd' }}>Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      {seniorCitizens.map((seniorCitizen) => (
-        <tr key={seniorCitizen.SeniorID} style={{ textAlign: 'center' }}>
-          <td style={{ padding: '12px', borderBottom: '1px solid #ddd' }}>{seniorCitizen.SeniorID}</td>
-          <td style={{ padding: '12px', borderBottom: '1px solid #ddd' }}>{seniorCitizen.FullName}</td>
-          <td style={{ padding: '12px', borderBottom: '1px solid #ddd' }}>{seniorCitizen.Address}</td>
-          <td style={{ padding: '12px', borderBottom: '1px solid #ddd' }}>{seniorCitizen.DateOfBirth}</td>
-          <td style={{ padding: '12px', borderBottom: '1px solid #ddd' }}>{seniorCitizen.ContactInfo.Phone}</td>
-          <td style={{ padding: '12px', borderBottom: '1px solid #ddd' }}>{seniorCitizen.Gender}</td>
-          <td style={{ padding: '12px', borderBottom: '1px solid #ddd' }}>{seniorCitizen.MedicalHistory}</td>
-          <td style={{ padding: '12px', borderBottom: '1px solid #ddd' }}>
-            <button 
-              onClick={() => handleView(seniorCitizen)} 
-              style={{ marginRight: '10px', padding: '5px 10px', backgroundColor: '#4CAF50', color: 'white', border: 'none', borderRadius: '5px' }}
-            >
-              View
-            </button>
-            <button 
-              onClick={() => handleUpdate(seniorCitizen)} 
-              style={{ marginRight: '10px', padding: '5px 10px', backgroundColor: '#2196F3', color: 'white', border: 'none', borderRadius: '5px' }}
-            >
-              Update
-            </button>
-            <button 
-              onClick={() => handleDelete(seniorCitizen.SeniorID)} 
-              style={{ padding: '5px 10px', backgroundColor: '#f44336', color: 'white', border: 'none', borderRadius: '5px' }}
-            >
-              Delete
-            </button>
-          </td>
-        </tr>
-      ))}
-    </tbody>
-  </table>
-</div>
-
-        {/* Modals */}
-        {isCreateModalOpen && (
-          <SeniorCitizenModal 
-            isOpen={isCreateModalOpen} 
-            onClose={handleCreateModalClose} 
-            onSubmit={handleCreateSubmit} 
-          />
-        )}
-
-        {isViewModalOpen && selectedSeniorCitizen && (
-          <SeniorCitizenViewModal
-            isOpen={isViewModalOpen} // Pass the isOpen prop
-            seniorCitizen={selectedSeniorCitizen}
-            onClose={handleViewModalClose}
-          />
-        )}
-
-        {isUpdateModalOpen && selectedSeniorCitizen && (
-          <SeniorCitizenUpdateModal
-            isOpen={isUpdateModalOpen} // Pass the isOpen prop
-            seniorCitizen={selectedSeniorCitizen}
-            onClose={handleUpdateModalClose}
-            onSave={handleUpdateSubmit} // Pass the onSave prop
-          />
-        )}
+        <TableContainer style={{ maxWidth: '95%', margin: '30px auto', overflowX: 'auto' }}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                {['Senior ID', 'Full Name', 'Address', 'Date of Birth', 'Contact Info', 'Gender', 'Medical History', 'Actions'].map((header) => (
+                  <TableCell key={header} style={{ backgroundColor: '#0B8769', color: 'white', padding: '10px', textAlign: 'center' }}>
+                    {header}
+                  </TableCell>
+                ))}
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {Array.isArray(seniorCitizens) && seniorCitizens.length > 0 ? (
+                seniorCitizens.map((citizen) => (
+                  <TableRow key={citizen.SeniorID}>
+                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>{citizen.SeniorID}</TableCell>
+                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>{citizen.FullName}</TableCell>
+                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>{citizen.Address}</TableCell>
+                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>{citizen.DateOfBirth}</TableCell>
+                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>{citizen.ContactInfo?.Phone}</TableCell>
+                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>{citizen.Gender}</TableCell>
+                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>{citizen.MedicalHistory}</TableCell>
+                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>
+                      <Button variant="contained" color="primary" style={{ marginRight: '10px' }} onClick={() => handleView(citizen)}>
+                        View
+                      </Button>
+                      <Button variant="contained" color="secondary" style={{ marginRight: '10px' }} onClick={() => handleUpdate(citizen)}>
+                        Update
+                      </Button>
+                      <Button variant="contained" color="error" onClick={() => handleDelete(citizen.SeniorID)}>
+                        Delete
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={8} style={{ textAlign: 'center' }}>
+                    No senior citizens found.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
       </div>
+
+      {/* Modal for New Senior Citizen Record */}
+      <SeniorCitizenModal
+        isOpen={isCreateModalOpen}
+        onClose={handleCreateModalClose}
+        onSubmit={handleCreateSubmit}
+      />
+
+      {/* Modal for Viewing Senior Citizen Record */}
+      <SeniorCitizenViewModal
+        isOpen={isViewModalOpen}
+        onClose={handleViewModalClose}
+        seniorCitizen={selectedSeniorCitizen}
+      />
+
+      {/* Modal for Updating Senior Citizen Record */}
+      <SeniorCitizenUpdateModal
+        isOpen={isUpdateModalOpen}
+        onClose={handleUpdateModalClose}
+        onSave={handleUpdateSubmit}
+        seniorCitizen={selectedSeniorCitizen}
+      />
     </div>
   );
 };

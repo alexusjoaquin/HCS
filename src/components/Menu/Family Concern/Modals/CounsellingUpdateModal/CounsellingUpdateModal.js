@@ -1,4 +1,13 @@
 import React from 'react';
+import {
+  Box,
+  Button,
+  TextField,
+  Typography,
+  Container,
+  Paper,
+  Grid,
+} from '@mui/material';
 
 const CounsellingUpdateModal = ({ isOpen, onClose, onSave, counselling }) => {
   const [formData, setFormData] = React.useState({
@@ -30,144 +39,111 @@ const CounsellingUpdateModal = ({ isOpen, onClose, onSave, counselling }) => {
     e.preventDefault();
     if (formData.ClientName && formData.Counselor && formData.DateOfSession && formData.Location) {
       onSave(formData);
+      onClose(); // Close the modal after saving
     } else {
-      alert("Please fill in all fields.");
+      alert('Please fill in all fields.');
     }
   };
 
   if (!isOpen) return null;
 
   return (
-    <div style={modalStyles.overlay}>
-      <div style={modalStyles.content}>
-        <h2>Update Counselling Record</h2>
-        <form onSubmit={handleSave}>
-          <label>
-            Service ID:
-            <input
-              type="text"
-              name="ServiceID"
-              value={formData.ServiceID}
-              readOnly
-              style={modalStyles.input}
-            />
-          </label>
-          <label>
-            Client Name:
-            <input
-              type="text"
-              name="ClientName"
-              value={formData.ClientName}
-              onChange={handleChange}
-              placeholder="Enter Client Name"
-              required
-              style={modalStyles.input}
-            />
-          </label>
-          <label>
-            Counselor:
-            <input
-              type="text"
-              name="Counselor"
-              value={formData.Counselor}
-              onChange={handleChange}
-              placeholder="Enter Counselor Name"
-              required
-              style={modalStyles.input}
-            />
-          </label>
-          <label>
-            Date of Session:
-            <input
-              type="date"
-              name="DateOfSession"
-              value={formData.DateOfSession}
-              onChange={handleChange}
-              required
-              style={modalStyles.input}
-            />
-          </label>
-          <label>
-            Location:
-            <input
-              type="text"
-              name="Location"
-              value={formData.Location}
-              onChange={handleChange}
-              placeholder="Enter Location"
-              required
-              style={modalStyles.input}
-            />
-          </label>
-          <div style={modalStyles.buttonContainer}>
-            <button type="submit" style={modalStyles.saveButton}>
-              Save
-            </button>
-            <button type="button" onClick={onClose} style={modalStyles.cancelButton}>
-              Cancel
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+    <Box
+      sx={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'rgba(0, 0, 0, 0.7)',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 1000,
+      }}
+    >
+      <Container maxWidth="sm">
+        <Paper elevation={10} sx={{ padding: 4, borderRadius: '16px' }}>
+          <Typography variant="h5" component="h2" align="center" gutterBottom>
+            Update Counselling Record
+          </Typography>
+          <form onSubmit={handleSave}>
+            <Grid container spacing={2}>
+              <Grid item xs={12}>
+                <TextField
+                  type="text"
+                  name="ServiceID"
+                  value={formData.ServiceID}
+                  readOnly
+                  label="Service ID"
+                  sx={{ width: '100%' }}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  name="ClientName"
+                  label="Client Name"
+                  value={formData.ClientName}
+                  onChange={handleChange}
+                  placeholder="Enter Client Name"
+                  required
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  name="Counselor"
+                  label="Counselor"
+                  value={formData.Counselor}
+                  onChange={handleChange}
+                  placeholder="Enter Counselor Name"
+                  required
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  type="date"
+                  name="DateOfSession"
+                  label="Date of Session"
+                  value={formData.DateOfSession}
+                  onChange={handleChange}
+                  required
+                  InputLabelProps={{ shrink: true }}
+                  sx={{ width: '100%' }}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  name="Location"
+                  label="Location"
+                  value={formData.Location}
+                  onChange={handleChange}
+                  placeholder="Enter Location"
+                  required
+                />
+              </Grid>
+              <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <Button type="submit" variant="contained" color="primary" sx={{ width: '48%' }}>
+                  Save
+                </Button>
+                <Button
+                  type="button"
+                  onClick={onClose}
+                  variant="contained"
+                  color="secondary"
+                  sx={{ width: '48%' }}
+                >
+                  Cancel
+                </Button>
+              </Grid>
+            </Grid>
+          </form>
+        </Paper>
+      </Container>
+    </Box>
   );
-};
-
-// Modal styles
-const modalStyles = {
-  overlay: {
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    background: 'rgba(0, 0, 0, 0.7)',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 1000,
-  },
-  content: {
-    background: 'white',
-    padding: '20px',
-    borderRadius: '8px',
-    width: '400px',
-    boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
-    position: 'relative',
-  },
-  input: {
-    width: '380px',
-    padding: '8px',
-    marginBottom: '10px',
-    border: '1px solid #ccc',
-    borderRadius: '4px',
-    display: 'block',
-  },
-  buttonContainer: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    paddingTop: '20px',
-  },
-  saveButton: {
-    padding: '12px 20px',
-    border: 'none',
-    borderRadius: '5px',
-    cursor: 'pointer',
-    fontSize: '16px',
-    width: '130px',
-    backgroundColor: '#4CAF50',
-    color: 'white',
-  },
-  cancelButton: {
-    padding: '12px 20px',
-    border: 'none',
-    borderRadius: '5px',
-    cursor: 'pointer',
-    fontSize: '16px',
-    width: '130px',
-    backgroundColor: '#f44336',
-    color: 'white',
-  },
 };
 
 export default CounsellingUpdateModal;

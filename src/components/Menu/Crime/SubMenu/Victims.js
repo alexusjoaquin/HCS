@@ -1,14 +1,14 @@
 // src/components/Victims/Victims.js
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import Sidebar from '../../../templates/Sidebar';
-import VictimsModal from '../Modals/VictimsModal/VictimsModal'; // Ensure this modal is created
-import VictimsViewModal from '../Modals/VictimsViewModal/VictimsViewModal'; // Ensure this modal is created
-import VictimsUpdateModal from '../Modals/VictimsUpdateModal/VictimsUpdateModal'; // Ensure this modal is created
-import victimsService from '../../../services/victimsService'; // Ensure this service is created
+import VictimsModal from '../Modals/VictimsModal/VictimsModal'; 
+import VictimsViewModal from '../Modals/VictimsViewModal/VictimsViewModal'; 
+import VictimsUpdateModal from '../Modals/VictimsUpdateModal/VictimsUpdateModal'; 
+import victimsService from '../../../services/victimsService'; 
 import { toast } from 'react-toastify';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
+import { Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography } from '@mui/material';
 
 const MySwal = withReactContent(Swal);
 
@@ -18,7 +18,6 @@ const Victims = () => {
   const [isUpdateModalOpen, setUpdateModalOpen] = useState(false);
   const [selectedVictim, setSelectedVictim] = useState(null);
   const [victims, setVictims] = useState([]);
-  const navigate = useNavigate();
 
   useEffect(() => {
     fetchVictims();
@@ -26,7 +25,7 @@ const Victims = () => {
 
   const fetchVictims = async () => {
     try {
-      const response = await victimsService.getAllVictims(); // Fetch victims from the service
+      const response = await victimsService.getAllVictims();
       if (response && Array.isArray(response)) {
         setVictims(response);
       } else {
@@ -35,27 +34,23 @@ const Victims = () => {
       }
     } catch (error) {
       console.error('Failed to fetch victims:', error);
-      toast.error('Failed to fetch victims. ' + error.message);
+      toast.error('Failed to fetch victims.');
     }
-  };
-
-  const handleTabClick = (path) => {
-    navigate(path);
   };
 
   const handleNewVictim = () => {
     setSelectedVictim(null);
-    setCreateModalOpen(true); // Open the create modal
+    setCreateModalOpen(true);
   };
 
   const handleCreateModalClose = () => {
-    setCreateModalOpen(false); // Close the create modal
+    setCreateModalOpen(false);
   };
 
   const handleCreateSubmit = async (data) => {
     try {
       const victimData = {
-        VictimID: `V-${Math.floor(Date.now() / 1000)}`, // Example ID generation
+        VictimID: `V-${Math.floor(Date.now() / 1000)}`,
         FullName: data.FullName,
         LastKnownAddress: data.LastKnownAddress,
         IncidentDate: data.IncidentDate,
@@ -69,56 +64,56 @@ const Victims = () => {
         text: 'Victim created successfully!',
         confirmButtonText: 'OK',
       });
-      setCreateModalOpen(false); // Close the modal after submission
-      fetchVictims(); // Refresh the victims list
+      setCreateModalOpen(false);
+      fetchVictims();
     } catch (error) {
       console.error('Error creating victim:', error);
-      toast.error('Failed to create victim: ' + error.message);
+      toast.error('Failed to create victim.');
     }
   };
 
   const handleView = (victim) => {
     setSelectedVictim(victim);
-    setViewModalOpen(true); // Open the view modal
+    setViewModalOpen(true);
   };
 
   const handleViewModalClose = () => {
-    setViewModalOpen(false); // Close the view modal
-    setSelectedVictim(null); // Reset selected victim
+    setViewModalOpen(false);
+    setSelectedVictim(null);
   };
 
   const handleUpdate = (victim) => {
     setSelectedVictim(victim);
-    setUpdateModalOpen(true); // Open the update modal
+    setUpdateModalOpen(true);
   };
 
   const handleUpdateModalClose = () => {
-    setUpdateModalOpen(false); // Close the update modal
-    setSelectedVictim(null); // Reset selected victim
+    setUpdateModalOpen(false);
+    setSelectedVictim(null);
   };
 
   const handleUpdateSubmit = async (data) => {
     try {
       const updatedVictim = {
-        VictimID: selectedVictim.VictimID,  // Use the selected record's ID
+        VictimID: selectedVictim.VictimID,
         FullName: data.FullName,
         LastKnownAddress: data.LastKnownAddress,
         IncidentDate: data.IncidentDate,
         CaseStatus: data.CaseStatus,
       };
 
-      await victimsService.updateVictim(updatedVictim); // Send to service
+      await victimsService.updateVictim(updatedVictim);
       MySwal.fire({
         icon: 'success',
         title: 'Updated!',
         text: 'Victim updated successfully!',
         confirmButtonText: 'OK',
       });
-      setUpdateModalOpen(false); // Close modal after updating
-      fetchVictims(); // Refresh the victims list
+      setUpdateModalOpen(false);
+      fetchVictims();
     } catch (error) {
       console.error('Error updating victim:', error);
-      toast.error('Failed to update victim: ' + error.message);
+      toast.error('Failed to update victim.');
     }
   };
 
@@ -131,6 +126,7 @@ const Victims = () => {
       confirmButtonColor: '#d33',
       cancelButtonColor: '#3085d6',
       confirmButtonText: 'Yes, delete it!',
+      reverseButtons: true,
     });
 
     if (result.isConfirmed) {
@@ -142,10 +138,10 @@ const Victims = () => {
           text: 'Victim has been deleted.',
           confirmButtonText: 'OK',
         });
-        fetchVictims(); // Refresh the victims list
+        fetchVictims();
       } catch (error) {
         console.error('Error deleting victim:', error);
-        toast.error('Failed to delete victim: ' + error.message);
+        toast.error('Failed to delete victim.');
       }
     }
   };
@@ -153,106 +149,87 @@ const Victims = () => {
   return (
     <div className="container">
       <Sidebar />
-      <div className="content">
-        <h2 className="header">VICTIMS</h2>
+      <div className="content" style={{ padding: '20px' }}>
+        <Typography variant="h4" className="header" style={{ fontWeight: '700', marginLeft: '40px', marginTop: '20px' }}>VICTIMS</Typography>
 
-        <div className="tabs">
-          <ul className="tab-list">
-            {[
-            ].map((tab, index) => (
-              <li key={index} onClick={() => handleTabClick(tab.path)} className="tab">
-                {tab.label}
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        <div className="button-container">
-          <button className="new-record-button" onClick={handleNewVictim}>
+        <div className="button-container" style={{ display: 'flex', justifyContent: 'flex-end', gap: '30px' }}>
+          <Button variant="contained" color="primary" style={{ height: '56px' }} onClick={handleNewVictim}>
             + New Victim
-          </button>
-          <input
-            type="text"
+          </Button>
+          <TextField
+            style={{ width: '300px', marginRight: '40px' }}
+            variant="outlined"
             placeholder="Search victims"
             className="search-input"
           />
         </div>
 
-        <div className="table-container">
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Victim ID</th>
-                <th>Full Name</th>
-                <th>Last Known Address</th>
-                <th>Incident Date</th>
-                <th>Case Status</th>
-                <th className="actions">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
+        <TableContainer style={{ maxWidth: '95%', margin: '30px auto', overflowX: 'auto' }}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                {['Victim ID', 'Full Name', 'Last Known Address', 'Incident Date', 'Case Status', 'Actions'].map((header) => (
+                  <TableCell key={header} style={{ backgroundColor: '#0B8769', color: 'white', padding: '10px', textAlign: 'center' }}>
+                    {header}
+                  </TableCell>
+                ))}
+              </TableRow>
+            </TableHead>
+            <TableBody>
               {Array.isArray(victims) && victims.length > 0 ? (
                 victims.map((victim) => (
-                  <tr key={victim.VictimID}>
-                    <td>{victim.VictimID}</td>
-                    <td>{victim.FullName}</td>
-                    <td>{victim.LastKnownAddress}</td>
-                    <td>{victim.IncidentDate}</td>
-                    <td>{victim.CaseStatus}</td>
-                    <td className="actions">
-                      <button className="view-button" onClick={() => handleView(victim)}>
+                  <TableRow key={victim.VictimID}>
+                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>{victim.VictimID}</TableCell>
+                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>{victim.FullName}</TableCell>
+                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>{victim.LastKnownAddress}</TableCell>
+                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>{victim.IncidentDate}</TableCell>
+                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>{victim.CaseStatus}</TableCell>
+                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>
+                      <Button variant="contained" color="primary" style={{ marginRight: '10px' }} onClick={() => handleView(victim)}>
                         View
-                      </button>
-                      <button className="update-button" onClick={() => handleUpdate(victim)}>
+                      </Button>
+                      <Button variant="contained" color="secondary" style={{ marginRight: '10px' }} onClick={() => handleUpdate(victim)}>
                         Update
-                      </button>
-                      <button
-                        className="delete-button"
-                        onClick={() => handleDelete(victim.VictimID)}
-                      >
+                      </Button>
+                      <Button variant="contained" color="error" onClick={() => handleDelete(victim.VictimID)}>
                         Delete
-                      </button>
-                    </td>
-                  </tr>
+                      </Button>
+                    </TableCell>
+                  </TableRow>
                 ))
               ) : (
-                <tr>
-                  <td colSpan="6" style={{ textAlign: 'center' }}>
+                <TableRow>
+                  <TableCell colSpan={6} style={{ textAlign: 'center' }}>
                     No victims found.
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               )}
-            </tbody>
-          </table>
-        </div>
+            </TableBody>
+          </Table>
+        </TableContainer>
       </div>
 
       {/* Modal for New Victim */}
-      {isCreateModalOpen && (
-        <VictimsModal
-          isOpen={isCreateModalOpen}
-          onClose={handleCreateModalClose}
-          onSubmit={handleCreateSubmit}
-        />
-      )}
+      <VictimsModal
+        isOpen={isCreateModalOpen}
+        onClose={handleCreateModalClose}
+        onSubmit={handleCreateSubmit}
+      />
 
       {/* Modal for Viewing Victim */}
-      {isViewModalOpen && (
-        <VictimsViewModal
-          isOpen={isViewModalOpen}
-          onClose={handleViewModalClose}
-          victim={selectedVictim} // Pass the selected victim
-        />
-      )}
+      <VictimsViewModal
+        isOpen={isViewModalOpen}
+        onClose={handleViewModalClose}
+        victim={selectedVictim}
+      />
 
-      {isUpdateModalOpen && (
-        <VictimsUpdateModal
-          isOpen={isUpdateModalOpen}
-          onClose={handleUpdateModalClose}
-          onSave={handleUpdateSubmit}  // Change from onSubmit to onSave
-          victim={selectedVictim} // Pass the selected victim for editing
-        />
-      )}
+      {/* Modal for Updating Victim */}
+      <VictimsUpdateModal
+        isOpen={isUpdateModalOpen}
+        onClose={handleUpdateModalClose}
+        onSave={handleUpdateSubmit}
+        victim={selectedVictim}
+      />
     </div>
   );
 };

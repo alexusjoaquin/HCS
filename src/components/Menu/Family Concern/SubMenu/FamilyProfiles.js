@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import Sidebar from '../../../templates/Sidebar';
 import FamilyProfilesModal from '../Modals/FamilyProfilesModal/FamilyProfilesModal';
 import FamilyProfilesUpdateModal from '../Modals/FamilyProfilesUpdateModal/FamilyProfilesUpdateModal';
@@ -8,6 +7,7 @@ import familyprofilesService from '../../../services/familyprofilesService';
 import { toast } from 'react-toastify';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
+import { Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography } from '@mui/material';
 
 const MySwal = withReactContent(Swal);
 
@@ -17,7 +17,7 @@ const FamilyProfiles = () => {
   const [isUpdateModalOpen, setUpdateModalOpen] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState(null);
   const [familyProfiles, setFamilyProfiles] = useState([]);
-  const navigate = useNavigate();
+
 
   useEffect(() => {
     fetchFamilyProfiles();
@@ -38,10 +38,6 @@ const FamilyProfiles = () => {
     }
   };
 
-  const handleTabClick = (path) => {
-    navigate(path);
-  };
-
   const handleNewProfile = () => {
     setSelectedProfile(null);
     setCreateModalOpen(true);
@@ -56,7 +52,7 @@ const FamilyProfiles = () => {
       const familyProfileData = {
         FamilyID: `FAM-${Math.floor(Date.now() / 1000)}`,
         FamilyName: data.FamilyName,
-        Members: data.Members, // Ensure this matches the expected structure in the backend
+        Members: data.Members,
         Address: data.Address,
         ContactNo: data.ContactNo,
       };
@@ -100,29 +96,28 @@ const FamilyProfiles = () => {
 
   const handleUpdateSubmit = async (data) => {
     try {
-        const updatedProfile = {
-            FamilyID: selectedProfile.FamilyID,  // Ensure selectedProfile is valid
-            FamilyName: data.FamilyName,
-            Members: data.Members,  // Make sure this is sent correctly
-            Address: data.Address,
-            ContactNo: data.ContactNo,
-        };
+      const updatedProfile = {
+        FamilyID: selectedProfile.FamilyID,
+        FamilyName: data.FamilyName,
+        Members: data.Members,
+        Address: data.Address,
+        ContactNo: data.ContactNo,
+      };
 
-        await familyprofilesService.updateFamilyProfile(updatedProfile);
-        MySwal.fire({
-            icon: 'success',
-            title: 'Updated!',
-            text: 'Family profile updated successfully!',
-            confirmButtonText: 'OK',
-        });
-        setUpdateModalOpen(false);
-        fetchFamilyProfiles();
+      await familyprofilesService.updateFamilyProfile(updatedProfile);
+      MySwal.fire({
+        icon: 'success',
+        title: 'Updated!',
+        text: 'Family profile updated successfully!',
+        confirmButtonText: 'OK',
+      });
+      setUpdateModalOpen(false);
+      fetchFamilyProfiles();
     } catch (error) {
-        console.error('Error updating family profile:', error);
-        toast.error('Failed to update family profile: ' + error.message);
+      console.error('Error updating family profile:', error);
+      toast.error('Failed to update family profile: ' + error.message);
     }
-};
-
+  };
 
   const handleDelete = async (familyID) => {
     const result = await MySwal.fire({
@@ -155,107 +150,87 @@ const FamilyProfiles = () => {
   return (
     <div className="container">
       <Sidebar />
-      <div className="content">
-        <h2 className="header">FAMILY PROFILES</h2>
+      <div className="content" style={{ padding: '20px' }}>
+        <Typography variant="h4" className="header" style={{ fontWeight: '700', marginLeft: '40px', marginTop: '20px' }}>FAMILY PROFILES</Typography>
 
-        <div className="tabs">
-          <ul className="tab-list">
-            {[
-            ].map((tab, index) => (
-              <li key={index} onClick={() => handleTabClick(tab.path)} className="tab">
-                {tab.label}
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        <div className="button-container">
-          <button className="new-record-button" onClick={handleNewProfile}>
+        <div className="button-container" style={{ display: 'flex', justifyContent: 'flex-end', gap: '30px' }}>
+          <Button variant="contained" color="primary" style={{ height: '56px' }} onClick={handleNewProfile}>
             + New Record
-          </button>
-          <input
-            type="text"
+          </Button>
+          <TextField
+            style={{ width: '300px', marginRight: '40px' }}
+            variant="outlined"
             placeholder="Search records"
             className="search-input"
           />
         </div>
 
-        <div className="table-container">
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Family ID</th>
-                <th>Family Name</th>
-                <th>Members</th>
-                <th>Address</th>
-                <th>Contact No.</th>
-                <th className="actions">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
+        <TableContainer style={{ maxWidth: '95%', margin: '30px auto', overflowX: 'auto' }}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                {['Family ID', 'Family Name', 'Members', 'Address', 'Contact No.', 'Actions'].map((header) => (
+                  <TableCell key={header} style={{ backgroundColor: '#0B8769', color: 'white', padding: '10px', textAlign: 'center' }}>
+                    {header}
+                  </TableCell>
+                ))}
+              </TableRow>
+            </TableHead>
+            <TableBody>
               {Array.isArray(familyProfiles) && familyProfiles.length > 0 ? (
                 familyProfiles.map((profile) => (
-                  <tr key={profile.FamilyID}>
-                    <td>{profile.FamilyID}</td>
-                    <td>{profile.FamilyName}</td>
-                    <td>{profile.Members}</td>
-                    <td>{profile.Address}</td>
-                    <td>{profile.ContactNo}</td>
-                    <td className="actions">
-                      <button className="view-button" onClick={() => handleView(profile)}>
+                  <TableRow key={profile.FamilyID}>
+                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>{profile.FamilyID}</TableCell>
+                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>{profile.FamilyName}</TableCell>
+                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>{profile.Members}</TableCell>
+                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>{profile.Address}</TableCell>
+                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>{profile.ContactNo}</TableCell>
+                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>
+                      <Button variant="contained" color="primary" style={{ marginRight: '10px' }} onClick={() => handleView(profile)}>
                         View
-                      </button>
-                      <button className="update-button" onClick={() => handleUpdate(profile)}>
+                      </Button>
+                      <Button variant="contained" color="secondary" style={{ marginRight: '10px' }} onClick={() => handleUpdate(profile)}>
                         Update
-                      </button>
-                      <button
-                        className="delete-button"
-                        onClick={() => handleDelete(profile.FamilyID)}
-                      >
+                      </Button>
+                      <Button variant="contained" color="error" onClick={() => handleDelete(profile.FamilyID)}>
                         Delete
-                      </button>
-                    </td>
-                  </tr>
+                      </Button>
+                    </TableCell>
+                  </TableRow>
                 ))
               ) : (
-                <tr>
-                  <td colSpan="6" style={{ textAlign: 'center' }}>
+                <TableRow>
+                  <TableCell colSpan={6} style={{ textAlign: 'center' }}>
                     No family profiles found.
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               )}
-            </tbody>
-          </table>
-        </div>
+            </TableBody>
+          </Table>
+        </TableContainer>
       </div>
 
       {/* Modal for New Family Profile */}
-      {isCreateModalOpen && (
-        <FamilyProfilesModal
-          isOpen={isCreateModalOpen}
-          onClose={handleCreateModalClose}
-          onSubmit={handleCreateSubmit}
-        />
-      )}
+      <FamilyProfilesModal
+        isOpen={isCreateModalOpen}
+        onClose={handleCreateModalClose}
+        onSubmit={handleCreateSubmit}
+      />
 
       {/* Modal for Viewing Family Profile */}
-      {isViewModalOpen && (
-        <FamilyProfilesViewModal
-          isOpen={isViewModalOpen}
-          onClose={handleViewModalClose}
-          profile={selectedProfile}
-        />
-      )}
+      <FamilyProfilesViewModal
+        isOpen={isViewModalOpen}
+        onClose={handleViewModalClose}
+        familyProfile={selectedProfile}
+      />
 
       {/* Modal for Updating Family Profile */}
-      {isUpdateModalOpen && (
-        <FamilyProfilesUpdateModal
-          isOpen={isUpdateModalOpen}
-          onClose={handleUpdateModalClose}
-          onSave={handleUpdateSubmit}
-          family={selectedProfile}
-        />
-      )}
+      <FamilyProfilesUpdateModal
+        isOpen={isUpdateModalOpen}
+        onClose={handleUpdateModalClose}
+        onSave={handleUpdateSubmit}
+        profile={selectedProfile}
+      />
     </div>
   );
 };

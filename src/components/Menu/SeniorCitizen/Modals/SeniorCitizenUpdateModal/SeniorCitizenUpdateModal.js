@@ -1,195 +1,181 @@
 import React from 'react';
+import {
+  Box,
+  Button,
+  TextField,
+  Typography,
+  Container,
+  Paper,
+  Grid,
+} from '@mui/material';
 
 const SeniorCitizenUpdateModal = ({ isOpen, onClose, onSave, seniorCitizen }) => {
   const [formData, setFormData] = React.useState({
-    SeniorID: seniorCitizen.SeniorID || '',
-    FullName: seniorCitizen.FullName || '',
-    Address: seniorCitizen.Address || '',
-    DateOfBirth: seniorCitizen.DateOfBirth || '',
-    ContactInfo: seniorCitizen.ContactInfo || { Phone: '', Email: '' },
-    Gender: seniorCitizen.Gender || '',
-    MedicalHistory: seniorCitizen.MedicalHistory || '',
+    SeniorID: '',
+    FullName: '',
+    Address: '',
+    DateOfBirth: '',
+    ContactInfo: { Phone: '', Email: '' },
+    Gender: '',
+    MedicalHistory: '',
   });
 
+  // Update form data when seniorCitizen prop changes
   React.useEffect(() => {
-    setFormData({
-      SeniorID: seniorCitizen.SeniorID || '',
-      FullName: seniorCitizen.FullName || '',
-      Address: seniorCitizen.Address || '',
-      DateOfBirth: seniorCitizen.DateOfBirth || '',
-      ContactInfo: seniorCitizen.ContactInfo || { Phone: '', Email: '' },
-      Gender: seniorCitizen.Gender || '',
-      MedicalHistory: seniorCitizen.MedicalHistory || '',
-    });
+    if (seniorCitizen) {
+      setFormData({
+        SeniorID: seniorCitizen.SeniorID || '',
+        FullName: seniorCitizen.FullName || '',
+        Address: seniorCitizen.Address || '',
+        DateOfBirth: seniorCitizen.DateOfBirth || '',
+        ContactInfo: seniorCitizen.ContactInfo || { Phone: '', Email: '' },
+        Gender: seniorCitizen.Gender || '',
+        MedicalHistory: seniorCitizen.MedicalHistory || '',
+      });
+    }
   }, [seniorCitizen]);
 
+  // Handle form changes
   const handleChange = (e) => {
     const { name, value } = e.target;
     if (name === 'ContactInfo.Phone') {
-        setFormData({ ...formData, ContactInfo: { ...formData.ContactInfo, Phone: value } });
+      setFormData({ ...formData, ContactInfo: { ...formData.ContactInfo, Phone: value } });
     } else {
-        setFormData({ ...formData, [name]: value });
+      setFormData({ ...formData, [name]: value });
     }
-};
-  const handleSave = (e) => {
-    e.preventDefault();
-    onSave(formData);
   };
 
+  // Handle form submission
+  const handleSave = (e) => {
+    e.preventDefault();
+    onSave(formData); // Call onSave with form data
+    onClose(); // Close the modal after saving
+  };
+
+  // Don't render if modal isn't open
   if (!isOpen) return null;
 
   return (
-    <div style={modalStyles.overlay}>
-      <div style={modalStyles.content}>
-        <h2>Update Senior Citizen</h2>
-        <form onSubmit={handleSave}>
-          <label>
-            Senior ID:
-            <input
-              type="text"
-              name="SeniorID"
-              value={formData.SeniorID}
-              readOnly
-              style={modalStyles.input}
-            />
-          </label>
-          <label>
-            Full Name:
-            <input
-              type="text"
-              name="FullName"
-              value={formData.FullName}
-              onChange={handleChange}
-              placeholder="Enter Full Name"
-              required
-              style={modalStyles.input}
-            />
-          </label>
-          <label>
-            Address:
-            <input
-              type="text"
-              name="Address"
-              value={formData.Address}
-              onChange={handleChange}
-              placeholder="Enter Address"
-              required
-              style={modalStyles.input}
-            />
-          </label>
-          <label>
-            Date of Birth:
-            <input
-              type="date"
-              name="DateOfBirth"
-              value={formData.DateOfBirth}
-              onChange={handleChange}
-              required
-              style={modalStyles.input}
-            />
-          </label>
-          <label>
-            Contact No.:
-            <input
-              type="text"
-              name="ContactInfo.Phone"
-              value={formData.ContactInfo.Phone}
-              onChange={handleChange}
-              placeholder="Enter Contact No."
-              required
-              style={modalStyles.input}
-            />
-          </label>
-          <label>
-            Gender:
-            <input
-              type="text"
-              name="Gender"
-              value={formData.Gender}
-              onChange={handleChange}
-              placeholder="Enter Gender"
-              required
-              style={modalStyles.input}
-            />
-          </label>
-          <label>
-            Medical History:
-            <textarea
-              name="MedicalHistory"
-              value={formData.MedicalHistory}
-              onChange={handleChange}
-              placeholder="Enter Medical History"
-              required
-              style={{ ...modalStyles.input, height: '60px' }}
-            />
-          </label>
-          <div style={modalStyles.buttonContainer}>
-            <button type="submit" style={modalStyles.saveButton}>
-              Save
-            </button>
-            <button type="button" onClick={onClose} style={modalStyles.cancelButton}>
-              Cancel
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+    <Box
+      sx={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'rgba(0, 0, 0, 0.7)',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 1000,
+      }}
+    >
+      <Container maxWidth="sm">
+        <Paper elevation={10} sx={{ padding: 4, borderRadius: '16px' }}>
+          <Typography variant="h5" component="h2" align="center" gutterBottom>
+            Update Senior Citizen
+          </Typography>
+          <form onSubmit={handleSave}>
+            <Grid container spacing={2}>
+              <Grid item xs={12}>
+                <TextField
+                  type="text"
+                  name="SeniorID"
+                  value={formData.SeniorID}
+                  readOnly
+                  label="Senior ID"
+                  sx={{ width: '100%' }}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  name="FullName"
+                  label="Full Name"
+                  value={formData.FullName}
+                  onChange={handleChange}
+                  placeholder="Enter Full Name"
+                  required
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  name="Address"
+                  label="Address"
+                  value={formData.Address}
+                  onChange={handleChange}
+                  placeholder="Enter Address"
+                  required
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  type="date"
+                  name="DateOfBirth"
+                  label="Date of Birth"
+                  value={formData.DateOfBirth}
+                  onChange={handleChange}
+                  required
+                  InputLabelProps={{ shrink: true }} // Ensure label stays visible
+                  sx={{ width: '100%' }}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  name="ContactInfo.Phone"
+                  label="Contact No."
+                  value={formData.ContactInfo.Phone}
+                  onChange={handleChange}
+                  placeholder="Enter Contact No."
+                  required
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  name="Gender"
+                  label="Gender"
+                  value={formData.Gender}
+                  onChange={handleChange}
+                  placeholder="Enter Gender"
+                  required
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  name="MedicalHistory"
+                  label="Medical History"
+                  value={formData.MedicalHistory}
+                  onChange={handleChange}
+                  placeholder="Enter Medical History"
+                  required
+                  multiline
+                  rows={3}
+                />
+              </Grid>
+              <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <Button type="submit" variant="contained" color="primary" sx={{ width: '48%' }}>
+                  Save
+                </Button>
+                <Button
+                  type="button"
+                  onClick={onClose}
+                  variant="contained"
+                  color="secondary"
+                  sx={{ width: '48%' }}
+                >
+                  Cancel
+                </Button>
+              </Grid>
+            </Grid>
+          </form>
+        </Paper>
+      </Container>
+    </Box>
   );
-};
-
-const modalStyles = {
-  overlay: {
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    background: 'rgba(0, 0, 0, 0.7)',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 1000,
-  },
-  content: {
-    background: 'white',
-    padding: '20px',
-    borderRadius: '8px',
-    width: '400px',
-    boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
-    position: 'relative',
-  },
-  input: {
-    width: '100%',
-    padding: '8px',
-    marginBottom: '10px',
-    border: '1px solid #ccc',
-    borderRadius: '4px',
-    display: 'block',
-  },
-  buttonContainer: {
-    display: 'flex',
-    justifyContent: 'space-between',
-  },
-  saveButton: {
-    padding: '12px 20px',
-    border: 'none',
-    borderRadius: '5px',
-    cursor: 'pointer',
-    fontSize: '16px',
-    width: '130px',
-    backgroundColor: '#4CAF50',
-    color: 'white',
-  },
-  cancelButton: {
-    padding: '12px 20px',
-    border: 'none',
-    borderRadius: '5px',
-    cursor: 'pointer',
-    fontSize: '16px',
-    width: '130px',
-    backgroundColor: '#f44336',
-    color: 'white',
-  },
 };
 
 export default SeniorCitizenUpdateModal;

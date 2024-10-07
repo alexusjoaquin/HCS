@@ -1,4 +1,13 @@
 import React from 'react';
+import {
+  Box,
+  Button,
+  TextField,
+  Typography,
+  Container,
+  Paper,
+  Grid,
+} from '@mui/material';
 
 const FamilyProfilesUpdateModal = ({ isOpen, onClose, onSave, family }) => {
   const [formData, setFormData] = React.useState({
@@ -39,138 +48,104 @@ const FamilyProfilesUpdateModal = ({ isOpen, onClose, onSave, family }) => {
   if (!isOpen) return null;
 
   return (
-    <div style={modalStyles.overlay}>
-      <div style={modalStyles.content}>
-        <h2>Update Family Profile</h2>
-        <form onSubmit={handleSave}>
-          <label>
-            Family ID:
-            <input
-              type="text"
-              name="FamilyID"
-              value={formData.FamilyID}
-              readOnly
-              style={modalStyles.input}
-            />
-          </label>
-          <label>
-            Family Name:
-            <input
-              type="text"
-              name="FamilyName"
-              value={formData.FamilyName}
-              onChange={handleChange}
-              placeholder="Enter Family Name"
-              required
-              style={modalStyles.input}
-            />
-          </label>
-          <label>
-            Members:
-            <input
-              type="number"
-              name="Members"
-              value={formData.Members}
-              onChange={handleChange}
-              placeholder="Enter Number of Members"
-              required
-              style={modalStyles.input}
-            />
-          </label>
-          <label>
-            Address:
-            <input
-              type="text"
-              name="Address"
-              value={formData.Address}
-              onChange={handleChange}
-              placeholder="Enter Address"
-              required
-              style={modalStyles.input}
-            />
-          </label>
-          <label>
-            Contact No:
-            <input
-              type="tel"
-              name="ContactNo"
-              value={formData.ContactNo}
-              onChange={handleChange}
-              placeholder="Enter Contact No"
-              required
-              style={modalStyles.input}
-            />
-          </label>
-          <div style={modalStyles.buttonContainer}>
-            <button type="submit" style={modalStyles.saveButton}>
-              Save
-            </button>
-            <button type="button" onClick={onClose} style={modalStyles.cancelButton}>
-              Cancel
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+    <Box
+      sx={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'rgba(0, 0, 0, 0.7)',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 1000,
+      }}
+    >
+      <Container maxWidth="sm">
+        <Paper elevation={10} sx={{ padding: 4, borderRadius: '16px' }}>
+          <Typography variant="h5" component="h2" align="center" gutterBottom>
+            Update Family Profile
+          </Typography>
+          <form onSubmit={handleSave}>
+            <Grid container spacing={2}>
+              <Grid item xs={12}>
+                <TextField
+                  type="text"
+                  name="FamilyID"
+                  value={formData.FamilyID}
+                  readOnly
+                  label="Family ID"
+                  sx={{ width: '100%' }}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  name="FamilyName"
+                  label="Family Name"
+                  value={formData.FamilyName}
+                  onChange={handleChange}
+                  placeholder="Enter Family Name"
+                  required
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  type="number"
+                  name="Members"
+                  value={formData.Members}
+                  onChange={handleChange}
+                  label="Members"
+                  placeholder="Enter Number of Members"
+                  required
+                  InputProps={{ inputProps: { min: 1 } }} // Ensure minimum number is 1
+                  sx={{ width: '100%' }}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  name="Address"
+                  label="Address"
+                  value={formData.Address}
+                  onChange={handleChange}
+                  placeholder="Enter Address"
+                  required
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  type="tel"
+                  name="ContactNo"
+                  label="Contact No"
+                  value={formData.ContactNo}
+                  onChange={handleChange}
+                  placeholder="Enter Contact No"
+                  required
+                />
+              </Grid>
+              <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <Button type="submit" variant="contained" color="primary" sx={{ width: '48%' }}>
+                  Save
+                </Button>
+                <Button
+                  type="button"
+                  onClick={onClose}
+                  variant="contained"
+                  color="secondary"
+                  sx={{ width: '48%' }}
+                >
+                  Cancel
+                </Button>
+              </Grid>
+            </Grid>
+          </form>
+        </Paper>
+      </Container>
+    </Box>
   );
-};
-
-
-// Modal styles
-const modalStyles = {
-  overlay: {
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    background: 'rgba(0, 0, 0, 0.7)',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 1000,
-  },
-  content: {
-    background: 'white',
-    padding: '20px',
-    borderRadius: '8px',
-    width: '400px',
-    boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
-    position: 'relative',
-  },
-  input: {
-    width: '380px',
-    padding: '8px',
-    marginBottom: '10px',
-    border: '1px solid #ccc',
-    borderRadius: '4px',
-    display: 'block',
-  },
-  buttonContainer: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    paddingTop: '20px'
-  },
-  saveButton: {
-    padding: '12px 20px',
-    border: 'none',
-    borderRadius: '5px',
-    cursor: 'pointer',
-    fontSize: '16px',
-    width: '130px',
-    backgroundColor: '#4CAF50',
-    color: 'white',
-  },
-  cancelButton: {
-    padding: '12px 20px',
-    border: 'none',
-    borderRadius: '5px',
-    cursor: 'pointer',
-    fontSize: '16px',
-    width: '130px',
-    backgroundColor: '#f44336',
-    color: 'white',
-  },
 };
 
 export default FamilyProfilesUpdateModal;

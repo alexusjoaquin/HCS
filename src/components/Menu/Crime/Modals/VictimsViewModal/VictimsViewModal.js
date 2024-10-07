@@ -1,96 +1,119 @@
 // src/components/Modals/VictimsViewModal/VictimsViewModal.js
 import React from 'react';
+import {
+  Box,
+  Button,
+  Typography,
+  Container,
+  Paper,
+  Grid,
+  TextField,
+} from '@mui/material';
 
 const VictimsViewModal = ({ isOpen, onClose, victim }) => {
   if (!isOpen || !victim) return null;
 
   return (
-    <div style={modalStyles.overlay}>
-      <div style={modalStyles.content}>
-        <span style={modalStyles.close} onClick={onClose}>
-          &times;
-        </span>
-        <h2>Victim Details</h2>
-        <div style={{ marginTop: '10px' }}>
-          <label style={modalStyles.label}>
-            Victim ID:
-            <input type="text" value={victim.VictimID || ''} readOnly style={modalStyles.input} />
-          </label>
-          <label style={modalStyles.label}>
-            Full Name:
-            <input type="text" value={victim.FullName || ''} readOnly style={modalStyles.input} />
-          </label>
-          <label style={modalStyles.label}>
-            Last Known Address:
-            <input type="text" value={victim.LastKnownAddress || ''} readOnly style={modalStyles.input} />
-          </label>
-          <label style={modalStyles.label}>
-            Incident Date:
-            <input type="text" value={victim.IncidentDate || ''} readOnly style={modalStyles.input} />
-          </label>
-          <label style={modalStyles.label}>
-            Case Status:
-            <input type="text" value={victim.CaseStatus || ''} readOnly style={modalStyles.input} />
-          </label>
-        </div>
-        <button style={modalStyles.closeButton} onClick={onClose}>
-          Close
-        </button>
-      </div>
-    </div>
+    <Box
+      sx={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'rgba(0, 0, 0, 0.7)',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 1000,
+      }}
+    >
+      <Container maxWidth="sm">
+        <Paper elevation={10} sx={{ padding: 4, borderRadius: '16px', position: 'relative' }}>
+          <Typography variant="h5" component="h2" align="center" gutterBottom>
+            Victim Details
+          </Typography>
+          <span
+            style={{
+              cursor: 'pointer',
+              position: 'absolute',
+              top: '10px',
+              right: '20px',
+              fontSize: '1.5em',
+            }}
+            onClick={onClose}
+          >
+            &times;
+          </span>
+          <Grid container spacing={2} sx={{ marginTop: '10px' }}>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Victim ID"
+                value={victim.VictimID || ''}
+                variant="outlined"
+                InputProps={{
+                  readOnly: true,
+                }}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Full Name"
+                value={victim.FullName || ''}
+                variant="outlined"
+                InputProps={{
+                  readOnly: true,
+                }}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Last Known Address"
+                value={victim.LastKnownAddress || ''}
+                variant="outlined"
+                InputProps={{
+                  readOnly: true,
+                }}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Incident Date"
+                value={victim.IncidentDate || ''}
+                variant="outlined"
+                InputProps={{
+                  readOnly: true,
+                }}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Case Status"
+                value={victim.CaseStatus || ''}
+                variant="outlined"
+                InputProps={{
+                  readOnly: true,
+                }}
+              />
+            </Grid>
+          </Grid>
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={onClose}
+            sx={{ marginTop: '20px', width: '100%' }}
+          >
+            Close
+          </Button>
+        </Paper>
+      </Container>
+    </Box>
   );
-};
-
-const modalStyles = {
-  overlay: {
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    background: 'rgba(0, 0, 0, 0.5)',
-    zIndex: 1000,
-  },
-  content: {
-    background: 'white',
-    padding: '20px',
-    borderRadius: '5px',
-    width: '400px',
-    boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
-    position: 'relative',
-  },
-  close: {
-    cursor: 'pointer',
-    position: 'absolute',
-    top: '10px',
-    right: '20px',
-    fontSize: '1.5em',
-  },
-  label: {
-    display: 'block',
-    marginBottom: '5px',
-  },
-  input: {
-    width: '100%',
-    marginBottom: '10px',
-    padding: '8px',
-    borderRadius: '4px',
-    border: '1px solid #ccc',
-    backgroundColor: '#f9f9f9', // Slightly different background for read-only
-  },
-  closeButton: {
-    marginTop: '20px',
-    padding: '10px',
-    backgroundColor: '#f44336',
-    color: 'white',
-    border: 'none',
-    borderRadius: '4px',
-    cursor: 'pointer',
-    width: '100%',
-  },
 };
 
 export default VictimsViewModal;

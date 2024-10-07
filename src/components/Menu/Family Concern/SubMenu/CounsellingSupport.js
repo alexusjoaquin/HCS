@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import Sidebar from '../../../templates/Sidebar';
 import CounsellingModal from '../Modals/CounsellingModal/CounsellingModal';
 import CounsellingViewModal from '../Modals/CounsellingViewModal/CounsellingViewModal';
@@ -8,6 +7,7 @@ import familycounsellingService from '../../../services/familycounsellingService
 import { toast } from 'react-toastify';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
+import { Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography } from '@mui/material';
 
 const MySwal = withReactContent(Swal);
 
@@ -17,7 +17,6 @@ const CounsellingSupport = () => {
   const [isUpdateModalOpen, setUpdateModalOpen] = useState(false);
   const [selectedCounselling, setSelectedCounselling] = useState(null);
   const [counsellingRecords, setCounsellingRecords] = useState([]);
-  const navigate = useNavigate();
 
   useEffect(() => {
     fetchCounsellingRecords();
@@ -34,12 +33,8 @@ const CounsellingSupport = () => {
       }
     } catch (error) {
       console.error('Failed to fetch counselling records:', error);
-      toast.error('Failed to fetch counselling records. ' + error.message);
+      toast.error('Failed to fetch counselling records.');
     }
-  };
-
-  const handleTabClick = (path) => {
-    navigate(path);
   };
 
   const handleNewRecord = () => {
@@ -72,7 +67,7 @@ const CounsellingSupport = () => {
       fetchCounsellingRecords();
     } catch (error) {
       console.error('Error creating counselling record:', error);
-      toast.error('Failed to create counselling record: ' + error.message);
+      toast.error('Failed to create counselling record.');
     }
   };
 
@@ -87,10 +82,8 @@ const CounsellingSupport = () => {
   };
 
   const handleUpdate = (record) => {
-    if (record) {
-      setSelectedCounselling(record);
-      setUpdateModalOpen(true);
-    }
+    setSelectedCounselling(record);
+    setUpdateModalOpen(true);
   };
 
   const handleUpdateModalClose = () => {
@@ -119,7 +112,7 @@ const CounsellingSupport = () => {
       fetchCounsellingRecords();
     } catch (error) {
       console.error('Error updating counselling record:', error);
-      toast.error('Failed to update counselling record: ' + error.message);
+      toast.error('Failed to update counselling record.');
     }
   };
 
@@ -146,7 +139,7 @@ const CounsellingSupport = () => {
         fetchCounsellingRecords();
       } catch (error) {
         console.error('Error deleting counselling record:', error);
-        toast.error('Failed to delete counselling record: ' + error.message);
+        toast.error('Failed to delete counselling record.');
       }
     }
   };
@@ -154,107 +147,76 @@ const CounsellingSupport = () => {
   return (
     <div className="container">
       <Sidebar />
-      <div className="content">
-        <h2 className="header">COUNSELLING AND SUPPORT</h2>
+      <div className="content" style={{ padding: '20px' }}>
+        <Typography variant="h4" className="header" style={{ fontWeight: '700', marginLeft: '40px', marginTop: '20px' }}>
+          COUNSELLING AND SUPPORT
+        </Typography>
 
-        <div className="tabs">
-          <ul className="tab-list">
-            {[
-            ].map((tab, index) => (
-              <li key={index} onClick={() => handleTabClick(tab.path)} className="tab">
-                {tab.label}
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        <div className="button-container">
-          <button className="new-record-button" onClick={handleNewRecord}>
+        <div className="button-container" style={{ display: 'flex', justifyContent: 'flex-end', gap: '30px' }}>
+          <Button variant="contained" color="primary" style={{ height: '56px' }} onClick={handleNewRecord}>
             + New Record
-          </button>
-          <input
-            type="text"
+          </Button>
+          <TextField
+            style={{ width: '300px', marginRight: '40px' }}
+            variant="outlined"
             placeholder="Search records"
             className="search-input"
           />
         </div>
 
-        <div className="table-container">
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Service ID</th>
-                <th>Client Name</th>
-                <th>Counselor</th>
-                <th>Date of Session</th>
-                <th>Location</th>
-                <th className="actions">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
+        <TableContainer style={{ maxWidth: '95%', margin: '30px auto', overflowX: 'auto' }}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                {['Service ID', 'Client Name', 'Counselor', 'Date of Session', 'Location', 'Actions'].map((header) => (
+                  <TableCell key={header} style={{ backgroundColor: '#0B8769', color: 'white', padding: '10px', textAlign: 'center' }}>
+                    {header}
+                  </TableCell>
+                ))}
+              </TableRow>
+            </TableHead>
+            <TableBody>
               {Array.isArray(counsellingRecords) && counsellingRecords.length > 0 ? (
                 counsellingRecords.map((record) => (
-                  <tr key={record.ServiceID}>
-                    <td>{record.ServiceID}</td>
-                    <td>{record.ClientName}</td>
-                    <td>{record.Counselor}</td>
-                    <td>{record.DateOfSession}</td>
-                    <td>{record.Location}</td>
-                    <td className="actions">
-                      <button className="view-button" onClick={() => handleView(record)}>
+                  <TableRow key={record.ServiceID}>
+                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>{record.ServiceID}</TableCell>
+                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>{record.ClientName}</TableCell>
+                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>{record.Counselor}</TableCell>
+                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>{record.DateOfSession}</TableCell>
+                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>{record.Location}</TableCell>
+                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>
+                      <Button variant="contained" color="primary" style={{ marginRight: '10px' }} onClick={() => handleView(record)}>
                         View
-                      </button>
-                      <button className="update-button" onClick={() => handleUpdate(record)}>
+                      </Button>
+                      <Button variant="contained" color="secondary" style={{ marginRight: '10px' }} onClick={() => handleUpdate(record)}>
                         Update
-                      </button>
-                      <button
-                        className="delete-button"
-                        onClick={() => handleDelete(record.ServiceID)}
-                      >
+                      </Button>
+                      <Button variant="contained" color="error" onClick={() => handleDelete(record.ServiceID)}>
                         Delete
-                      </button>
-                    </td>
-                  </tr>
+                      </Button>
+                    </TableCell>
+                  </TableRow>
                 ))
               ) : (
-                <tr>
-                  <td colSpan="6" style={{ textAlign: 'center' }}>
+                <TableRow>
+                  <TableCell colSpan={6} style={{ textAlign: 'center' }}>
                     No counselling records found.
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               )}
-            </tbody>
-          </table>
-        </div>
+            </TableBody>
+          </Table>
+        </TableContainer>
       </div>
 
-      {/* Modal for New Counselling Record */}
-      {isCreateModalOpen && (
-        <CounsellingModal
-          isOpen={isCreateModalOpen}
-          onClose={handleCreateModalClose}
-          onSubmit={handleCreateSubmit}
-        />
-      )}
-
-      {/* Modal for Viewing Counselling Record */}
-      {isViewModalOpen && (
-        <CounsellingViewModal
-          isOpen={isViewModalOpen}
-          onClose={handleViewModalClose}
-          record={selectedCounselling}
-        />
-      )}
-
-      {/* Modal for Updating Counselling Record */}
-      {isUpdateModalOpen && (
-        <CounsellingUpdateModal
-          isOpen={isUpdateModalOpen}
-          onClose={handleUpdateModalClose}
-          onSubmit={handleUpdateSubmit}
-          record={selectedCounselling}
-        />
-      )}
+      {/* Modals */}
+      <CounsellingModal isOpen={isCreateModalOpen} onClose={handleCreateModalClose} onSubmit={handleCreateSubmit} />
+      <CounsellingViewModal
+        isOpen={isViewModalOpen}
+        onClose={handleViewModalClose}
+        counsellingData={selectedCounselling}  // update to match the expected prop
+      />
+      <CounsellingUpdateModal isOpen={isUpdateModalOpen} onClose={handleUpdateModalClose} onSave={handleUpdateSubmit} counselling={selectedCounselling} />
     </div>
   );
 };

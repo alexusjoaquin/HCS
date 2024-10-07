@@ -214,7 +214,7 @@ const Sidebar = () => {
           </List>
         </Collapse>
 
-        <ListItem button onClick={() => handleNavigation('/seniorcitizen')}>
+        <ListItem button onClick={() => handleNavigation('/seniorcitizendata')}>
           <ListItemIcon sx={{ color: '#bbbbbb' }}>
             <LocalHospitalIcon />
           </ListItemIcon>
