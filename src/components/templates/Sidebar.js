@@ -1,4 +1,3 @@
-// src/components/templates/Sidebar.js
 import React, { useState } from 'react';
 import {
   List,
@@ -113,17 +112,13 @@ const Sidebar = () => {
         Healthcare System
       </Typography>
       <List component="nav" sx={{ flexGrow: 1 }}>
-        {/* Conditionally render Dashboard and Settings for admin users */}
-        {username === 'admin' && (
-          <>
-            <ListItem button onClick={() => handleNavigation('/landing')}>
-              <ListItemIcon sx={{ color: '#bbbbbb' }}>
-                <DashboardIcon />
-              </ListItemIcon>
-              <ListItemText primary="Dashboard" />
-            </ListItem>
-          </>
-        )}
+        {/* Dashboard Menu */}
+        <ListItem button onClick={() => handleNavigation('/landing')}>
+          <ListItemIcon sx={{ color: '#bbbbbb' }}>
+            <DashboardIcon />
+          </ListItemIcon>
+          <ListItemText primary="Dashboard" />
+        </ListItem>
 
         {/* Residents Menu */}
         <ListItem button onClick={() => handleNavigation('/residents')}>
@@ -230,11 +225,11 @@ const Sidebar = () => {
         </ListItem>
 
         <ListItem button onClick={() => handleNavigation('/settings')}>
-              <ListItemIcon sx={{ color: '#bbbbbb' }}>
-                <SettingsIcon />
-              </ListItemIcon>
-              <ListItemText primary="Add New User" />
-            </ListItem>
+          <ListItemIcon sx={{ color: '#bbbbbb' }}>
+            <SettingsIcon />
+          </ListItemIcon>
+          <ListItemText primary="Add New User" />
+        </ListItem>
       </List>
 
       <Divider sx={{ bgcolor: '#555555' }} />

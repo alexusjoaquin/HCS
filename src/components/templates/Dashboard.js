@@ -23,6 +23,8 @@ import { BarChart, Bar, PieChart, Pie, Cell, Tooltip, Legend, XAxis, YAxis, Resp
 import axios from 'axios';
 import apiconfig from '../../api/apiconfig';
 
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#D32F2F', '#1976D2'];
+
 const Dashboard = () => {
   const theme = useTheme();
 
@@ -37,15 +39,16 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // Colors for Pie Chart
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#AA336A', '#FF6666'];
+  const username = localStorage.getItem('username'); // Get username from localStorage
+  const isAdmin = username && username.startsWith('admin'); // Check if the user is an admin
+  const barangay = isAdmin ? null : username.split('_')[1]; // Extract barangay from username (e.g., 'LGU_Malayantoc' => 'Malayantoc')
 
   // Fetch data on component mount
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-
+        
         // Fetch Residents Data
         const residentsResponse = await axios.get(apiconfig.residents.getAll);
         if (
@@ -54,10 +57,13 @@ const Dashboard = () => {
           Array.isArray(residentsResponse.data.data)
         ) {
           const residents = residentsResponse.data.data;
-          setResidentsData(residents);
+          
+          // If user is not admin, filter residents by barangay
+          const filteredResidents = isAdmin ? residents : residents.filter(resident => resident.Address === barangay);
+          setResidentsData(filteredResidents);
 
           // Extract unique addresses
-          const addresses = [...new Set(residents.map(resident => resident.Address))];
+          const addresses = [...new Set(filteredResidents.map(resident => resident.Address))];
           setUniqueAddresses(addresses);
         } else {
           throw new Error('Failed to fetch residents data');
@@ -72,7 +78,11 @@ const Dashboard = () => {
           typeof crimeResponse.data.data.totalRecords === 'number' &&
           Array.isArray(crimeResponse.data.data.crimeReports)
         ) {
-          setCrimeData(crimeResponse.data.data.crimeReports);
+          const crimes = crimeResponse.data.data.crimeReports;
+
+          // If user is not admin, filter crimes by barangay
+          const filteredCrimes = isAdmin ? crimes : crimes.filter(crime => crime.Location === barangay);
+          setCrimeData(filteredCrimes);
         } else {
           throw new Error('Failed to fetch crime reports data');
         }
@@ -86,7 +96,7 @@ const Dashboard = () => {
     };
 
     fetchData();
-  }, []);
+  }, [isAdmin, barangay]);
 
   // Handle address filter change
   const handleAddressChange = (event) => {
@@ -198,25 +208,27 @@ const Dashboard = () => {
       </Typography>
 
       {/* Address Filter */}
-      <Box sx={{ marginBottom: '2rem' }}>
-        <FormControl sx={{ minWidth: 200 }} variant="outlined">
-          <InputLabel id="address-filter-label">Filter by Address</InputLabel>
-          <Select
-            labelId="address-filter-label"
-            id="address-filter"
-            value={selectedAddress}
-            label="Filter by Address"
-            onChange={handleAddressChange}
-          >
-            <MenuItem value="All">All</MenuItem>
-            {uniqueAddresses.map((address, index) => (
-              <MenuItem key={index} value={address}>
-                {address}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-      </Box>
+      {isAdmin && (
+        <Box sx={{ marginBottom: '2rem' }}>
+          <FormControl sx={{ minWidth: 200 }} variant="outlined">
+            <InputLabel id="address-filter-label">Filter by Address</InputLabel>
+            <Select
+              labelId="address-filter-label"
+              id="address-filter"
+              value={selectedAddress}
+              label="Filter by Address"
+              onChange={handleAddressChange}
+            >
+              <MenuItem value="All">All</MenuItem>
+              {uniqueAddresses.map((address, index) => (
+                <MenuItem key={index} value={address}>
+                  {address}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Box>
+      )}
 
       {/* Metrics Cards */}
       <Grid container spacing={4} sx={{ marginBottom: '2rem' }}>
