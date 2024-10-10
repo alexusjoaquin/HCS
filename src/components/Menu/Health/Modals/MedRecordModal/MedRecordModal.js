@@ -3,7 +3,8 @@ import React, { useState, useEffect } from 'react';
 
 const MedRecordModal = ({ isOpen, onClose, onSubmit }) => {
   const [formData, setFormData] = useState({
-    PatientID: '',
+    FullName: '',
+    Address: '',
     DoctorID: '',
     Date: '',
     Diagnosis: '',
@@ -15,7 +16,8 @@ const MedRecordModal = ({ isOpen, onClose, onSubmit }) => {
     if (!isOpen) {
       // Clear form data when the modal is closed
       setFormData({
-        PatientID: '',
+        FullName: '',
+        Address: '',
         DoctorID: '',
         Date: '',
         Diagnosis: '',
@@ -44,13 +46,25 @@ const MedRecordModal = ({ isOpen, onClose, onSubmit }) => {
         <h2>New Medical Record</h2>
         <form onSubmit={handleSubmit}>
           <label>
-            Patient ID:
+            Full Name:
             <input
               type="text"
-              name="PatientID"
-              value={formData.PatientID}
+              name="FullName"
+              value={formData.FullName}
               onChange={handleChange}
-              placeholder="Enter Patient ID"
+              placeholder="Enter Full Name"
+              required
+              style={modalStyles.input}
+            />
+          </label>
+          <label>
+            Address:
+            <input
+              type="text"
+              name="Address"
+              value={formData.Address}
+              onChange={handleChange}
+              placeholder="Enter Address"
               required
               style={modalStyles.input}
             />

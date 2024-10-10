@@ -1,4 +1,3 @@
-// src/components/Modals/MedicineViewModal/MedicineViewModal.js
 import React from 'react';
 import {
   Box,
@@ -60,8 +59,19 @@ const MedicineViewModal = ({ isOpen, onClose, medicine }) => {
             <Grid item xs={12}>
               <TextField
                 fullWidth
-                label="Resident ID"
-                value={medicine.ResidentID}
+                label="Full Name"
+                value={medicine.FullName}
+                variant="outlined"
+                InputProps={{
+                  readOnly: true,
+                }}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Address"
+                value={medicine.Address}
                 variant="outlined"
                 InputProps={{
                   readOnly: true,

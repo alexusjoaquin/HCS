@@ -7,10 +7,13 @@ import {
   Container,
   Paper,
   Grid,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from '@mui/material';
 
 const CounsellingModal = ({ isOpen, onClose, onSubmit }) => {
-  // Generate an auto-incremented ServiceID based on timestamp
   const generateServiceID = () => `SERV-${Date.now()}`;
 
   const [formData, setFormData] = useState({
@@ -41,7 +44,6 @@ const CounsellingModal = ({ isOpen, onClose, onSubmit }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     await onSubmit(formData); // Wait for submission to complete
-    // Reset form with a new ServiceID after successful submission
     setFormData({
       ServiceID: generateServiceID(),
       ClientName: '',
@@ -53,6 +55,33 @@ const CounsellingModal = ({ isOpen, onClose, onSubmit }) => {
   };
 
   if (!isOpen) return null;
+
+  const locationOptions = [
+    'Baloc',
+    'Buasao',
+    'Burgos',
+    'Cabugao',
+    'Casulucan',
+    'Comitang',
+    'Concepcion',
+    'Dolores',
+    'General Luna',
+    'Hulo',
+    'Mabini',
+    'Malasin',
+    'Malayantoc',
+    'Mambarao',
+    'Poblacion',
+    'Malaya (Pook Malaya)',
+    'Pulong Buli',
+    'Sagaba',
+    'San Agustin',
+    'San Fabian',
+    'San Francisco',
+    'San Pascual',
+    'Santa Rita',
+    'Santo Rosario',
+  ];
 
   return (
     <Box
@@ -119,15 +148,21 @@ const CounsellingModal = ({ isOpen, onClose, onSubmit }) => {
                 />
               </Grid>
               <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  name="Location"
-                  label="Location"
-                  value={formData.Location}
-                  onChange={handleChange}
-                  placeholder="Enter Location"
-                  required
-                />
+                <FormControl fullWidth required sx={{ mb: 2 }}>
+                  <InputLabel id="location-label">Location</InputLabel>
+                  <Select
+                    labelId="location-label"
+                    name="Location"
+                    value={formData.Location}
+                    onChange={handleChange}
+                  >
+                    {locationOptions.map((location) => (
+                      <MenuItem key={location} value={location}>
+                        {location}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
               </Grid>
               <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'space-between' }}>
                 <Button type="submit" variant="contained" color="primary" sx={{ width: '48%' }}>

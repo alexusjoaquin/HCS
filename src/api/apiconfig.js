@@ -217,7 +217,24 @@ const apiconfig = {
   
   resident: {
     importCSV: `${API_BASE_URL}/Resident/importCSV`, // POST for CSV import
-  }
+  },
+
+  medicines: {
+    create: `${API_BASE_URL}/Medicines`, // POST
+    update: `${API_BASE_URL}/Medicines`, // PUT
+    delete: `${API_BASE_URL}/Medicines`, // DELETE
+    getById: (id) => `${API_BASE_URL}/Medicines/${id}`, // GET /{id}
+    getAll: `${API_BASE_URL}/Medicines/all`, // GET /all
+  },
+
+  vaccines: {
+    create: `${API_BASE_URL}/Vaccines`, // POST
+    update: `${API_BASE_URL}/Vaccines`, // PUT
+    delete: `${API_BASE_URL}/Medicines`, // DELETE
+    getById: (id) => `${API_BASE_URL}/Vaccines/${id}`, // GET /{id}
+    getAll: `${API_BASE_URL}/Vaccines/all`, // GET /all
+  },
+  
 };
 
 export default apiconfig;

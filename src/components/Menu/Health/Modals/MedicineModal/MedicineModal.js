@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Box,
   Button,
@@ -7,14 +7,19 @@ import {
   Container,
   Paper,
   Grid,
+  Autocomplete,
 } from '@mui/material';
+import apiconfig from '../../../../../api/apiconfig';
 
 const MedicineModal = ({ isOpen, onClose, onSubmit }) => {
-  const [formData, setFormData] = React.useState({
+  const [formData, setFormData] = useState({
     TransactionID: '',
-    ResidentID: '',
+    FullName: '',
+    Address: '',
     MedicineName: '',
   });
+
+  const [residents, setResidents] = useState([]); // State for residents
 
   // Generate a unique Transaction ID whenever the modal opens
   useEffect(() => {
@@ -24,8 +29,46 @@ const MedicineModal = ({ isOpen, onClose, onSubmit }) => {
         ...prevState,
         TransactionID: generatedID,
       }));
+
+      // Fetch residents data when modal opens
+      fetchResidents();
     }
   }, [isOpen]);
+
+  const fetchResidents = async () => {
+    try {
+      const response = await fetch(apiconfig.residents.getAll);
+      const result = await response.json();
+      if (result.status === 'success') {
+        setResidents(result.data); // Set the resident data
+      } else {
+        console.error('Failed to fetch residents:', result.message);
+      }
+    } catch (error) {
+      console.error('Error fetching residents:', error);
+    }
+  };
+
+  const handleResidentChange = (event, value) => {
+    const resident = residents.find((r) => r.Name === value);
+
+    if (resident) {
+      setFormData((prevState) => ({
+        ...prevState,
+        FullName: resident.Name,
+        Address: resident.Address,
+      }));
+    } else {
+      // Clear fields if no resident is selected
+      setFormData((prevState) => ({
+        ...prevState,
+        FullName: '',
+        Address: '',
+      }));
+    }
+  };
+
+  
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -41,7 +84,8 @@ const MedicineModal = ({ isOpen, onClose, onSubmit }) => {
     // Reset form after submission
     setFormData({
       TransactionID: '',
-      ResidentID: '',
+      FullName: '',
+      Address: '',
       MedicineName: '',
     });
     onClose();
@@ -78,20 +122,29 @@ const MedicineModal = ({ isOpen, onClose, onSubmit }) => {
                   label="Transaction ID"
                   value={formData.TransactionID}
                   onChange={handleChange}
-                  placeholder="Enter Transaction ID"
                   required
                   disabled // Disable input for TransactionID
                 />
               </Grid>
               <Grid item xs={12}>
+                <Autocomplete
+                  options={residents.map((resident) => resident.Name)}
+                  onChange={handleResidentChange}
+                  renderInput={(params) => (
+                    <TextField {...params} label="Full Name" required />
+                  )}
+                />
+              </Grid>
+              <Grid item xs={12}>
                 <TextField
                   fullWidth
-                  name="ResidentID"
-                  label="Resident ID"
-                  value={formData.ResidentID}
+                  name="Address"
+                  label="Address"
+                  value={formData.Address}
                   onChange={handleChange}
-                  placeholder="Enter Resident ID"
+                  placeholder="Enter Address"
                   required
+                  disabled // Disable input for Address
                 />
               </Grid>
               <Grid item xs={12}>

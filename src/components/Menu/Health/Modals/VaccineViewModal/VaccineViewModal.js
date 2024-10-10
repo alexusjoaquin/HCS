@@ -9,8 +9,8 @@ import {
   TextField,
 } from '@mui/material';
 
-const VaccineViewModal = ({ isOpen, onClose, vaccine }) => {
-  if (!isOpen || !vaccine) return null;
+const VaccineViewModal = ({ isOpen, onClose, transaction }) => {
+  if (!isOpen || !transaction) return null;
 
   return (
     <Box
@@ -49,7 +49,7 @@ const VaccineViewModal = ({ isOpen, onClose, vaccine }) => {
               <TextField
                 fullWidth
                 label="Transaction ID"
-                value={vaccine.TransactionID}
+                value={transaction.TransactionID}
                 variant="outlined"
                 InputProps={{
                   readOnly: true,
@@ -59,8 +59,19 @@ const VaccineViewModal = ({ isOpen, onClose, vaccine }) => {
             <Grid item xs={12}>
               <TextField
                 fullWidth
-                label="Resident ID"
-                value={vaccine.ResidentID}
+                label="Full Name"
+                value={transaction.FullName}
+                variant="outlined"
+                InputProps={{
+                  readOnly: true,
+                }}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Address"
+                value={transaction.Address}
                 variant="outlined"
                 InputProps={{
                   readOnly: true,
@@ -71,7 +82,7 @@ const VaccineViewModal = ({ isOpen, onClose, vaccine }) => {
               <TextField
                 fullWidth
                 label="Vaccine Name"
-                value={vaccine.VaccineName}
+                value={transaction.VaccineName}
                 variant="outlined"
                 InputProps={{
                   readOnly: true,

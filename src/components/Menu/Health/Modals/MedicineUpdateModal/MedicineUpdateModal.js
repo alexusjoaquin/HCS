@@ -12,7 +12,8 @@ import {
 const MedicineUpdateModal = ({ isOpen, onClose, onSave, medicine }) => {
   const [formData, setFormData] = React.useState({
     TransactionID: medicine?.TransactionID || '',
-    ResidentID: medicine?.ResidentID || '',
+    FullName: medicine?.FullName || '',
+    Address: medicine?.Address || '',
     MedicineName: medicine?.MedicineName || '',
   });
 
@@ -20,7 +21,8 @@ const MedicineUpdateModal = ({ isOpen, onClose, onSave, medicine }) => {
     if (medicine) {
       setFormData({
         TransactionID: medicine.TransactionID || '',
-        ResidentID: medicine.ResidentID || '',
+        FullName: medicine.FullName || '',
+        Address: medicine.Address || '',
         MedicineName: medicine.MedicineName || '',
       });
     }
@@ -34,12 +36,13 @@ const MedicineUpdateModal = ({ isOpen, onClose, onSave, medicine }) => {
   const handleSave = (e) => {
     e.preventDefault();
     if (typeof onSave === 'function') {
-      onSave(formData);
+      onSave(formData);  // Call the onSave function passed as prop
     } else {
       console.error('onSave is not a function:', onSave);
     }
     onClose();
   };
+  
 
   if (!isOpen || !medicine) return null; // Ensure both conditions are met
 
@@ -70,20 +73,33 @@ const MedicineUpdateModal = ({ isOpen, onClose, onSave, medicine }) => {
                   type="text"
                   name="TransactionID"
                   value={formData.TransactionID}
-                  readOnly
                   label="Transaction ID"
+                  readOnly
                   sx={{ width: '100%' }}
                 />
               </Grid>
               <Grid item xs={12}>
                 <TextField
                   fullWidth
-                  name="ResidentID"
-                  label="Resident ID"
-                  value={formData.ResidentID}
+                  name="FullName"
+                  label="Full Name"
+                  value={formData.FullName}
                   onChange={handleChange}
-                  placeholder="Enter Resident ID"
+                  placeholder="Enter Full Name"
                   required
+                  InputProps={{ readOnly: true }} // Make this field read-only
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  name="Address"
+                  label="Address"
+                  value={formData.Address}
+                  onChange={handleChange}
+                  placeholder="Enter Address"
+                  required
+                  InputProps={{ readOnly: true }} // Make this field read-only
                 />
               </Grid>
               <Grid item xs={12}>

@@ -49,11 +49,7 @@ const SeniorCitizenData = () => {
     }
   };
 
-  // Handlers for Modals
-  const handleNewRecord = () => {
-    setSelectedSeniorCitizen(null);
-    setCreateModalOpen(true);
-  };
+
 
   const handleCreateModalClose = () => {
     setCreateModalOpen(false);
@@ -95,11 +91,7 @@ const SeniorCitizenData = () => {
     setSelectedSeniorCitizen(null);
   };
 
-  const handleUpdate = (seniorCitizen) => {
-    setSelectedSeniorCitizen(seniorCitizen);
-    setUpdateModalOpen(true);
-  };
-
+  
   const handleUpdateModalClose = () => {
     setUpdateModalOpen(false);
     setSelectedSeniorCitizen(null);
@@ -131,33 +123,7 @@ const SeniorCitizenData = () => {
     }
   };
 
-  const handleDelete = async (seniorCitizenID) => {
-    const result = await MySwal.fire({
-      title: 'Are you sure?',
-      text: 'Do you want to delete this record?',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#d33',
-      cancelButtonColor: '#3085d6',
-      confirmButtonText: 'Yes, delete it!',
-    });
-
-    if (result.isConfirmed) {
-      try {
-        await seniorcitizenService.deleteSeniorCitizen(seniorCitizenID);
-        MySwal.fire({
-          icon: 'success',
-          title: 'Deleted!',
-          text: 'Record has been deleted.',
-          confirmButtonText: 'OK',
-        });
-        fetchSeniorCitizens();
-      } catch (error) {
-        console.error('Error deleting record:', error);
-      }
-    }
-  };
-
+  
   // CSV headers for export
   const csvHeaders = [
     { label: "Senior ID", key: "SeniorID" },
@@ -218,10 +184,6 @@ const SeniorCitizenData = () => {
               <PrintIcon />
             </IconButton>
           </Tooltip>
-
-          <Button variant="contained" color="primary" style={{ height: '56px' }} onClick={handleNewRecord}>
-            + New Record
-          </Button>
           <TextField
             style={{ width: '300px', marginRight: '40px' }}
             variant="outlined"
@@ -257,12 +219,6 @@ const SeniorCitizenData = () => {
                     <TableCell style={{ padding: '10px', textAlign: 'center' }}>
                       <Button variant="contained" color="primary" style={{ marginRight: '10px' }} onClick={() => handleView(citizen)}>
                         View
-                      </Button>
-                      <Button variant="contained" color="secondary" style={{ marginRight: '10px' }} onClick={() => handleUpdate(citizen)}>
-                        Update
-                      </Button>
-                      <Button variant="contained" color="error" onClick={() => handleDelete(citizen.SeniorID)}>
-                        Delete
                       </Button>
                     </TableCell>
                   </TableRow>

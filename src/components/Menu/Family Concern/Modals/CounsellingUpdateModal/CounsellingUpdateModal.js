@@ -7,6 +7,10 @@ import {
   Container,
   Paper,
   Grid,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from '@mui/material';
 
 const CounsellingUpdateModal = ({ isOpen, onClose, onSave, counselling }) => {
@@ -46,6 +50,33 @@ const CounsellingUpdateModal = ({ isOpen, onClose, onSave, counselling }) => {
   };
 
   if (!isOpen) return null;
+
+  const locationOptions = [
+    'Baloc',
+    'Buasao',
+    'Burgos',
+    'Cabugao',
+    'Casulucan',
+    'Comitang',
+    'Concepcion',
+    'Dolores',
+    'General Luna',
+    'Hulo',
+    'Mabini',
+    'Malasin',
+    'Malayantoc',
+    'Mambarao',
+    'Poblacion',
+    'Malaya (Pook Malaya)',
+    'Pulong Buli',
+    'Sagaba',
+    'San Agustin',
+    'San Fabian',
+    'San Francisco',
+    'San Pascual',
+    'Santa Rita',
+    'Santo Rosario',
+  ];
 
   return (
     <Box
@@ -114,15 +145,24 @@ const CounsellingUpdateModal = ({ isOpen, onClose, onSave, counselling }) => {
                 />
               </Grid>
               <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  name="Location"
-                  label="Location"
-                  value={formData.Location}
-                  onChange={handleChange}
-                  placeholder="Enter Location"
-                  required
-                />
+                <FormControl fullWidth required sx={{ mb: 2 }}>
+                  <InputLabel id="location-label">Location</InputLabel>
+                  <Select
+                    labelId="Location"
+                    name="Location"
+                    value={formData.Location}
+                    onChange={handleChange}
+                  >
+                    <MenuItem value="">
+                      <em>Select Location</em>
+                    </MenuItem>
+                    {locationOptions.map((location) => (
+                      <MenuItem key={location} value={location}>
+                        {location}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
               </Grid>
               <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'space-between' }}>
                 <Button type="submit" variant="contained" color="primary" sx={{ width: '48%' }}>

@@ -7,17 +7,20 @@ import {
   Container,
   Paper,
   Grid,
+  MenuItem,
+  Select,
+  FormControl,
+  InputLabel,
 } from '@mui/material';
 
 const FamilyProfilesModal = ({ isOpen, onClose, onSubmit }) => {
-  // Generate an auto-incremented FamilyID based on timestamp
-  const generateFamilyID = () => `FAM-${Date.now()}`; // Fixed string interpolation
+  const generateFamilyID = () => `FAM-${Date.now()}`;
 
   const [formData, setFormData] = React.useState({
-    FamilyID: generateFamilyID(), // Auto-generated
+    FamilyID: generateFamilyID(),
     FamilyName: '',
-    Members: '', // Ensure this matches in handleCreateSubmit
-    Address: '',
+    Members: '',
+    Address: '', // Updated to match selection
     ContactNo: '',
   });
 
@@ -28,8 +31,7 @@ const FamilyProfilesModal = ({ isOpen, onClose, onSubmit }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await onSubmit(formData); // Wait for the submission to complete
-    // Reset form with a new FamilyID after successful submission
+    await onSubmit(formData);
     setFormData({
       FamilyID: generateFamilyID(),
       FamilyName: '',
@@ -37,7 +39,7 @@ const FamilyProfilesModal = ({ isOpen, onClose, onSubmit }) => {
       Address: '',
       ContactNo: '',
     });
-    onClose(); // Close only after successful submission
+    onClose();
   };
 
   useEffect(() => {
@@ -53,6 +55,14 @@ const FamilyProfilesModal = ({ isOpen, onClose, onSubmit }) => {
   }, [isOpen]);
 
   if (!isOpen) return null;
+
+  const addressOptions = [
+    'Baloc', 'Buasao', 'Burgos', 'Cabugao', 'Casulucan', 'Comitang',
+    'Concepcion', 'Dolores', 'General Luna', 'Hulo', 'Mabini', 'Malasin',
+    'Malayantoc', 'Mambarao', 'Poblacion', 'Malaya (Pook Malaya)',
+    'Pulong Buli', 'Sagaba', 'San Agustin', 'San Fabian', 'San Francisco',
+    'San Pascual', 'Santa Rita', 'Santo Rosario'
+  ];
 
   return (
     <Box
@@ -82,7 +92,7 @@ const FamilyProfilesModal = ({ isOpen, onClose, onSubmit }) => {
                   name="FamilyID"
                   label="Family ID"
                   value={formData.FamilyID}
-                  InputProps={{ readOnly: true }} // Auto-generated, so it's read-only
+                  InputProps={{ readOnly: true }}
                   sx={{ mb: 2 }}
                 />
               </Grid>
@@ -111,16 +121,22 @@ const FamilyProfilesModal = ({ isOpen, onClose, onSubmit }) => {
                 />
               </Grid>
               <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  name="Address"
-                  label="Address"
-                  value={formData.Address}
-                  onChange={handleChange}
-                  placeholder="Enter Address"
-                  required
-                  sx={{ mb: 2 }}
-                />
+                <FormControl fullWidth sx={{ mb: 2 }}>
+                  <InputLabel id="address-label">Address</InputLabel>
+                  <Select
+                    labelId="address-label"
+                    name="Address"
+                    value={formData.Address}
+                    onChange={handleChange}
+                    required
+                  >
+                    {addressOptions.map((address) => (
+                      <MenuItem key={address} value={address}>
+                        {address}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
               </Grid>
               <Grid item xs={12}>
                 <TextField

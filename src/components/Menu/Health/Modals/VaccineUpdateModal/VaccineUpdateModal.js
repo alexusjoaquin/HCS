@@ -9,22 +9,24 @@ import {
   Grid,
 } from '@mui/material';
 
-const VaccineUpdateModal = ({ isOpen, onClose, onSave, vaccine }) => {
+const VaccineUpdateModal = ({ isOpen, onClose, onSave, transaction }) => {
   const [formData, setFormData] = React.useState({
-    TransactionID: vaccine?.TransactionID || '',
-    ResidentID: vaccine?.ResidentID || '',
-    VaccineName: vaccine?.VaccineName || '',
+    TransactionID: transaction?.TransactionID || '',
+    FullName: transaction?.FullName || '',
+    Address: transaction?.Address || '',
+    VaccineName: transaction?.VaccineName || '',
   });
 
   React.useEffect(() => {
-    if (vaccine) {
+    if (transaction) {
       setFormData({
-        TransactionID: vaccine.TransactionID || '',
-        ResidentID: vaccine.ResidentID || '',
-        VaccineName: vaccine.VaccineName || '',
+        TransactionID: transaction.TransactionID || '',
+        FullName: transaction.FullName || '',
+        Address: transaction.Address || '',
+        VaccineName: transaction.VaccineName || '',
       });
     }
-  }, [vaccine]);
+  }, [transaction]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -41,7 +43,7 @@ const VaccineUpdateModal = ({ isOpen, onClose, onSave, vaccine }) => {
     onClose();
   };
 
-  if (!isOpen || !vaccine) return null; // Ensure modal is only shown if open and vaccine data is provided
+  if (!isOpen || !transaction) return null;
 
   return (
     <Box
@@ -78,11 +80,22 @@ const VaccineUpdateModal = ({ isOpen, onClose, onSave, vaccine }) => {
               <Grid item xs={12}>
                 <TextField
                   fullWidth
-                  name="ResidentID"
-                  label="Resident ID"
-                  value={formData.ResidentID}
+                  name="FullName"
+                  label="Full Name"
+                  value={formData.FullName}
                   onChange={handleChange}
-                  placeholder="Enter Resident ID"
+                  placeholder="Enter Full Name"
+                  required
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  name="Address"
+                  label="Address"
+                  value={formData.Address}
+                  onChange={handleChange}
+                  placeholder="Enter Address"
                   required
                 />
               </Grid>

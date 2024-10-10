@@ -7,6 +7,10 @@ import {
   Container,
   Paper,
   Grid,
+  MenuItem,
+  Select,
+  FormControl,
+  InputLabel,
 } from '@mui/material';
 
 const FamilyProfilesUpdateModal = ({ isOpen, onClose, onSave, family }) => {
@@ -46,6 +50,14 @@ const FamilyProfilesUpdateModal = ({ isOpen, onClose, onSave, family }) => {
   };
 
   if (!isOpen) return null;
+
+  const addressOptions = [
+    'Baloc', 'Buasao', 'Burgos', 'Cabugao', 'Casulucan', 'Comitang',
+    'Concepcion', 'Dolores', 'General Luna', 'Hulo', 'Mabini', 'Malasin',
+    'Malayantoc', 'Mambarao', 'Poblacion', 'Malaya (Pook Malaya)',
+    'Pulong Buli', 'Sagaba', 'San Agustin', 'San Fabian', 'San Francisco',
+    'San Pascual', 'Santa Rita', 'Santo Rosario'
+  ];
 
   return (
     <Box
@@ -104,15 +116,22 @@ const FamilyProfilesUpdateModal = ({ isOpen, onClose, onSave, family }) => {
                 />
               </Grid>
               <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  name="Address"
-                  label="Address"
-                  value={formData.Address}
-                  onChange={handleChange}
-                  placeholder="Enter Address"
-                  required
-                />
+                <FormControl fullWidth sx={{ mb: 2 }}>
+                  <InputLabel id="address-label">Address</InputLabel>
+                  <Select
+                    labelId="address-label"
+                    name="Address"
+                    value={formData.Address}
+                    onChange={handleChange}
+                    required
+                  >
+                    {addressOptions.map((address) => (
+                      <MenuItem key={address} value={address}>
+                        {address}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
               </Grid>
               <Grid item xs={12}>
                 <TextField

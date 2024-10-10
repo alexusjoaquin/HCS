@@ -4,28 +4,31 @@ import Sidebar from '../../../templates/Sidebar';
 import MedicineModal from '../Modals/MedicineModal/MedicineModal';
 import MedicineViewModal from '../Modals/MedicineViewModal/MedicineViewModal';
 import MedicineUpdateModal from '../Modals/MedicineUpdateModal/MedicineUpdateModal';
-import medicineService from '../../../services/medicineService'; // Service to handle fetching data
-import { toast } from 'react-toastify'; // For notifications
+import medicineService from '../../../services/medicineService';
+import { toast } from 'react-toastify';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
-import { Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography, Tabs, Tab, Box } from '@mui/material';
-import LocalPharmacyIcon from '@mui/icons-material/LocalPharmacy'; // Icon for Medicine tab
-import VaccinesIcon from '@mui/icons-material/Vaccines'; // Icon for Vaccine tab
+import { Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography, Tabs, Tab, Box, IconButton, Tooltip } from '@mui/material';
+import LocalPharmacyIcon from '@mui/icons-material/LocalPharmacy';
+import VaccinesIcon from '@mui/icons-material/Vaccines';
+import ImportExportIcon from '@mui/icons-material/ImportExport';
+import PrintIcon from '@mui/icons-material/Print';
+import { CSVLink } from 'react-csv';
 
 const MySwal = withReactContent(Swal);
 
 const Medicine = () => {
-  const [isCreateModalOpen, setCreateModalOpen] = useState(false);
-  const [isViewModalOpen, setViewModalOpen] = useState(false);
-  const [isUpdateModalOpen, setUpdateModalOpen] = useState(false);
-  const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [transactions, setTransactions] = useState([]);
-  const [activeTab, setActiveTab] = useState(0); // For tab management
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState(0);
+  const [selectedTransaction, setSelectedTransaction] = useState(null);
+  const [isMedicineModalOpen, setIsMedicineModalOpen] = useState(false);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const navigate = useNavigate();
 
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
-    // Navigate to the respective route when the tab is clicked
     if (newValue === 0) {
       navigate('/medicine');
     } else {
@@ -39,12 +42,12 @@ const Medicine = () => {
 
   const fetchTransactions = async () => {
     try {
-      const data = await medicineService.getAllTransactions();
+      const data = await medicineService.getAllMedicines();
       if (Array.isArray(data)) {
         setTransactions(data);
       } else {
         console.warn('Fetched data is not an array:', data);
-        setTransactions([]); // Fallback to empty array
+        setTransactions([]);
       }
     } catch (error) {
       console.error('Failed to fetch transactions:', error);
@@ -53,51 +56,81 @@ const Medicine = () => {
   };
 
   const handleNewRecord = () => {
-    setCreateModalOpen(true);
+    setIsMedicineModalOpen(true);
   };
 
-  const handleCreateModalClose = () => {
-    setCreateModalOpen(false);
+  const handleSearchChange = (event) => {
+    setSearchQuery(event.target.value);
   };
+
+  const filteredTransactions = transactions.filter(transaction => {
+    const { FullName, Address, MedicineName } = transaction;
+    return (
+      FullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      Address.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      MedicineName.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  });
 
   const handleCreateSubmit = async (data) => {
-    // Add logic for creating a new transaction
-    console.log('Create transaction data:', data);
-    // Fetch transactions again after creating a new one
-    fetchTransactions();
+    try {
+      const medicineData = {
+        TransactionID: data.TransactionID,
+        FullName: data.FullName,
+        Address: data.Address,
+        MedicineName: data.MedicineName,
+      };
+
+      await medicineService.createMedicine(medicineData);
+
+      MySwal.fire({
+        icon: 'success',
+        title: 'Success',
+        text: 'Medicine record created successfully!',
+        confirmButtonText: 'OK',
+      });
+
+      setIsMedicineModalOpen(false);
+      fetchTransactions();
+    } catch (error) {
+      console.error('Error creating medicine record:', error);
+      toast.error('Failed to create medicine record.');
+    }
   };
 
   const handleView = (transaction) => {
     setSelectedTransaction(transaction);
-    setViewModalOpen(true);
-  };
-
-  const handleViewModalClose = () => {
-    setViewModalOpen(false);
-    setSelectedTransaction(null);
+    setIsViewModalOpen(true);
   };
 
   const handleUpdate = (transaction) => {
     setSelectedTransaction(transaction);
-    setUpdateModalOpen(true);
+    setIsUpdateModalOpen(true);
   };
 
-  const handleUpdateModalClose = () => {
-    setUpdateModalOpen(false);
-    setSelectedTransaction(null);
-  };
-
-  const handleUpdateSave = async (data) => {
+  const handleUpdateSubmit = async (data) => {
     try {
-      const updatedTransaction = {
-        ...data,
+      const medicineData = {
+        TransactionID: data.TransactionID,
+        FullName: data.FullName,
+        Address: data.Address,
+        MedicineName: data.MedicineName,
       };
-      await medicineService.updateTransaction(data.TransactionID, updatedTransaction);
-      MySwal.fire('Updated!', 'Transaction has been updated.', 'success');
-      fetchTransactions(); // Refresh the list after update
+
+      await medicineService.updateMedicine(medicineData);
+
+      MySwal.fire({
+        icon: 'success',
+        title: 'Success',
+        text: 'Medicine record updated successfully!',
+        confirmButtonText: 'OK',
+      });
+
+      setIsUpdateModalOpen(false);
+      fetchTransactions();
     } catch (error) {
-      console.error('Error updating transaction:', error);
-      toast.error('Failed to update transaction.');
+      console.error('Error updating medicine record:', error);
+      toast.error('Failed to update medicine record.');
     }
   };
 
@@ -110,19 +143,21 @@ const Medicine = () => {
       confirmButtonColor: '#d33',
       cancelButtonColor: '#3085d6',
       confirmButtonText: 'Yes, delete it!',
-      reverseButtons: true,
     });
 
     if (result.isConfirmed) {
       try {
-        await medicineService.deleteTransaction(transactionID);
+        await medicineService.deleteMedicine(transactionID);
         MySwal.fire({
           icon: 'success',
           title: 'Deleted!',
           text: 'Transaction has been deleted.',
           confirmButtonText: 'OK',
         });
-        fetchTransactions(); // Refresh the list after deletion
+
+        setTransactions((prevTransactions) =>
+          prevTransactions.filter((transaction) => transaction.TransactionID !== transactionID)
+        );
       } catch (error) {
         console.error('Error deleting transaction:', error);
         toast.error('Failed to delete transaction.');
@@ -130,25 +165,28 @@ const Medicine = () => {
     }
   };
 
+  // CSV headers for export
+  const csvHeaders = [
+    { label: "Transaction ID", key: "TransactionID" },
+    { label: "Full Name", key: "FullName" },
+    { label: "Address", key: "Address" },
+    { label: "Medicine Name", key: "MedicineName" },
+  ];
+
+  const handlePrint = () => {
+    window.print();
+  };
+
   return (
     <div className="container">
       <Sidebar />
       <div className="content" style={{ padding: '20px' }}>
-      <Typography 
-          variant="h4" 
-          className="header" 
-          style={{ 
-            marginLeft: '40px', 
-            marginTop: '20px', 
-            marginBottom: '40px', 
-            fontWeight: '700' // Make the text bolder
-          }}
-        >
+        <Typography variant="h4" className="header" style={{ marginLeft: '40px', marginTop: '20px', marginBottom: '40px', fontWeight: '700' }}>
           MEDICINE MANAGEMENT
         </Typography>
 
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', marginLeft: '40px' }}>
-          <Tabs 
+          <Tabs
             value={activeTab}
             onChange={handleTabChange}
             aria-label="medicine tabs"
@@ -159,12 +197,12 @@ const Medicine = () => {
                 minWidth: '150px',
                 fontWeight: 'bold',
                 '&:hover': {
-                  borderBottom: '3px solid #0B8769', // Hover effect to show underline
+                  borderBottom: '3px solid #0B8769',
                 },
               },
               '.Mui-selected': {
-                borderBottom: '3px solid #0B8769', // Underline for the selected tab
-                color: '#0B8769', // Color for selected tab
+                borderBottom: '3px solid #0B8769',
+                color: '#0B8769',
               },
             }}
           >
@@ -172,27 +210,56 @@ const Medicine = () => {
             <Tab icon={<VaccinesIcon />} label="Vaccine" />
           </Tabs>
 
-          {/* Keep New Record Button and Search Bar in their current position */}
-          <Box sx={{ display: 'flex', gap: '20px' }}>
+          <Box sx={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
+            <input
+              accept=".csv"
+              id="import-csv"
+              type="file"
+              style={{ display: 'none' }}
+              onChange={() => {}}
+            />
+            <Tooltip title="Import CSV" arrow>
+              <IconButton onClick={() => document.getElementById('import-csv').click()} color="primary" aria-label="Import CSV">
+                <ImportExportIcon />
+              </IconButton>
+            </Tooltip>
+
+            <Tooltip title="Export CSV" arrow>
+              <span>
+                <CSVLink data={transactions} headers={csvHeaders} filename="medicine_data.csv">
+                  <IconButton color="secondary" aria-label="Export CSV">
+                    <ImportExportIcon />
+                  </IconButton>
+                </CSVLink>
+              </span>
+            </Tooltip>
+
+            <Tooltip title="Print Records" arrow>
+              <IconButton color="error" onClick={handlePrint} aria-label="Print Records">
+                <PrintIcon />
+              </IconButton>
+            </Tooltip>
+
             <Button variant="contained" color="primary" style={{ height: '56px' }} onClick={handleNewRecord}>
               + New Record
             </Button>
 
             <TextField
-              style={{ width: '300px', marginRight:'40px' }}
+              style={{ width: '300px', marginRight: '40px' }}
               variant="outlined"
               placeholder="Search transactions"
+              value={searchQuery}
+              onChange={handleSearchChange}
               className="search-input"
             />
           </Box>
         </Box>
 
-
         <TableContainer style={{ maxWidth: '95%', margin: '30px auto', overflowX: 'auto' }}>
           <Table>
             <TableHead>
               <TableRow>
-                {['Transaction ID', 'Resident ID', 'Medicine Name', 'Actions'].map((header) => (
+                {['Transaction ID', 'Full Name', 'Address', 'Medicine Name', 'Actions'].map((header) => (
                   <TableCell key={header} style={{ backgroundColor: '#0B8769', color: 'white', padding: '10px', textAlign: 'center' }}>
                     {header}
                   </TableCell>
@@ -200,20 +267,29 @@ const Medicine = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {Array.isArray(transactions) && transactions.length > 0 ? (
-                transactions.map((transaction) => (
+              {filteredTransactions.length > 0 ? (
+                filteredTransactions.map((transaction) => (
                   <TableRow key={transaction.TransactionID}>
                     <TableCell style={{ padding: '10px', textAlign: 'center' }}>{transaction.TransactionID}</TableCell>
-                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>{transaction.ResidentID}</TableCell>
-                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>{transaction.VaccineName}</TableCell>
+                    <TableCell style={{ padding: '10px', textAlign: 'center', cursor: 'pointer', color: '#1976d2' }} onClick={() => handleView(transaction)}>
+                      {transaction.FullName}
+                    </TableCell>
+                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>{transaction.Address}</TableCell>
+                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>{transaction.MedicineName}</TableCell>
                     <TableCell style={{ padding: '10px', textAlign: 'center' }}>
-                      <Button variant="contained" color="primary" style={{ marginRight: '10px' }} onClick={() => handleView(transaction)}>
-                        View
-                      </Button>
-                      <Button variant="contained" color="secondary" style={{ marginRight: '10px' }} onClick={() => handleUpdate(transaction)}>
+                      <Button
+                        variant="contained"
+                        color="secondary"
+                        style={{ marginRight: '10px' }}
+                        onClick={() => handleUpdate(transaction)}
+                      >
                         Update
                       </Button>
-                      <Button variant="contained" color="error" onClick={() => handleDelete(transaction.TransactionID)}>
+                      <Button
+                        variant="contained"
+                        color="error"
+                        onClick={() => handleDelete(transaction.TransactionID)}
+                      >
                         Delete
                       </Button>
                     </TableCell>
@@ -221,37 +297,39 @@ const Medicine = () => {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={4} style={{ textAlign: 'center' }}>
-                    No transactions found.
-                  </TableCell>
+                  <TableCell colSpan={5} style={{ textAlign: 'center' }}>No records found</TableCell>
                 </TableRow>
               )}
             </TableBody>
           </Table>
         </TableContainer>
+
+        {/* Modals for Add, View, Update */}
+        {isMedicineModalOpen && (
+          <MedicineModal
+            isOpen={isMedicineModalOpen}
+            onClose={() => setIsMedicineModalOpen(false)}
+            onSubmit={handleCreateSubmit}
+          />
+        )}
+
+        {isViewModalOpen && selectedTransaction && (
+          <MedicineViewModal
+            isOpen={isViewModalOpen}
+            onClose={() => setIsViewModalOpen(false)}
+            medicine={selectedTransaction}
+          />
+        )}
+
+        {isUpdateModalOpen && selectedTransaction && (
+          <MedicineUpdateModal
+            isOpen={isUpdateModalOpen}
+            onClose={() => setIsUpdateModalOpen(false)}
+            medicine={selectedTransaction}
+            onSave={handleUpdateSubmit}
+          />
+        )}
       </div>
-
-      {/* Modal for New Medicine Record */}
-      <MedicineModal
-        isOpen={isCreateModalOpen}
-        onClose={handleCreateModalClose}
-        onSubmit={handleCreateSubmit}
-      />
-
-      {/* Modal for Viewing Medicine Transaction */}
-      <MedicineViewModal
-        isOpen={isViewModalOpen}
-        onClose={handleViewModalClose}
-        transaction={selectedTransaction}
-      />
-
-      {/* Modal for Updating Medicine Transaction */}
-      <MedicineUpdateModal
-        isOpen={isUpdateModalOpen}
-        onClose={handleUpdateModalClose}
-        transaction={selectedTransaction}
-        onSave={handleUpdateSave}
-      />
     </div>
   );
 };
