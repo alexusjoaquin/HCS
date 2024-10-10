@@ -14,10 +14,10 @@ import {
 const PatientUpdateModal = ({ isOpen, onClose, onSave, patient }) => {
   const [formData, setFormData] = React.useState({
     PatientID: patient?.PatientID || '',
-    FirstName: patient?.FirstName || '',
-    LastName: patient?.LastName || '',
+    Fullname: patient?.Fullname || '',
+    Address: patient?.Address || '',
     DateOfBirth: patient?.DateOfBirth || '',
-    ContactNo: patient?.ContactNo || '', // Ensure this is correctly mapped
+    ContactNo: patient?.ContactNo || '',
     Gender: patient?.Gender || '',
     MedicalHistory: patient?.MedicalHistory || '',
   });
@@ -26,10 +26,10 @@ const PatientUpdateModal = ({ isOpen, onClose, onSave, patient }) => {
     if (patient) {
       setFormData({
         PatientID: patient.PatientID || '',
-        FirstName: patient.FirstName || '',
-        LastName: patient.LastName || '',
+        Fullname: patient?.Fullname || '',
+        Address: patient.Address || '',
         DateOfBirth: patient.DateOfBirth || '',
-        ContactNo: patient.ContactNo || '', // Ensure this is correctly mapped
+        ContactNo: patient.ContactNo || '',
         Gender: patient.Gender || '',
         MedicalHistory: patient.MedicalHistory || '',
       });
@@ -43,16 +43,15 @@ const PatientUpdateModal = ({ isOpen, onClose, onSave, patient }) => {
 
   const handleSave = (e) => {
     e.preventDefault();
-    if (typeof onSave === 'function') { // Optional: Check if onSave is a function
+    if (typeof onSave === 'function') {
       onSave(formData);
     } else {
       console.error('onSave is not a function:', onSave);
     }
     onClose();
   };
-  
 
-  if (!isOpen || !patient) return null; // Ensure both conditions are met
+  if (!isOpen || !patient) return null;
 
   return (
     <Box
@@ -89,22 +88,22 @@ const PatientUpdateModal = ({ isOpen, onClose, onSave, patient }) => {
               <Grid item xs={12}>
                 <TextField
                   fullWidth
-                  name="FirstName"
-                  label="First Name"
-                  value={formData.FirstName}
+                  name="Fullname"
+                  label="Full Name"
+                  value={formData.Fullname}
                   onChange={handleChange}
-                  placeholder="Enter First Name"
+                  placeholder="Enter Full Name"
                   required
                 />
               </Grid>
               <Grid item xs={12}>
                 <TextField
                   fullWidth
-                  name="LastName"
-                  label="Last Name"
-                  value={formData.LastName}
+                  name="Address"
+                  label="Address"
+                  value={formData.Address}
                   onChange={handleChange}
-                  placeholder="Enter Last Name"
+                  placeholder="Enter Address"
                   required
                 />
               </Grid>
@@ -116,17 +115,17 @@ const PatientUpdateModal = ({ isOpen, onClose, onSave, patient }) => {
                   value={formData.DateOfBirth}
                   onChange={handleChange}
                   required
-                  InputLabelProps={{ shrink: true }} // Ensure label stays visible
-                  sx={{ width: '100%' }} // Ensure the field takes the full width
+                  InputLabelProps={{ shrink: true }}
+                  sx={{ width: '100%' }}
                 />
               </Grid>
               <Grid item xs={12}>
                 <TextField
                   fullWidth
-                  name="ContactNo" // Ensure this matches your state
+                  name="ContactNo"
                   label="Contact No"
-                  value={formData.ContactNo} // Ensure this matches your state
-                  onChange={handleChange} // Ensure this is correctly set up for editing
+                  value={formData.ContactNo}
+                  onChange={handleChange}
                   placeholder="Enter Contact No"
                   required
                 />
@@ -140,7 +139,9 @@ const PatientUpdateModal = ({ isOpen, onClose, onSave, patient }) => {
                   displayEmpty
                   required
                 >
-                  <MenuItem value="" disabled>Select Gender</MenuItem>
+                  <MenuItem value="" disabled>
+                    Select Gender
+                  </MenuItem>
                   <MenuItem value="Male">Male</MenuItem>
                   <MenuItem value="Female">Female</MenuItem>
                   <MenuItem value="Other">Other</MenuItem>

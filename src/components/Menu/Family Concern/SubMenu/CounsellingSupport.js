@@ -7,7 +7,10 @@ import familycounsellingService from '../../../services/familycounsellingService
 import { toast } from 'react-toastify';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
-import { Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography } from '@mui/material';
+import { Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography, IconButton, Tooltip } from '@mui/material';
+import { CSVLink } from 'react-csv'; 
+import ImportExportIcon from '@mui/icons-material/ImportExport'; 
+import PrintIcon from '@mui/icons-material/Print'; 
 
 const MySwal = withReactContent(Swal);
 
@@ -17,19 +20,33 @@ const CounsellingSupport = () => {
   const [isUpdateModalOpen, setUpdateModalOpen] = useState(false);
   const [selectedCounselling, setSelectedCounselling] = useState(null);
   const [counsellingRecords, setCounsellingRecords] = useState([]);
+  const [filteredRecords, setFilteredRecords] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     fetchCounsellingRecords();
   }, []);
+
+  useEffect(() => {
+    const results = counsellingRecords.filter(record =>
+      record.ClientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      record.Counselor.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      record.Location.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      record.DateOfSession.includes(searchTerm)
+    );
+    setFilteredRecords(results);
+  }, [searchTerm, counsellingRecords]);
 
   const fetchCounsellingRecords = async () => {
     try {
       const response = await familycounsellingService.getAllFamilyCounselling();
       if (response && Array.isArray(response.counselingRecords)) {
         setCounsellingRecords(response.counselingRecords);
+        setFilteredRecords(response.counselingRecords); // Initialize filtered records
       } else {
         console.warn('Fetched data is not an array:', response);
         setCounsellingRecords([]);
+        setFilteredRecords([]);
       }
     } catch (error) {
       console.error('Failed to fetch counselling records:', error);
@@ -144,6 +161,24 @@ const CounsellingSupport = () => {
     }
   };
 
+  // CSV headers for export
+  const csvHeaders = [
+    { label: "Service ID", key: "ServiceID" },
+    { label: "Client Name", key: "ClientName" },
+    { label: "Counselor", key: "Counselor" },
+    { label: "Date Of Session", key: "DateOfSession" },
+    { label: "Location", key: "Location" },
+  ];
+
+  const handleFileUpload = () => {
+    // Handle file upload logic here
+  }
+
+  // Handle Print Records
+  const handlePrint = () => {
+    window.print();
+  };
+
   return (
     <div className="container">
       <Sidebar />
@@ -153,6 +188,38 @@ const CounsellingSupport = () => {
         </Typography>
 
         <div className="button-container" style={{ display: 'flex', justifyContent: 'flex-end', gap: '30px' }}>
+          {/* Import CSV with Tooltip */}
+          <input
+            accept=".csv"
+            id="import-csv"
+            type="file"
+            style={{ display: 'none' }}
+            onChange={handleFileUpload}
+          />
+          <Tooltip title="Import CSV" arrow>
+            <IconButton onClick={() => document.getElementById('import-csv').click()} color="primary" aria-label="Import CSV">
+              <ImportExportIcon />
+            </IconButton>
+          </Tooltip>
+
+          {/* Export CSV with Tooltip */}
+          <Tooltip title="Export CSV" arrow>
+            <span>
+              <CSVLink data={counsellingRecords} headers={csvHeaders} filename="counselling_records.csv">
+                <IconButton color="secondary" aria-label="Export CSV">
+                  <ImportExportIcon />
+                </IconButton>
+              </CSVLink>
+            </span>
+          </Tooltip>
+
+          {/* Print Records with Tooltip */}
+          <Tooltip title="Print Records" arrow>
+            <IconButton color="error" onClick={handlePrint} aria-label="Print Records">
+              <PrintIcon />
+            </IconButton>
+          </Tooltip>
+          
           <Button variant="contained" color="primary" style={{ height: '56px' }} onClick={handleNewRecord}>
             + New Record
           </Button>
@@ -161,6 +228,8 @@ const CounsellingSupport = () => {
             variant="outlined"
             placeholder="Search records"
             className="search-input"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
 
@@ -176,8 +245,8 @@ const CounsellingSupport = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {Array.isArray(counsellingRecords) && counsellingRecords.length > 0 ? (
-                counsellingRecords.map((record) => (
+              {filteredRecords.length > 0 ? (
+                filteredRecords.map((record) => (
                   <TableRow key={record.ServiceID}>
                     <TableCell style={{ padding: '10px', textAlign: 'center' }}>{record.ServiceID}</TableCell>
                     <TableCell style={{ padding: '10px', textAlign: 'center' }}>{record.ClientName}</TableCell>
@@ -214,7 +283,7 @@ const CounsellingSupport = () => {
       <CounsellingViewModal
         isOpen={isViewModalOpen}
         onClose={handleViewModalClose}
-        counsellingData={selectedCounselling}  // update to match the expected prop
+        counsellingData={selectedCounselling}
       />
       <CounsellingUpdateModal isOpen={isUpdateModalOpen} onClose={handleUpdateModalClose} onSave={handleUpdateSubmit} counselling={selectedCounselling} />
     </div>

@@ -22,7 +22,6 @@ import {
 } from '@mui/material';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
-import LockOpenIcon from '@mui/icons-material/LockOpen';
 import axios from 'axios';
 
 // Validation schema with enhanced validation for username and password

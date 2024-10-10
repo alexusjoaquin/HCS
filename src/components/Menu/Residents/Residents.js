@@ -7,7 +7,10 @@ import { toast } from 'react-toastify';
 import ResidentCreateModal from './Modals/ResidentCreateModal';
 import ResidentViewModal from './Modals/ResidentViewModal';
 import ResidentUpdateModal from './Modals/ResidentUpdateModal';
-import { Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography } from '@mui/material';
+import { Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography, IconButton, Tooltip } from '@mui/material';
+import { CSVLink } from 'react-csv'; 
+import ImportExportIcon from '@mui/icons-material/ImportExport'; 
+import PrintIcon from '@mui/icons-material/Print'; 
 import '../Health/CssFiles/Appointment.css';
 
 const MySwal = withReactContent(Swal);
@@ -26,10 +29,10 @@ const Residents = () => {
   }, []);
 
   useEffect(() => {
-    // Filter residents based on search term
     const results = residents.filter(resident =>
       resident.ResidentID.toString().includes(searchTerm) ||
-      resident.Name.toLowerCase().includes(searchTerm.toLowerCase())
+      resident.Name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      resident.Address.toLowerCase().includes(searchTerm.toLowerCase())
     );
     setFilteredResidents(results);
   }, [searchTerm, residents]);
@@ -39,7 +42,7 @@ const Residents = () => {
       const response = await residentsService.getAllResidents();
       if (response && Array.isArray(response)) {
         setResidents(response);
-        setFilteredResidents(response); // Initialize filtered residents
+        setFilteredResidents(response);
       } else {
         console.warn('Fetched data is not an array:', response);
         setResidents([]);
@@ -161,14 +164,85 @@ const Residents = () => {
     }
   };
 
+  // CSV headers for export
+  const csvHeaders = [
+    { label: "Resident ID", key: "ResidentID" },
+    { label: "Name", key: "Name" },
+    { label: "Age", key: "Age" },
+    { label: "Birthdate", key: "Birthday" },
+    { label: "Gender", key: "Gender" },
+    { label: "Address", key: "Address" },
+    { label: "If Senior", key: "is_senior" },
+  ];
+
+  // Handle File Upload
+  const handleFileUpload = (event) => {
+    const file = event.target.files[0];
+    const reader = new FileReader();
+
+    reader.onload = async (e) => {
+      const csvData = e.target.result;
+      const base64String = btoa(unescape(encodeURIComponent(csvData))); // Base64 encoding
+
+      try {
+        await residentsService.importResidentsCSV(base64String); // Send base64 string
+        toast.success("CSV data imported and saved successfully!");
+        fetchResidents(); // Refresh the resident data
+      } catch (error) {
+        console.error('Error importing residents:', error);
+        toast.error('Failed to import residents: ' + error.message);
+      }
+    };
+
+    if (file) reader.readAsText(file);
+  };
+
+  // Handle Print Records
+  const handlePrint = () => {
+    window.print();
+  };
+
   return (
     <div className="container">
       <Sidebar />
       <div className="content" style={{ padding: '20px' }}>
         <Typography variant="h4" className="header" style={{ fontWeight: '700', marginLeft: '40px', marginTop: '20px' }}>RESIDENTS</Typography>
 
-        <div className="button-container" style={{ display: 'flex', justifyContent: 'flex-end', gap: '30px' }}>
-          <Button variant="contained" color="primary" style={{ height: '56px' }} onClick={handleNewResident}>
+        <div className="button-container" style={{ display: 'flex', justifyContent: 'flex-end', gap: '30px', alignItems: 'center' }}>
+          {/* Import CSV as Icon Button */}
+          <input
+            accept=".csv"
+            id="import-csv"
+            type="file"
+            style={{ display: 'none' }}
+            onChange={handleFileUpload}
+          />
+          <Tooltip title="Import CSV" arrow>
+            <IconButton onClick={() => document.getElementById('import-csv').click()} color="primary" aria-label="Import CSV">
+              <ImportExportIcon />
+            </IconButton>
+          </Tooltip>
+
+          {/* Export CSV as Icon Button */}
+          <Tooltip title="Export CSV" arrow>
+            <span>
+              <CSVLink data={residents} headers={csvHeaders} filename="residents_data.csv">
+                <IconButton color="secondary" aria-label="Export CSV">
+                  <ImportExportIcon />
+                </IconButton>
+              </CSVLink>
+            </span>
+          </Tooltip>
+
+          {/* Print Records as Icon Button */}
+          <Tooltip title="Print Records" arrow>
+            <IconButton color="error" onClick={handlePrint} aria-label="Print Records">
+              <PrintIcon />
+            </IconButton>
+          </Tooltip>
+
+          {/* New Resident Button */}
+          <Button variant="contained" color="primary" style={{ height: '56px'}} onClick={handleNewResident}>
             + New Resident
           </Button>
           <TextField
@@ -176,8 +250,8 @@ const Residents = () => {
             variant="outlined"
             placeholder="Search residents"
             className="search-input"
-            value={searchTerm} // Bind search input to state
-            onChange={(e) => setSearchTerm(e.target.value)} // Update state on change
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
 
@@ -204,21 +278,15 @@ const Residents = () => {
                     <TableCell style={{ padding: '10px', textAlign: 'center' }}>{resident.Address}</TableCell>
                     <TableCell style={{ padding: '10px', textAlign: 'center' }}>{resident.is_senior ? 'Yes' : 'No'}</TableCell>
                     <TableCell style={{ padding: '10px', textAlign: 'center' }}>
-                      <Button variant="contained" color="primary" style={{ marginRight: '10px' }} onClick={() => handleView(resident)}>
-                        View
-                      </Button>
-                      <Button variant="contained" color="secondary" style={{ marginRight: '10px' }} onClick={() => handleUpdate(resident)}>
-                        Update
-                      </Button>
-                      <Button variant="contained" color="error" onClick={() => handleDelete(resident.ResidentID)}>
-                        Delete
-                      </Button>
+                      <Button variant="contained" color="primary" style={{ marginRight: '10px' }} onClick={() => handleView(resident)}>View</Button>
+                      <Button variant="contained" color="secondary" style={{ marginRight: '10px' }} onClick={() => handleUpdate(resident)}>Update</Button>
+                      <Button variant="contained" color="error" onClick={() => handleDelete(resident.ResidentID)}>Delete</Button>
                     </TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={8} style={{ textAlign: 'center' }}>
+                  <TableCell colSpan={8} style={{ textAlign: 'center', padding: '20px' }}>
                     No residents found.
                   </TableCell>
                 </TableRow>
@@ -226,29 +294,29 @@ const Residents = () => {
             </TableBody>
           </Table>
         </TableContainer>
+
+        {/* Modal for New Resident */}
+        <ResidentCreateModal
+          isOpen={isCreateModalOpen}
+          onClose={handleCreateModalClose}
+          onSubmit={handleCreateSubmit}
+        />
+
+        {/* Modal for Viewing Resident */}
+        <ResidentViewModal
+          isOpen={isViewModalOpen}
+          onClose={handleViewModalClose}
+          resident={selectedResident}
+        />
+
+        {/* Modal for Updating Resident */}
+        <ResidentUpdateModal
+          isOpen={isUpdateModalOpen}
+          onClose={handleUpdateModalClose}
+          onSave={handleUpdateSubmit}
+          resident={selectedResident}
+        />
       </div>
-
-      {/* Modal for New Resident */}
-      <ResidentCreateModal
-        isOpen={isCreateModalOpen}
-        onClose={handleCreateModalClose}
-        onSubmit={handleCreateSubmit}
-      />
-
-      {/* Modal for Viewing Resident */}
-      <ResidentViewModal
-        isOpen={isViewModalOpen}
-        onClose={handleViewModalClose}
-        resident={selectedResident}
-      />
-
-      {/* Modal for Updating Resident */}
-      <ResidentUpdateModal
-        isOpen={isUpdateModalOpen}
-        onClose={handleUpdateModalClose}
-        resident={selectedResident}
-        onSubmit={handleUpdateSubmit}
-      />
     </div>
   );
 };

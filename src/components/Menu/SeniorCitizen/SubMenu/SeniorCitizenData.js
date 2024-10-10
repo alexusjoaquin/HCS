@@ -6,7 +6,10 @@ import SeniorCitizenUpdateModal from '../Modals/SeniorCitizenUpdateModal/SeniorC
 import seniorcitizenService from '../../../services/seniorcitizenService';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
-import { Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, TextField } from '@mui/material';
+import { Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography, IconButton, Tooltip } from '@mui/material';
+import { CSVLink } from 'react-csv'; 
+import ImportExportIcon from '@mui/icons-material/ImportExport'; 
+import PrintIcon from '@mui/icons-material/Print'; 
 
 const MySwal = withReactContent(Swal);
 
@@ -16,18 +19,31 @@ const SeniorCitizenData = () => {
   const [isUpdateModalOpen, setUpdateModalOpen] = useState(false);
   const [selectedSeniorCitizen, setSelectedSeniorCitizen] = useState(null);
   const [seniorCitizens, setSeniorCitizens] = useState([]);
-
+  const [filteredCitizens, setFilteredCitizens] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
 
   // Fetch senior citizens data when component loads
   useEffect(() => {
     fetchSeniorCitizens();
   }, []);
 
+  useEffect(() => {
+    const results = seniorCitizens.filter(citizen =>
+      citizen.FullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      citizen.Address.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      citizen.ContactInfo?.Phone.includes(searchTerm) ||
+      citizen.Gender.toLowerCase().includes(searchTerm) ||
+      citizen.MedicalHistory.toLowerCase().includes(searchTerm)
+    );
+    setFilteredCitizens(results);
+  }, [searchTerm, seniorCitizens]);
+
   const fetchSeniorCitizens = async () => {
     try {
       const response = await seniorcitizenService.getAllSeniorCitizens();
-      console.log('Fetched senior citizens:', response); // Log the response
+      console.log('Fetched senior citizens:', response);
       setSeniorCitizens(response);
+      setFilteredCitizens(response); // Initialize filtered citizens
     } catch (error) {
       console.error('Failed to fetch senior citizens:', error);
     }
@@ -142,6 +158,26 @@ const SeniorCitizenData = () => {
     }
   };
 
+  // CSV headers for export
+  const csvHeaders = [
+    { label: "Senior ID", key: "SeniorID" },
+    { label: "Full Name", key: "FullName" },
+    { label: "Address", key: "Address" },
+    { label: "Date Of Birth", key: "DateOfBirth" },
+    { label: "Contact Info", key: "ContactInfo" },
+    { label: "Gender", key: "Gender" },
+    { label: "Medical History", key: "MedicalHistory" }
+  ];
+
+  const handleFileUpload = () => {
+    // Handle file upload logic here
+  }
+
+  // Handle Print Records
+  const handlePrint = () => {
+    window.print();
+  };
+
   return (
     <div className="container">
       <Sidebar />
@@ -151,6 +187,38 @@ const SeniorCitizenData = () => {
         </Typography>
 
         <div className="button-container" style={{ display: 'flex', justifyContent: 'flex-end', gap: '30px' }}>
+          {/* Import CSV with Tooltip */}
+          <input
+            accept=".csv"
+            id="import-csv"
+            type="file"
+            style={{ display: 'none' }}
+            onChange={handleFileUpload}
+          />
+          <Tooltip title="Import CSV" arrow>
+            <IconButton onClick={() => document.getElementById('import-csv').click()} color="primary" aria-label="Import CSV">
+              <ImportExportIcon />
+            </IconButton>
+          </Tooltip>
+
+          {/* Export CSV with Tooltip */}
+          <Tooltip title="Export CSV" arrow>
+            <span>
+              <CSVLink data={seniorCitizens} headers={csvHeaders} filename="senior_citizens.csv">
+                <IconButton color="secondary" aria-label="Export CSV">
+                  <ImportExportIcon />
+                </IconButton>
+              </CSVLink>
+            </span>
+          </Tooltip>
+
+          {/* Print Records with Tooltip */}
+          <Tooltip title="Print Records" arrow>
+            <IconButton color="error" onClick={handlePrint} aria-label="Print Records">
+              <PrintIcon />
+            </IconButton>
+          </Tooltip>
+
           <Button variant="contained" color="primary" style={{ height: '56px' }} onClick={handleNewRecord}>
             + New Record
           </Button>
@@ -159,6 +227,8 @@ const SeniorCitizenData = () => {
             variant="outlined"
             placeholder="Search senior citizens"
             className="search-input"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
 
@@ -174,8 +244,8 @@ const SeniorCitizenData = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {Array.isArray(seniorCitizens) && seniorCitizens.length > 0 ? (
-                seniorCitizens.map((citizen) => (
+              {Array.isArray(filteredCitizens) && filteredCitizens.length > 0 ? (
+                filteredCitizens.map((citizen) => (
                   <TableRow key={citizen.SeniorID}>
                     <TableCell style={{ padding: '10px', textAlign: 'center' }}>{citizen.SeniorID}</TableCell>
                     <TableCell style={{ padding: '10px', textAlign: 'center' }}>{citizen.FullName}</TableCell>

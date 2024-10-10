@@ -79,6 +79,30 @@ const residentsService = {
       throw error;
     }
   },
+
+  importResidentsCSV: async (csvString) => {
+    try {
+        const response = await axios.post(apiconfig.resident.importCSV, {
+            csvFile: csvString,
+        }, {
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+
+        if (response.data.status === 'success') {
+            return response.data.message;
+        } else {
+            throw new Error(response.data.message || 'Failed to import residents');
+        }
+    } catch (error) {
+        console.error('Error importing residents CSV:', error);
+        throw error;
+    }
+},
+
 };
+
+
 
 export default residentsService;

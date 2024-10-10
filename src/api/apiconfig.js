@@ -214,6 +214,10 @@ const apiconfig = {
     getById: (id) => `${API_BASE_URL}/Residents/${id}`, // GET /{id}
     getAll: `${API_BASE_URL}/Residents/all`, // GET /all
   },
+  
+  resident: {
+    importCSV: `${API_BASE_URL}/Resident/importCSV`, // POST for CSV import
+  }
 };
 
 export default apiconfig;

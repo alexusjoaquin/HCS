@@ -7,12 +7,17 @@ import SuspectUpdateModal from '../Modals/SuspectUpdateModal/SuspectUpdateModal'
 import { toast } from 'react-toastify';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
-import { Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography } from '@mui/material';
+import { Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography, IconButton, Tooltip } from '@mui/material';
+import { CSVLink } from 'react-csv'; 
+import ImportExportIcon from '@mui/icons-material/ImportExport'; 
+import PrintIcon from '@mui/icons-material/Print'; 
 
 const MySwal = withReactContent(Swal);
 
 const Suspects = () => {
   const [suspects, setSuspects] = useState([]);
+  const [filteredSuspects, setFilteredSuspects] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const [isCreateModalOpen, setCreateModalOpen] = useState(false);
   const [isViewModalOpen, setViewModalOpen] = useState(false);
   const [isUpdateModalOpen, setUpdateModalOpen] = useState(false);
@@ -22,14 +27,26 @@ const Suspects = () => {
     fetchSuspects();
   }, []);
 
+  useEffect(() => {
+    const results = suspects.filter(suspect =>
+      suspect.FullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      suspect.Alias.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      suspect.LastKnownAddress.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      suspect.Status.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    setFilteredSuspects(results);
+  }, [searchTerm, suspects]);
+
   const fetchSuspects = async () => {
     try {
       const response = await suspectService.getAllSuspects();
       if (response && Array.isArray(response)) {
         setSuspects(response);
+        setFilteredSuspects(response); // Initialize filtered suspects
       } else {
         console.warn('Fetched data is not an array:', response);
         setSuspects([]);
+        setFilteredSuspects([]);
       }
     } catch (error) {
       console.error('Failed to fetch suspects:', error);
@@ -49,7 +66,7 @@ const Suspects = () => {
   const handleCreateSubmit = async (data) => {
     try {
       const suspectData = {
-        SuspectID: `SUS-${Math.floor(Date.now() / 1000)}`, // Generate Suspect ID based on timestamp
+        SuspectID: `SUS-${Math.floor(Date.now() / 1000)}`,
         FullName: data.FullName,
         Alias: data.Alias,
         LastKnownAddress: data.LastKnownAddress,
@@ -144,6 +161,24 @@ const Suspects = () => {
     }
   };
 
+  // CSV headers for export
+  const csvHeaders = [
+    { label: "Suspect ID", key: "SuspectID" },
+    { label: "Full Name", key: "FullName" },
+    { label: "Alias", key: "Alias" },
+    { label: "Last Known Address", key: "LastKnownAddress" },
+    { label: "Status", key: "Status" },
+  ];
+
+  const handleFileUpload = () => {
+    // Handle file upload logic here
+  };
+
+  // Handle Print Records
+  const handlePrint = () => {
+    window.print();
+  };
+
   return (
     <div className="container">
       <Sidebar />
@@ -151,14 +186,48 @@ const Suspects = () => {
         <Typography variant="h4" className="header" style={{ fontWeight: '700', marginLeft: '40px', marginTop: '20px' }}>SUSPECTS</Typography>
 
         <div className="button-container" style={{ display: 'flex', justifyContent: 'flex-end', gap: '30px' }}>
+          {/* Import CSV with Tooltip */}
+          <input
+            accept=".csv"
+            id="import-csv"
+            type="file"
+            style={{ display: 'none' }}
+            onChange={handleFileUpload}
+          />
+          <Tooltip title="Import CSV" arrow>
+            <IconButton onClick={() => document.getElementById('import-csv').click()} color="primary" aria-label="Import CSV">
+              <ImportExportIcon />
+            </IconButton>
+          </Tooltip>
+
+          {/* Export CSV with Tooltip */}
+          <Tooltip title="Export CSV" arrow>
+            <span>
+              <CSVLink data={filteredSuspects} headers={csvHeaders} filename="suspects.csv">
+                <IconButton color="secondary" aria-label="Export CSV">
+                  <ImportExportIcon />
+                </IconButton>
+              </CSVLink>
+            </span>
+          </Tooltip>
+
+          {/* Print Records with Tooltip */}
+          <Tooltip title="Print Records" arrow>
+            <IconButton color="error" onClick={handlePrint} aria-label="Print Records">
+              <PrintIcon />
+            </IconButton>
+          </Tooltip>
+
           <Button variant="contained" color="primary" style={{ height: '56px' }} onClick={handleNewSuspect}>
             + New Suspect
           </Button>
           <TextField
             style={{ width: '300px', marginRight: '40px' }}
             variant="outlined"
-            placeholder="Search suspects"
+            placeholder="Search suspects by Full Name, Alias, or Address"
             className="search-input"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
 
@@ -166,7 +235,7 @@ const Suspects = () => {
           <Table>
             <TableHead>
               <TableRow>
-                {['Suspect ID', 'Full Name', 'Alias', 'Last Known Address', 'Status', 'Actions'].map((header) => (
+                {['Suspect ID', 'Full Name', 'Alias', 'Address', 'Status', 'Actions'].map((header) => (
                   <TableCell key={header} style={{ backgroundColor: '#0B8769', color: 'white', padding: '10px', textAlign: 'center' }}>
                     {header}
                   </TableCell>
@@ -174,14 +243,14 @@ const Suspects = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {Array.isArray(suspects) && suspects.length > 0 ? (
-                suspects.map((suspect) => (
+              {Array.isArray(filteredSuspects) && filteredSuspects.length > 0 ? (
+                filteredSuspects.map((suspect) => (
                   <TableRow key={suspect.SuspectID}>
-                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>{suspect.SuspectID}</TableCell>
-                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>{suspect.FullName}</TableCell>
-                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>{suspect.Alias}</TableCell>
-                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>{suspect.LastKnownAddress}</TableCell>
-                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>{suspect.Status}</TableCell>
+                    <TableCell align="center">{suspect.SuspectID}</TableCell>
+                    <TableCell align="center">{suspect.FullName}</TableCell>
+                    <TableCell align="center">{suspect.Alias}</TableCell>
+                    <TableCell align="center">{suspect.LastKnownAddress}</TableCell>
+                    <TableCell align="center">{suspect.Status}</TableCell>
                     <TableCell style={{ padding: '10px', textAlign: 'center' }}>
                       <Button variant="contained" color="primary" style={{ marginRight: '10px' }} onClick={() => handleView(suspect)}>
                         View
@@ -197,17 +266,14 @@ const Suspects = () => {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={6} style={{ textAlign: 'center' }}>
-                    No suspects found.
-                  </TableCell>
+                  <TableCell colSpan={6} align="center">No suspects found</TableCell>
                 </TableRow>
               )}
             </TableBody>
           </Table>
         </TableContainer>
-      </div>
 
-      {/* Modal for New Suspect */}
+       {/* Modal for New Suspect */}
       <SuspectModal
         isOpen={isCreateModalOpen}
         onClose={handleCreateModalClose}
@@ -228,6 +294,7 @@ const Suspects = () => {
         onSave={handleUpdateSubmit}
         suspect={selectedSuspect}
       />
+      </div>
     </div>
   );
 };

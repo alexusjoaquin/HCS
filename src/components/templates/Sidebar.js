@@ -205,12 +205,6 @@ const Sidebar = () => {
               <ListItemText primary="Family Counseling" />
             </ListItem>
 
-            <ListItem button sx={{ pl: 4 }} onClick={() => handleNavigation('/familyplanning')}>
-              <ListItemIcon sx={{ color: '#e0f7fa' }}>
-                <FamilyRestroomIcon />
-              </ListItemIcon>
-              <ListItemText primary="Family Planning" />
-            </ListItem>
           </List>
         </Collapse>
 

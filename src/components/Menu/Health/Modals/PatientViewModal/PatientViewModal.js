@@ -57,22 +57,22 @@ const PatientViewModal = ({ isOpen, onClose, patient }) => {
                 }}
               />
             </Grid>
-            <Grid item xs={6}>
+            <Grid item xs={12}>
               <TextField
                 fullWidth
-                label="First Name"
-                value={patient.FirstName}
+                label="Full Name"
+                value={patient.Fullname}
                 variant="outlined"
                 InputProps={{
                   readOnly: true,
                 }}
               />
             </Grid>
-            <Grid item xs={6}>
+            <Grid item xs={12}>
               <TextField
                 fullWidth
-                label="Last Name"
-                value={patient.LastName}
+                label="Address"
+                value={patient.Address}
                 variant="outlined"
                 InputProps={{
                   readOnly: true,
@@ -93,7 +93,7 @@ const PatientViewModal = ({ isOpen, onClose, patient }) => {
             <Grid item xs={12}>
               <TextField
                 fullWidth
-                label="Contact Info"
+                label="Contact No."
                 value={patient.ContactNo}
                 variant="outlined"
                 InputProps={{

@@ -14,18 +14,14 @@ import {
 const PatientModal = ({ isOpen, onClose, onSubmit }) => {
   const [formData, setFormData] = React.useState({
     PatientID: '',
-    FirstName: '',
-    LastName: '',
+    Fullname: '',
+    Address: '',
     DateOfBirth: '',
-    ContactInfo: {
-      Phone: '',
-      Email: '',
-    },
+    ContactNo: '',
     Gender: 'Male', // Default value
     MedicalHistory: '',
   });
 
-  // Generate a unique Patient ID whenever the modal opens
   useEffect(() => {
     if (isOpen) {
       const generatedID = `PID-${Date.now()}`; // Example ID generation logic
@@ -44,30 +40,15 @@ const PatientModal = ({ isOpen, onClose, onSubmit }) => {
     }));
   };
 
-  const handleContactChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prevState) => ({
-      ...prevState,
-      ContactInfo: {
-        ...prevState.ContactInfo,
-        [name]: value,
-      },
-    }));
-  };
-
   const handleSubmit = (e) => {
     e.preventDefault();
     onSubmit(formData);
-    // Reset form after submission
     setFormData({
       PatientID: '',
-      FirstName: '',
-      LastName: '',
+      Fullname: '',
+      Address: '',
       DateOfBirth: '',
-      ContactInfo: {
-        Phone: '',
-        Email: '',
-      },
+      ContactNo: '',
       Gender: 'Male',
       MedicalHistory: '',
     });
@@ -105,7 +86,6 @@ const PatientModal = ({ isOpen, onClose, onSubmit }) => {
                   label="Patient ID"
                   value={formData.PatientID}
                   onChange={handleChange}
-                  placeholder="Enter Patient ID"
                   required
                   disabled // Disable input for PatientID
                 />
@@ -113,22 +93,22 @@ const PatientModal = ({ isOpen, onClose, onSubmit }) => {
               <Grid item xs={12}>
                 <TextField
                   fullWidth
-                  name="FirstName"
-                  label="First Name"
-                  value={formData.FirstName}
+                  name="Fullname"
+                  label="Full Name"
+                  value={formData.Fullname}
                   onChange={handleChange}
-                  placeholder="Enter First Name"
+                  placeholder="Enter Full Name"
                   required
                 />
               </Grid>
               <Grid item xs={12}>
                 <TextField
                   fullWidth
-                  name="LastName"
-                  label="Last Name"
-                  value={formData.LastName}
+                  name="Address"
+                  label="Address"
+                  value={formData.Address}
                   onChange={handleChange}
-                  placeholder="Enter Last Name"
+                  placeholder="Enter Address"
                   required
                 />
               </Grid>
@@ -148,23 +128,11 @@ const PatientModal = ({ isOpen, onClose, onSubmit }) => {
                 <TextField
                   fullWidth
                   type="tel"
-                  name="Phone"
-                  label="Phone"
-                  value={formData.ContactInfo.Phone}
-                  onChange={handleContactChange}
-                  placeholder="Enter Phone Number"
-                  required
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  type="email"
-                  name="Email"
-                  label="Email"
-                  value={formData.ContactInfo.Email}
-                  onChange={handleContactChange}
-                  placeholder="Enter Email"
+                  name="ContactNo"
+                  label="Contact No"
+                  value={formData.ContactNo}
+                  onChange={handleChange}
+                  placeholder="Enter Contact Number"
                   required
                 />
               </Grid>
@@ -205,7 +173,7 @@ const PatientModal = ({ isOpen, onClose, onSubmit }) => {
                   color="secondary"
                   sx={{ width: '48%' }}
                 >
-                  Close
+                  Cancel
                 </Button>
               </Grid>
             </Grid>

@@ -123,16 +123,36 @@ const ResidentUpdateModal = ({ isOpen, onClose, onSave, resident }) => {
                 </Grid>
               </Grid>
               <Grid item xs={12}>
-                <TextField
+                <Select
                   fullWidth
                   name="Address"
-                  label="Address"
                   value={formData.Address}
                   onChange={handleChange}
-                  placeholder="Enter Address"
+                  displayEmpty
                   required
-                />
+                >
+                  <MenuItem value="" disabled>Select Barangay</MenuItem>
+                  <MenuItem value="Baloc">Baloc</MenuItem>
+                  <MenuItem value="Buasao">Buasao</MenuItem>
+                  <MenuItem value="Burgos">Burgos</MenuItem>
+                  <MenuItem value="Cabugao">Cabugao</MenuItem>
+                  <MenuItem value="Casulucan">Casulucan</MenuItem>
+                  <MenuItem value="Comitang">Comitang</MenuItem>
+                  <MenuItem value="Concepcion">Concepcion</MenuItem>
+                  <MenuItem value="Dolores">Dolores</MenuItem>
+                  <MenuItem value="General Luna">General Luna</MenuItem>
+                  <MenuItem value="Hulo">Hulo</MenuItem>
+                  <MenuItem value="Mabini">Mabini</MenuItem>
+                  <MenuItem value="Malasin">Malasin</MenuItem>
+                  <MenuItem value="Malayantoc">Malayantoc</MenuItem>
+                  <MenuItem value="Mambarao">Mambarao</MenuItem>
+                  <MenuItem value="Poblacion">Poblacion</MenuItem>
+                  <MenuItem value="Malaya (Pook Malaya)">Malaya (Pook Malaya)</MenuItem>
+                  <MenuItem value="Pulong Buli">Pulong Buli</MenuItem>
+                  <MenuItem value="Sagaba">Sagaba</MenuItem>
+                </Select>
               </Grid>
+
               <Grid item xs={6}>
                 <Select
                   fullWidth
@@ -149,20 +169,21 @@ const ResidentUpdateModal = ({ isOpen, onClose, onSave, resident }) => {
                 </Select>
               </Grid>
               <Grid item xs={6}>
-                <Select
-                  fullWidth
-                  name="Status"
-                  value={formData.Status}
-                  onChange={handleChange}
-                  displayEmpty
-                  required
-                >
-                  <MenuItem value="" disabled>Select Status</MenuItem>
-                  <MenuItem value="Single">Single</MenuItem>
-                  <MenuItem value="Married">Married</MenuItem>
-                  <MenuItem value="Widowed">Widowed</MenuItem>
-                </Select>
-              </Grid>
+                  <Select
+                    fullWidth
+                    name="Status"
+                    value={formData.Status}
+                    onChange={handleChange}
+                    displayEmpty
+                    required
+                  >
+                    <MenuItem value="" disabled>Select Status</MenuItem>
+                    <MenuItem value="Single">Single</MenuItem>
+                    <MenuItem value="Married">Married</MenuItem>
+                    <MenuItem value="Widowed">Widowed</MenuItem>
+                  </Select>
+                </Grid>
+
               <Grid item xs={4}>
                 <TextField
                   type="number"

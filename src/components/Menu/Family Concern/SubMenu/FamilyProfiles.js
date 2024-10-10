@@ -7,8 +7,10 @@ import familyprofilesService from '../../../services/familyprofilesService';
 import { toast } from 'react-toastify';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
-import { Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography } from '@mui/material';
-
+import { Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography, IconButton, Tooltip } from '@mui/material';
+import { CSVLink } from 'react-csv'; 
+import ImportExportIcon from '@mui/icons-material/ImportExport'; 
+import PrintIcon from '@mui/icons-material/Print'; 
 const MySwal = withReactContent(Swal);
 
 const FamilyProfiles = () => {
@@ -17,20 +19,33 @@ const FamilyProfiles = () => {
   const [isUpdateModalOpen, setUpdateModalOpen] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState(null);
   const [familyProfiles, setFamilyProfiles] = useState([]);
-
+  const [filteredProfiles, setFilteredProfiles] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     fetchFamilyProfiles();
   }, []);
+
+  useEffect(() => {
+    const results = familyProfiles.filter(profile =>
+      profile.FamilyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      profile.Members.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      profile.Address.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      profile.ContactNo.includes(searchTerm)
+    );
+    setFilteredProfiles(results);
+  }, [searchTerm, familyProfiles]);
 
   const fetchFamilyProfiles = async () => {
     try {
       const response = await familyprofilesService.getAllFamilyProfiles();
       if (response && Array.isArray(response)) {
         setFamilyProfiles(response);
+        setFilteredProfiles(response); // Initialize filtered profiles
       } else {
         console.warn('Fetched data is not an array:', response);
         setFamilyProfiles([]);
+        setFilteredProfiles([]);
       }
     } catch (error) {
       console.error('Failed to fetch family profiles:', error);
@@ -147,6 +162,24 @@ const FamilyProfiles = () => {
     }
   };
 
+    // CSV headers for export
+    const csvHeaders = [
+      { label: "Family ID", key: "FamilyID" },
+      { label: "Family Name", key: "FamilyName" },
+      { label: "Members", key: "Members" },
+      { label: "Address", key: "Address" },
+      { label: "Contact No", key: "ContactNo" },
+    ];
+  
+    const handleFileUpload = () => {
+      // Handle file upload logic here
+    }
+  
+    // Handle Print Records
+    const handlePrint = () => {
+      window.print();
+    };
+
   return (
     <div className="container">
       <Sidebar />
@@ -154,6 +187,38 @@ const FamilyProfiles = () => {
         <Typography variant="h4" className="header" style={{ fontWeight: '700', marginLeft: '40px', marginTop: '20px' }}>FAMILY PROFILES</Typography>
 
         <div className="button-container" style={{ display: 'flex', justifyContent: 'flex-end', gap: '30px' }}>
+          {/* Import CSV with Tooltip */}
+          <input
+            accept=".csv"
+            id="import-csv"
+            type="file"
+            style={{ display: 'none' }}
+            onChange={handleFileUpload}
+          />
+          <Tooltip title="Import CSV" arrow>
+            <IconButton onClick={() => document.getElementById('import-csv').click()} color="primary" aria-label="Import CSV">
+              <ImportExportIcon />
+            </IconButton>
+          </Tooltip>
+
+          {/* Export CSV with Tooltip */}
+          <Tooltip title="Export CSV" arrow>
+            <span>
+              <CSVLink data={filteredProfiles} headers={csvHeaders} filename="crime_reports.csv">
+                <IconButton color="secondary" aria-label="Export CSV">
+                  <ImportExportIcon />
+                </IconButton>
+              </CSVLink>
+            </span>
+          </Tooltip>
+
+          {/* Print Records with Tooltip */}
+          <Tooltip title="Print Records" arrow>
+            <IconButton color="error" onClick={handlePrint} aria-label="Print Records">
+              <PrintIcon />
+            </IconButton>
+          </Tooltip>
+          
           <Button variant="contained" color="primary" style={{ height: '56px' }} onClick={handleNewProfile}>
             + New Record
           </Button>
@@ -162,6 +227,8 @@ const FamilyProfiles = () => {
             variant="outlined"
             placeholder="Search records"
             className="search-input"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
 
@@ -177,8 +244,8 @@ const FamilyProfiles = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {Array.isArray(familyProfiles) && familyProfiles.length > 0 ? (
-                familyProfiles.map((profile) => (
+              {Array.isArray(filteredProfiles) && filteredProfiles.length > 0 ? (
+                filteredProfiles.map((profile) => (
                   <TableRow key={profile.FamilyID}>
                     <TableCell style={{ padding: '10px', textAlign: 'center' }}>{profile.FamilyID}</TableCell>
                     <TableCell style={{ padding: '10px', textAlign: 'center' }}>{profile.FamilyName}</TableCell>
@@ -226,11 +293,12 @@ const FamilyProfiles = () => {
 
       {/* Modal for Updating Family Profile */}
       <FamilyProfilesUpdateModal
-        isOpen={isUpdateModalOpen}
-        onClose={handleUpdateModalClose}
-        onSave={handleUpdateSubmit}
-        profile={selectedProfile}
-      />
+          isOpen={isUpdateModalOpen}
+          onClose={handleUpdateModalClose}
+          onSave={handleUpdateSubmit}
+          family={selectedProfile} // Change here
+        />
+
     </div>
   );
 };

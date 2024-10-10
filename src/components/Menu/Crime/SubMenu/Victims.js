@@ -1,4 +1,3 @@
-// src/components/Victims/Victims.js
 import React, { useState, useEffect } from 'react';
 import Sidebar from '../../../templates/Sidebar';
 import VictimsModal from '../Modals/VictimsModal/VictimsModal'; 
@@ -8,7 +7,10 @@ import victimsService from '../../../services/victimsService';
 import { toast } from 'react-toastify';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
-import { Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography } from '@mui/material';
+import { Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography, IconButton, Tooltip } from '@mui/material';
+import { CSVLink } from 'react-csv'; 
+import ImportExportIcon from '@mui/icons-material/ImportExport'; 
+import PrintIcon from '@mui/icons-material/Print'; 
 
 const MySwal = withReactContent(Swal);
 
@@ -18,19 +20,33 @@ const Victims = () => {
   const [isUpdateModalOpen, setUpdateModalOpen] = useState(false);
   const [selectedVictim, setSelectedVictim] = useState(null);
   const [victims, setVictims] = useState([]);
+  const [filteredVictims, setFilteredVictims] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     fetchVictims();
   }, []);
+
+  useEffect(() => {
+    const results = victims.filter(victim =>
+      victim.FullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      victim.LastKnownAddress.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      victim.IncidentDate.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      victim.CaseStatus.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    setFilteredVictims(results);
+  }, [searchTerm, victims]);
 
   const fetchVictims = async () => {
     try {
       const response = await victimsService.getAllVictims();
       if (response && Array.isArray(response)) {
         setVictims(response);
+        setFilteredVictims(response); // Initialize filtered victims
       } else {
         console.warn('Fetched data is not an array:', response);
         setVictims([]);
+        setFilteredVictims([]);
       }
     } catch (error) {
       console.error('Failed to fetch victims:', error);
@@ -146,6 +162,24 @@ const Victims = () => {
     }
   };
 
+  // CSV headers for export
+  const csvHeaders = [
+    { label: "Victim ID", key: "VictimID" },
+    { label: "Full Name", key: "FullName" },
+    { label: "Last Known Address", key: "LastKnownAddress" },
+    { label: "Incident Date", key: "IncidentDate" },
+    { label: "Case Status", key: "CaseStatus" },
+  ];
+
+  const handleFileUpload = () => {
+    // Handle file upload logic here
+  };
+
+  // Handle Print Records
+  const handlePrint = () => {
+    window.print();
+  };
+
   return (
     <div className="container">
       <Sidebar />
@@ -153,14 +187,48 @@ const Victims = () => {
         <Typography variant="h4" className="header" style={{ fontWeight: '700', marginLeft: '40px', marginTop: '20px' }}>VICTIMS</Typography>
 
         <div className="button-container" style={{ display: 'flex', justifyContent: 'flex-end', gap: '30px' }}>
+          {/* Import CSV with Tooltip */}
+          <input
+            accept=".csv"
+            id="import-csv"
+            type="file"
+            style={{ display: 'none' }}
+            onChange={handleFileUpload}
+          />
+          <Tooltip title="Import CSV" arrow>
+            <IconButton onClick={() => document.getElementById('import-csv').click()} color="primary" aria-label="Import CSV">
+              <ImportExportIcon />
+            </IconButton>
+          </Tooltip>
+
+          {/* Export CSV with Tooltip */}
+          <Tooltip title="Export CSV" arrow>
+            <span>
+              <CSVLink data={filteredVictims} headers={csvHeaders} filename="victims.csv">
+                <IconButton color="secondary" aria-label="Export CSV">
+                  <ImportExportIcon />
+                </IconButton>
+              </CSVLink>
+            </span>
+          </Tooltip>
+
+          {/* Print Records with Tooltip */}
+          <Tooltip title="Print Records" arrow>
+            <IconButton color="error" onClick={handlePrint} aria-label="Print Records">
+              <PrintIcon />
+            </IconButton>
+          </Tooltip>
+
           <Button variant="contained" color="primary" style={{ height: '56px' }} onClick={handleNewVictim}>
             + New Victim
           </Button>
           <TextField
             style={{ width: '300px', marginRight: '40px' }}
             variant="outlined"
-            placeholder="Search victims"
+            placeholder="Search victims by Full Name, Address, Incident Date, or Status"
             className="search-input"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
 
@@ -176,8 +244,8 @@ const Victims = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {Array.isArray(victims) && victims.length > 0 ? (
-                victims.map((victim) => (
+              {Array.isArray(filteredVictims) && filteredVictims.length > 0 ? (
+                filteredVictims.map((victim) => (
                   <TableRow key={victim.VictimID}>
                     <TableCell style={{ padding: '10px', textAlign: 'center' }}>{victim.VictimID}</TableCell>
                     <TableCell style={{ padding: '10px', textAlign: 'center' }}>{victim.FullName}</TableCell>

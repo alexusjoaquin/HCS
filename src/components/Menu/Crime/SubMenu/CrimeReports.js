@@ -8,7 +8,10 @@ import crimeReportService from '../../../services/crimeReportService';
 import { toast } from 'react-toastify';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
-import { Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography } from '@mui/material';
+import { Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography, IconButton, Tooltip } from '@mui/material';
+import { CSVLink } from 'react-csv'; 
+import ImportExportIcon from '@mui/icons-material/ImportExport'; 
+import PrintIcon from '@mui/icons-material/Print'; 
 
 const MySwal = withReactContent(Swal);
 
@@ -18,26 +21,37 @@ const CrimeReports = () => {
   const [isUpdateModalOpen, setUpdateModalOpen] = useState(false);
   const [selectedReport, setSelectedReport] = useState(null);
   const [crimeReports, setCrimeReports] = useState([]);
+  const [filteredReports, setFilteredReports] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     fetchCrimeReports();
   }, []);
 
+  useEffect(() => {
+    const results = crimeReports.filter(report =>
+      report.Location.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      report.Description.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    setFilteredReports(results);
+  }, [searchTerm, crimeReports]);
+
   const fetchCrimeReports = async () => {
     try {
-        const response = await crimeReportService.getAllCrimeReports();
-        if (response && response.crimeReports) {
-            setCrimeReports(response.crimeReports);
-        } else {
-            console.warn('Fetched data is not valid:', response);
-            setCrimeReports([]);
-        }
+      const response = await crimeReportService.getAllCrimeReports();
+      if (response && response.crimeReports) {
+        setCrimeReports(response.crimeReports);
+        setFilteredReports(response.crimeReports);
+      } else {
+        console.warn('Fetched data is not valid:', response);
+        setCrimeReports([]);
+        setFilteredReports([]);
+      }
     } catch (error) {
-        console.error('Failed to fetch crime reports:', error);
-        toast.error('Failed to fetch crime reports.');
+      console.error('Failed to fetch crime reports:', error);
+      toast.error('Failed to fetch crime reports.');
     }
-};
-
+  };
 
   const handleNewReport = () => {
     setSelectedReport(null);
@@ -50,27 +64,28 @@ const CrimeReports = () => {
 
   const handleCreateSubmit = async (data) => {
     try {
-        const reportData = {
-            ReportID: `CR${Math.floor(Date.now() / 1000)}`,
-            Location: data.Location,
-            Description: data.Description,
-            Date: data.Date,
-            OfficerInCharge: data.OfficerInCharge,
-        };
-        await crimeReportService.createCrimeReport(reportData);
-        MySwal.fire({
-            icon: 'success',
-            title: 'Success',
-            text: 'Crime report created successfully!',
-            confirmButtonText: 'OK',
-        });
-        setCreateModalOpen(false);
-        fetchCrimeReports();
+      const reportData = {
+        ReportID: `CR${Math.floor(Date.now() / 1000)}`,
+        Location: data.Location,
+        Description: data.Description,
+        Date: data.Date,
+        OfficerInCharge: data.OfficerInCharge,
+      };
+      await crimeReportService.createCrimeReport(reportData);
+      MySwal.fire({
+        icon: 'success',
+        title: 'Success',
+        text: 'Crime report created successfully!',
+        confirmButtonText: 'OK',
+      });
+      setCreateModalOpen(false);
+      fetchCrimeReports();
     } catch (error) {
-        console.error('Error creating crime report:', error);
-        toast.error('Failed to create crime report.');
+      console.error('Error creating crime report:', error);
+      toast.error('Failed to create crime report.');
     }
-};
+  };
+
   const handleView = (report) => {
     setSelectedReport(report);
     setViewModalOpen(true);
@@ -93,27 +108,27 @@ const CrimeReports = () => {
 
   const handleUpdateSave = async (data) => {
     try {
-        const reportData = {
-            ReportID: data.ReportID,
-            Location: data.Location,
-            Description: data.Description,
-            Date: data.Date,
-            OfficerInCharge: data.OfficerInCharge,
-        };
-        await crimeReportService.updateCrimeReport(reportData);
-        MySwal.fire({
-            icon: 'success',
-            title: 'Success',
-            text: 'Crime report updated successfully!',
-            confirmButtonText: 'OK',
-        });
-        setUpdateModalOpen(false);
-        fetchCrimeReports();
+      const reportData = {
+        ReportID: data.ReportID,
+        Location: data.Location,
+        Description: data.Description,
+        Date: data.Date,
+        OfficerInCharge: data.OfficerInCharge,
+      };
+      await crimeReportService.updateCrimeReport(reportData);
+      MySwal.fire({
+        icon: 'success',
+        title: 'Success',
+        text: 'Crime report updated successfully!',
+        confirmButtonText: 'OK',
+      });
+      setUpdateModalOpen(false);
+      fetchCrimeReports();
     } catch (error) {
-        console.error('Error updating crime report:', error);
-        toast.error('Failed to update crime report.');
+      console.error('Error updating crime report:', error);
+      toast.error('Failed to update crime report.');
     }
-};
+  };
 
   const handleDelete = async (reportID) => {
     const result = await MySwal.fire({
@@ -144,21 +159,74 @@ const CrimeReports = () => {
     }
   };
 
+  // CSV headers for export
+  const csvHeaders = [
+    { label: "Report ID", key: "ReportID" },
+    { label: "Description", key: "Description" },
+    { label: "Location", key: "Location" },
+    { label: "Date", key: "Date" },
+    { label: "Officer In Charge", key: "OfficerInCharge" },
+  ];
+
+  const handleFileUpload = () => {
+    // Handle file upload logic here
+  }
+
+  // Handle Print Records
+  const handlePrint = () => {
+    window.print();
+  };
+
   return (
     <div className="container">
       <Sidebar />
       <div className="content" style={{ padding: '20px' }}>
         <Typography variant="h4" className="header" style={{ fontWeight: '700', marginLeft: '40px', marginTop: '20px' }}>CRIME REPORTS</Typography>
 
-        <div className="button-container" style={{ display: 'flex', justifyContent: 'flex-end', gap: '30px' }}>
+        <div className="button-container" style={{ display: 'flex', justifyContent: 'flex-end', gap: '30px', alignItems: 'center' }}>
+          {/* Import CSV with Tooltip */}
+          <input
+            accept=".csv"
+            id="import-csv"
+            type="file"
+            style={{ display: 'none' }}
+            onChange={handleFileUpload}
+          />
+          <Tooltip title="Import CSV" arrow>
+            <IconButton onClick={() => document.getElementById('import-csv').click()} color="primary" aria-label="Import CSV">
+              <ImportExportIcon />
+            </IconButton>
+          </Tooltip>
+
+          {/* Export CSV with Tooltip */}
+          <Tooltip title="Export CSV" arrow>
+            <span>
+              <CSVLink data={filteredReports} headers={csvHeaders} filename="crime_reports.csv">
+                <IconButton color="secondary" aria-label="Export CSV">
+                  <ImportExportIcon />
+                </IconButton>
+              </CSVLink>
+            </span>
+          </Tooltip>
+
+          {/* Print Records with Tooltip */}
+          <Tooltip title="Print Records" arrow>
+            <IconButton color="error" onClick={handlePrint} aria-label="Print Records">
+              <PrintIcon />
+            </IconButton>
+          </Tooltip>
+
+          {/* New Report Button */}
           <Button variant="contained" color="primary" style={{ height: '56px' }} onClick={handleNewReport}>
             + New Report
           </Button>
           <TextField
             style={{ width: '300px', marginRight: '40px' }}
             variant="outlined"
-            placeholder="Search reports"
+            placeholder="Search reports by location or description"
             className="search-input"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
 
@@ -174,8 +242,8 @@ const CrimeReports = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {Array.isArray(crimeReports) && crimeReports.length > 0 ? (
-                crimeReports.map((report) => (
+              {Array.isArray(filteredReports) && filteredReports.length > 0 ? (
+                filteredReports.map((report) => (
                   <TableRow key={report.ReportID}>
                     <TableCell style={{ padding: '10px', textAlign: 'center' }}>{report.ReportID}</TableCell>
                     <TableCell style={{ padding: '10px', textAlign: 'center' }}>{report.Description}</TableCell>
@@ -197,38 +265,37 @@ const CrimeReports = () => {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={6} style={{ textAlign: 'center' }}>
-                    No crime reports found.
+                  <TableCell colSpan={6} style={{ textAlign: 'center', padding: '20px' }}>
+                    <Typography>No crime reports found.</Typography>
                   </TableCell>
                 </TableRow>
               )}
             </TableBody>
           </Table>
         </TableContainer>
+
+        {/* Modal for New Crime Report */}
+        <CrimeReportModal
+          isOpen={isCreateModalOpen}
+          onClose={handleCreateModalClose}
+          onSubmit={handleCreateSubmit}
+        />
+
+        {/* Modal for Viewing Crime Report */}
+        <CrimeReportViewModal
+          isOpen={isViewModalOpen}
+          onClose={handleViewModalClose}
+          crimeReport={selectedReport}
+        />
+
+        {/* Modal for Updating Crime Report */}
+        <CrimeReportUpdateModal
+          isOpen={isUpdateModalOpen}
+          onClose={handleUpdateModalClose}
+          onSave={handleUpdateSave}
+          report={selectedReport}
+        />
       </div>
-
-      {/* Modal for New Crime Report */}
-      <CrimeReportModal
-        isOpen={isCreateModalOpen}
-        onClose={handleCreateModalClose}
-        onSubmit={handleCreateSubmit}
-      />
-
-      {/* Modal for Viewing Crime Report */}
-      <CrimeReportViewModal
-        isOpen={isViewModalOpen}
-        onClose={handleViewModalClose}
-        crimeReport={selectedReport}  // Change "report" to "crimeReport"
-      />
-
-
-      {/* Modal for Updating Crime Report */}
-      <CrimeReportUpdateModal
-        isOpen={isUpdateModalOpen}
-        onClose={handleUpdateModalClose}
-        onSave={handleUpdateSave}
-        report={selectedReport}
-      />
     </div>
   );
 };

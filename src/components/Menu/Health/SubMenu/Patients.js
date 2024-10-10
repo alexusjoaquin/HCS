@@ -1,4 +1,3 @@
-// src/components/Patients/Patients.js
 import React, { useState, useEffect } from 'react';
 import Sidebar from '../../../templates/Sidebar';
 import PatientModal from '../Modals/PatientModal/PatientModal';
@@ -8,30 +7,45 @@ import patientService from '../../../services/patientService';
 import { toast } from 'react-toastify';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
-import { Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography } from '@mui/material';
+import { Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography, IconButton, Tooltip } from '@mui/material';
+import { CSVLink } from 'react-csv'; 
+import ImportExportIcon from '@mui/icons-material/ImportExport'; 
+import PrintIcon from '@mui/icons-material/Print';
 
 const MySwal = withReactContent(Swal);
 
 const Patients = () => {
+  const [patients, setPatients] = useState([]);
+  const [filteredPatients, setFilteredPatients] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const [isCreateModalOpen, setCreateModalOpen] = useState(false);
   const [isViewModalOpen, setViewModalOpen] = useState(false);
   const [isUpdateModalOpen, setUpdateModalOpen] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState(null);
-  const [patients, setPatients] = useState([]);
 
   useEffect(() => {
     fetchPatients();
   }, []);
 
+  useEffect(() => {
+    const results = patients.filter(patient =>
+      patient.PatientID.toString().includes(searchTerm) ||
+      patient.Fullname.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      patient.Address.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    setFilteredPatients(results);
+  }, [searchTerm, patients]);
+
   const fetchPatients = async () => {
     try {
-      const data = await patientService.getAllPatients();
-      console.log('Fetched patients:', data);
-      if (Array.isArray(data)) {
-        setPatients(data);
+      const response = await patientService.getAllPatients();
+      if (Array.isArray(response)) {
+        setPatients(response);
+        setFilteredPatients(response);
       } else {
-        console.warn('Fetched data is not an array:', data);
+        console.warn('Fetched data is not an array:', response);
         setPatients([]);
+        setFilteredPatients([]);
       }
     } catch (error) {
       console.error('Failed to fetch patients:', error);
@@ -51,16 +65,15 @@ const Patients = () => {
   const handleCreateSubmit = async (data) => {
     try {
       const patientData = {
-        PatientID: `P${Math.floor(Date.now() / 1000)}`, // Simple unique ID
-        FirstName: data.FirstName,
-        LastName: data.LastName,
+        PatientID: `P${Math.floor(Date.now() / 1000)}`,
+        Fullname: data.Fullname,
+        Address: data.Address,
         DateOfBirth: data.DateOfBirth,
-        ContactInfo: data.ContactInfo,
+        ContactNo: data.ContactNo,
         Gender: data.Gender,
         MedicalHistory: data.MedicalHistory,
       };
-      const response = await patientService.createPatient(patientData);
-      console.log('Patient created:', response);
+      await patientService.createPatient(patientData);
       MySwal.fire({
         icon: 'success',
         title: 'Success',
@@ -99,18 +112,17 @@ const Patients = () => {
     try {
       const patientData = {
         PatientID: data.PatientID,
-        FirstName: data.FirstName,
-        LastName: data.LastName,
+        Fullname: data.Fullname,
+        Address: data.Address,
         DateOfBirth: data.DateOfBirth,
-        ContactInfo: data.ContactNo, // Make sure this matches the state
+        ContactNo: data.ContactNo,
         Gender: data.Gender,
         MedicalHistory: data.MedicalHistory,
       };
-      const response = await patientService.updatePatient(patientData);
-      console.log('Patient updated:', response);
+      await patientService.updatePatient(patientData);
       MySwal.fire({
         icon: 'success',
-        title: 'Success',
+        title: 'Updated!',
         text: 'Patient updated successfully!',
         confirmButtonText: 'OK',
       });
@@ -131,7 +143,6 @@ const Patients = () => {
       confirmButtonColor: '#d33',
       cancelButtonColor: '#3085d6',
       confirmButtonText: 'Yes, delete it!',
-      reverseButtons: true,
     });
 
     if (result.isConfirmed) {
@@ -151,22 +162,89 @@ const Patients = () => {
     }
   };
 
+  // CSV headers for export
+  const csvHeaders = [
+    { label: "Patient ID", key: "PatientID" },
+    { label: "Full Name", key: "Fullname" },
+    { label: "Date of Birth", key: "DateOfBirth" },
+    { label: "Gender", key: "Gender" },
+    { label: "Address", key: "Address" },
+    { label: "Medical History", key: "MedicalHistory" },
+  ];
+
+  // Handle File Upload
+  const handleFileUpload = (event) => {
+    const file = event.target.files[0];
+    const reader = new FileReader();
+
+    reader.onload = async (e) => {
+      const csvData = e.target.result;
+      // Assuming your backend can handle CSV parsing directly.
+      try {
+        await patientService.importPatientsCSV(csvData);
+        toast.success("CSV data imported successfully!");
+        fetchPatients(); // Refresh the patient data
+      } catch (error) {
+        console.error('Error importing patients:', error);
+        toast.error('Failed to import patients.');
+      }
+    };
+
+    if (file) reader.readAsText(file);
+  };
+
+  // Handle Print Records
+  const handlePrint = () => {
+    window.print();
+  };
+
   return (
     <div className="container">
       <Sidebar />
       <div className="content" style={{ padding: '20px' }}>
-        <Typography variant="h4" className="header" style={{fontWeight: '700', marginLeft: '40px', marginTop: '20px' }}>PATIENTS</Typography>
+        <Typography variant="h4" className="header" style={{ fontWeight: '700', marginLeft: '40px', marginTop: '20px' }}>PATIENTS</Typography>
+        <div className="button-container" style={{ display: 'flex', justifyContent: 'flex-end', gap: '30px', alignItems: 'center' }}>
+          {/* Import CSV as Icon Button */}
+          <input
+            accept=".csv"
+            id="import-csv"
+            type="file"
+            style={{ display: 'none' }}
+            onChange={handleFileUpload}
+          />
+          <Tooltip title="Import CSV" arrow>
+            <IconButton onClick={() => document.getElementById('import-csv').click()} color="primary" aria-label="Import CSV">
+              <ImportExportIcon />
+            </IconButton>
+          </Tooltip>
 
-        <div className="button-container" style={{ display: 'flex', justifyContent: 'flex-end', gap: '30px' }}>
+          {/* Export CSV as Icon Button */}
+          <Tooltip title="Export CSV" arrow>
+            <span>
+              <CSVLink data={patients} headers={csvHeaders} filename="patients_data.csv">
+                <IconButton color="secondary" aria-label="Export CSV">
+                  <ImportExportIcon />
+                </IconButton>
+              </CSVLink>
+            </span>
+          </Tooltip>
+
+          {/* Print Records as Icon Button */}
+          <Tooltip title="Print Records" arrow>
+            <IconButton color="error" onClick={handlePrint} aria-label="Print Records">
+              <PrintIcon />
+            </IconButton>
+          </Tooltip>
+
           <Button variant="contained" color="primary" style={{ height: '56px' }} onClick={handleNewRecord}>
-            + New Record
+            + New Patient
           </Button>
           <TextField
             style={{ width: '300px', marginRight: '40px' }}
             variant="outlined"
-            placeholder="Search records"
-            className="search-input"
-            // Implement search functionality if desired
+            placeholder="Search patients"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
 
@@ -174,7 +252,7 @@ const Patients = () => {
           <Table>
             <TableHead>
               <TableRow>
-                {['Patient ID', 'First Name', 'Last Name', 'Date of Birth', 'Contact Info', 'Gender', 'Medical History', 'Actions'].map((header) => (
+                {['Patient ID', 'Full Name', 'Date of Birth', 'Gender', 'Address', 'Medical History', 'Actions'].map((header) => (
                   <TableCell key={header} style={{ backgroundColor: '#0B8769', color: 'white', padding: '10px', textAlign: 'center' }}>
                     {header}
                   </TableCell>
@@ -182,32 +260,25 @@ const Patients = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {Array.isArray(patients) && patients.length > 0 ? (
-                patients.map((patient) => (
+              {Array.isArray(filteredPatients) && filteredPatients.length > 0 ? (
+                filteredPatients.map((patient) => (
                   <TableRow key={patient.PatientID}>
                     <TableCell style={{ padding: '10px', textAlign: 'center' }}>{patient.PatientID}</TableCell>
-                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>{patient.FirstName}</TableCell>
-                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>{patient.LastName}</TableCell>
+                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>{patient.Fullname}</TableCell>
                     <TableCell style={{ padding: '10px', textAlign: 'center' }}>{patient.DateOfBirth}</TableCell>
-                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>{patient.ContactNo}</TableCell>
                     <TableCell style={{ padding: '10px', textAlign: 'center' }}>{patient.Gender}</TableCell>
+                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>{patient.Address}</TableCell>
                     <TableCell style={{ padding: '10px', textAlign: 'center' }}>{patient.MedicalHistory}</TableCell>
                     <TableCell style={{ padding: '10px', textAlign: 'center' }}>
-                      <Button variant="contained" color="primary" style={{ marginRight: '10px' }} onClick={() => handleView(patient)}>
-                        View
-                      </Button>
-                      <Button variant="contained" color="secondary" style={{ marginRight: '10px' }} onClick={() => handleUpdate(patient)}>
-                        Update
-                      </Button>
-                      <Button variant="contained" color="error" onClick={() => handleDelete(patient.PatientID)}>
-                        Delete
-                      </Button>
+                      <Button variant="contained" color="primary" style={{ marginRight: '10px' }} onClick={() => handleView(patient)}>View</Button>
+                      <Button variant="contained" color="secondary" style={{ marginRight: '10px' }} onClick={() => handleUpdate(patient)}>Update</Button>
+                      <Button variant="contained" color="error" onClick={() => handleDelete(patient.PatientID)}>Delete</Button>
                     </TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={8} style={{ textAlign: 'center' }}>
+                  <TableCell colSpan={7} style={{ textAlign: 'center', padding: '20px' }}>
                     No patients found.
                   </TableCell>
                 </TableRow>
@@ -215,29 +286,26 @@ const Patients = () => {
             </TableBody>
           </Table>
         </TableContainer>
-      </div>
 
-      {/* Modal for New Patient */}
-      <PatientModal
-        isOpen={isCreateModalOpen}
-        onClose={handleCreateModalClose}
-        onSubmit={handleCreateSubmit}
-      />
-
-      {/* Modal for Viewing Patient */}
-      <PatientViewModal
-        isOpen={isViewModalOpen}
-        onClose={handleViewModalClose}
-        patient={selectedPatient}
-      />
-
-      {/* Modal for Updating Patient */}
-      <PatientUpdateModal
-        isOpen={isUpdateModalOpen}
-        onClose={handleUpdateModalClose}
-        onSave={handleUpdateSave} // Make sure onSave is set to the correct function
-        patient={selectedPatient}
+        <PatientModal
+          isOpen={isCreateModalOpen}
+          onClose={handleCreateModalClose}
+          onSubmit={handleCreateSubmit}
         />
+
+        <PatientViewModal
+          isOpen={isViewModalOpen}
+          onClose={handleViewModalClose}
+          patient={selectedPatient}
+        />
+
+        <PatientUpdateModal
+          isOpen={isUpdateModalOpen}
+          onClose={handleUpdateModalClose}
+          onSave={handleUpdateSave}
+          patient={selectedPatient}
+        />
+      </div>
     </div>
   );
 };
