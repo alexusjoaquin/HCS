@@ -4,14 +4,29 @@ import Sidebar from '../../../templates/Sidebar';
 import CrimeReportModal from '../Modals/CrimeReportModal/CrimeReportModal';
 import CrimeReportViewModal from '../Modals/CrimeReportViewModal/CrimeReportViewModal';
 import CrimeReportUpdateModal from '../Modals/CrimeReportUpdateModal/CrimeReportUpdateModal';
-import crimeReportService from '../../../services/crimeReportService';
+import VictimsViewModal from '../Modals/VictimsViewModal/VictimsViewModal'; // Import Victim Modal
+import SuspectViewModal from '../Modals/SuspectViewModal/SuspectViewModal'; // Import Suspect Modal
 import { toast } from 'react-toastify';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
-import { Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography, IconButton, Tooltip } from '@mui/material';
-import { CSVLink } from 'react-csv'; 
-import ImportExportIcon from '@mui/icons-material/ImportExport'; 
-import PrintIcon from '@mui/icons-material/Print'; 
+import {
+  Button,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TextField,
+  Typography,
+  IconButton,
+  Tooltip,
+} from '@mui/material';
+import { CSVLink } from 'react-csv';
+import ImportExportIcon from '@mui/icons-material/ImportExport';
+import PrintIcon from '@mui/icons-material/Print';
+import axios from 'axios';
+import apiconfig from '../../../../api/apiconfig'; // Adjust the path as necessary
 
 const MySwal = withReactContent(Swal);
 
@@ -23,6 +38,10 @@ const CrimeReports = () => {
   const [crimeReports, setCrimeReports] = useState([]);
   const [filteredReports, setFilteredReports] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isVictimModalOpen, setVictimModalOpen] = useState(false);
+  const [selectedVictim, setSelectedVictim] = useState(null);
+  const [isSuspectModalOpen, setSuspectModalOpen] = useState(false);
+  const [selectedSuspect, setSelectedSuspect] = useState(null);
 
   useEffect(() => {
     fetchCrimeReports();
@@ -38,10 +57,10 @@ const CrimeReports = () => {
 
   const fetchCrimeReports = async () => {
     try {
-      const response = await crimeReportService.getAllCrimeReports();
-      if (response && response.crimeReports) {
-        setCrimeReports(response.crimeReports);
-        setFilteredReports(response.crimeReports);
+      const response = await axios.get(apiconfig.crime.getAll); // Fetch all crime reports
+      if (response.data.status === 'success') {
+        setCrimeReports(response.data.data.crimeReports);
+        setFilteredReports(response.data.data.crimeReports);
       } else {
         console.warn('Fetched data is not valid:', response);
         setCrimeReports([]);
@@ -70,8 +89,10 @@ const CrimeReports = () => {
         Description: data.Description,
         Date: data.Date,
         OfficerInCharge: data.OfficerInCharge,
+        SuspectID: data.SuspectID,  // Include SuspectID
+        VictimID: data.VictimID,    // Include VictimID
       };
-      await crimeReportService.createCrimeReport(reportData);
+      await axios.post(apiconfig.crime.create, reportData); // Create a new crime report
       MySwal.fire({
         icon: 'success',
         title: 'Success',
@@ -114,8 +135,10 @@ const CrimeReports = () => {
         Description: data.Description,
         Date: data.Date,
         OfficerInCharge: data.OfficerInCharge,
+        SuspectID: data.SuspectID,  // Include SuspectID
+        VictimID: data.VictimID,    // Include VictimID
       };
-      await crimeReportService.updateCrimeReport(reportData);
+      await axios.put(apiconfig.crime.update, reportData); // Update the crime report
       MySwal.fire({
         icon: 'success',
         title: 'Success',
@@ -141,10 +164,13 @@ const CrimeReports = () => {
       confirmButtonText: 'Yes, delete it!',
       reverseButtons: true,
     });
-
+  
     if (result.isConfirmed) {
       try {
-        await crimeReportService.deleteCrimeReport(reportID);
+        // Send the ReportID in the body of the delete request
+        await axios.delete(apiconfig.crime.delete, {
+          data: { ReportID: reportID }  // Include the ReportID in the request body
+        });
         MySwal.fire({
           icon: 'success',
           title: 'Deleted!',
@@ -158,6 +184,7 @@ const CrimeReports = () => {
       }
     }
   };
+  
 
   // CSV headers for export
   const csvHeaders = [
@@ -166,6 +193,8 @@ const CrimeReports = () => {
     { label: "Location", key: "Location" },
     { label: "Date", key: "Date" },
     { label: "Officer In Charge", key: "OfficerInCharge" },
+    { label: "Suspect ID", key: "SuspectID" }, // Added SuspectID
+    { label: "Victim ID", key: "VictimID" },   // Added VictimID
   ];
 
   const handleFileUpload = () => {
@@ -175,6 +204,46 @@ const CrimeReports = () => {
   // Handle Print Records
   const handlePrint = () => {
     window.print();
+  };
+
+  // Fetch victim data by ID
+  const fetchVictimData = async (victimID) => {
+    try {
+      const response = await axios.get(apiconfig.victims.getById(victimID)); // Adjust as necessary
+      if (response.data.status === 'success') {
+        setSelectedVictim(response.data.data); // Ensure correct data structure
+        setVictimModalOpen(true);
+      } else {
+        toast.error(response.data.message);
+      }
+    } catch (error) {
+      console.error('Error fetching victim data:', error);
+      toast.error('Failed to fetch victim data.');
+    }
+  };
+
+  // Fetch suspect data by ID
+  const fetchSuspectData = async (suspectID) => {
+    try {
+      const response = await axios.get(apiconfig.suspect.getById(suspectID)); // Adjust as necessary
+      if (response.data.status === 'success') {
+        setSelectedSuspect(response.data.data.suspectDetails); // Ensure correct data structure
+        setSuspectModalOpen(true);
+      } else {
+        toast.error(response.data.message);
+      }
+    } catch (error) {
+      console.error('Error fetching suspect data:', error);
+      toast.error('Failed to fetch suspect data.');
+    }
+  };
+
+  const handleVictimClick = (victimID) => {
+    fetchVictimData(victimID);
+  };
+
+  const handleSuspectClick = (suspectID) => {
+    fetchSuspectData(suspectID);
   };
 
   return (
@@ -234,7 +303,7 @@ const CrimeReports = () => {
           <Table>
             <TableHead>
               <TableRow>
-                {['Report ID', 'Description', 'Location', 'Date', 'Officer In Charge', 'Actions'].map((header) => (
+                {['Report ID', 'Description', 'Location', 'Date', 'Officer In Charge', 'Suspect ID', 'Victim ID', 'Actions'].map((header) => (
                   <TableCell key={header} style={{ backgroundColor: '#0B8769', color: 'white', padding: '10px', textAlign: 'center' }}>
                     {header}
                   </TableCell>
@@ -250,6 +319,12 @@ const CrimeReports = () => {
                     <TableCell style={{ padding: '10px', textAlign: 'center' }}>{report.Location}</TableCell>
                     <TableCell style={{ padding: '10px', textAlign: 'center' }}>{report.Date}</TableCell>
                     <TableCell style={{ padding: '10px', textAlign: 'center' }}>{report.OfficerInCharge}</TableCell>
+                    <TableCell style={{ padding: '10px', textAlign: 'center', cursor: 'pointer', color: '#0B8769' }} onClick={() => handleSuspectClick(report.SuspectID)}>
+                      {report.SuspectID}
+                    </TableCell>
+                    <TableCell style={{ padding: '10px', textAlign: 'center', cursor: 'pointer', color: '#0B8769' }} onClick={() => handleVictimClick(report.VictimID)}>
+                      {report.VictimID}
+                    </TableCell>
                     <TableCell style={{ padding: '10px', textAlign: 'center' }}>
                       <Button variant="contained" color="primary" style={{ marginRight: '10px' }} onClick={() => handleView(report)}>
                         View
@@ -265,7 +340,7 @@ const CrimeReports = () => {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={6} style={{ textAlign: 'center', padding: '20px' }}>
+                  <TableCell colSpan={8} style={{ textAlign: 'center', padding: '20px' }}>
                     <Typography>No crime reports found.</Typography>
                   </TableCell>
                 </TableRow>
@@ -294,6 +369,20 @@ const CrimeReports = () => {
           onClose={handleUpdateModalClose}
           onSave={handleUpdateSave}
           report={selectedReport}
+        />
+
+        {/* Modal for Victim View */}
+        <VictimsViewModal
+          isOpen={isVictimModalOpen}
+          onClose={() => setVictimModalOpen(false)}
+          victim={selectedVictim}
+        />
+
+        {/* Modal for Suspect View */}
+        <SuspectViewModal
+          isOpen={isSuspectModalOpen}
+          onClose={() => setSuspectModalOpen(false)}
+          suspect={selectedSuspect}
         />
       </div>
     </div>

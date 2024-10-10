@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Box,
   Button,
@@ -7,41 +7,133 @@ import {
   Container,
   Paper,
   Grid,
+  CircularProgress,
 } from '@mui/material';
+import Autocomplete from '@mui/material/Autocomplete';
+import axios from 'axios';
+import apiconfig from '../../../../../api/apiconfig'; // Adjust the path as necessary
 
 const CrimeReportModal = ({ isOpen, onClose, onSubmit }) => {
-  // Ensure all initial values are defined
-  const [formData, setFormData] = React.useState({
-    ReportID: '', // Add Report ID
+  // Form data state
+  const [formData, setFormData] = useState({
+    ReportID: '',
     Location: '',
     Date: '',
     Description: '',
     OfficerInCharge: '',
+    SuspectID: '', // Added SuspectID
+    VictimID: '',  // Added VictimID
   });
 
-  // Generate a unique Report ID whenever the modal opens
+  // Suspects state
+  const [suspects, setSuspects] = useState([]);
+  const [loadingSuspects, setLoadingSuspects] = useState(false);
+  const [suspectsError, setSuspectsError] = useState(null);
+
+  // Victims state
+  const [victims, setVictims] = useState([]);
+  const [loadingVictims, setLoadingVictims] = useState(false);
+  const [victimsError, setVictimsError] = useState(null);
+
+  // Effect to initialize form and fetch data when modal opens
   useEffect(() => {
     if (isOpen) {
-      const generatedID = `RID-${Date.now()}`; // Example ID generation logic
+      // Generate a unique Report ID
+      const generatedID = `RID-${Date.now()}`;
       setFormData({
         ReportID: generatedID,
         Location: '',
         Date: '',
         Description: '',
         OfficerInCharge: '',
+        SuspectID: '',
+        VictimID: '',
       });
+
+      // Fetch Suspects and Victims
+      fetchSuspects();
+      fetchVictims();
     }
   }, [isOpen]);
 
+  // Fetch Suspects
+  const fetchSuspects = async () => {
+    setLoadingSuspects(true);
+    setSuspectsError(null);
+    try {
+      const response = await axios.get(apiconfig.suspect.getAll);
+      if (response.data.status === 'success') {
+        setSuspects(response.data.data.suspects);
+      } else {
+        setSuspectsError('Failed to fetch suspects');
+      }
+    } catch (error) {
+      setSuspectsError(error.message || 'Error fetching suspects');
+    } finally {
+      setLoadingSuspects(false);
+    }
+  };
+
+  // Fetch Victims
+  const fetchVictims = async () => {
+    setLoadingVictims(true);
+    setVictimsError(null);
+    try {
+      const response = await axios.get(apiconfig.victims.getAll);
+      if (response.data.status === 'success') {
+        setVictims(response.data.data);
+      } else {
+        setVictimsError('Failed to fetch victims');
+      }
+    } catch (error) {
+      setVictimsError(error.message || 'Error fetching victims');
+    } finally {
+      setLoadingVictims(false);
+    }
+  };
+
+  // Handle input changes for text fields
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
 
+  // Handle Autocomplete changes
+  const handleSuspectChange = (event, value) => {
+    if (value) {
+      setFormData({ ...formData, SuspectID: value.SuspectID });
+    } else {
+      setFormData({ ...formData, SuspectID: '' });
+    }
+  };
+
+  const handleVictimChange = (event, value) => {
+    if (value) {
+      setFormData({ ...formData, VictimID: value.VictimID });
+    } else {
+      setFormData({ ...formData, VictimID: '' });
+    }
+  };
+
+  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await onSubmit(formData); // Wait for the submission to complete
-    onClose(); // Close only after successful submission
+    try {
+      // Only include SuspectID and VictimID if they are selected
+      const submissionData = { ...formData };
+      if (!submissionData.SuspectID) {
+        delete submissionData.SuspectID;
+      }
+      if (!submissionData.VictimID) {
+        delete submissionData.VictimID;
+      }
+
+      await onSubmit(submissionData); // Ensure onSubmit handles the data correctly
+      onClose(); // Close the modal after successful submission
+    } catch (error) {
+      console.error('Error submitting crime report:', error);
+      // Optionally, display an error message to the user
+    }
   };
 
   if (!isOpen) return null;
@@ -68,6 +160,7 @@ const CrimeReportModal = ({ isOpen, onClose, onSubmit }) => {
           </Typography>
           <form onSubmit={handleSubmit}>
             <Grid container spacing={2}>
+              {/* Report ID */}
               <Grid item xs={12}>
                 <TextField
                   fullWidth
@@ -77,9 +170,11 @@ const CrimeReportModal = ({ isOpen, onClose, onSubmit }) => {
                   onChange={handleChange}
                   placeholder="Enter Report ID"
                   required
-                  disabled // Disable input for Report ID
+                  disabled
                 />
               </Grid>
+
+              {/* Location */}
               <Grid item xs={12}>
                 <TextField
                   fullWidth
@@ -91,6 +186,8 @@ const CrimeReportModal = ({ isOpen, onClose, onSubmit }) => {
                   required
                 />
               </Grid>
+
+              {/* Date */}
               <Grid item xs={12}>
                 <TextField
                   fullWidth
@@ -102,6 +199,8 @@ const CrimeReportModal = ({ isOpen, onClose, onSubmit }) => {
                   InputLabelProps={{ shrink: true }}
                 />
               </Grid>
+
+              {/* Description */}
               <Grid item xs={12}>
                 <TextField
                   fullWidth
@@ -115,6 +214,8 @@ const CrimeReportModal = ({ isOpen, onClose, onSubmit }) => {
                   rows={4}
                 />
               </Grid>
+
+              {/* Officer In Charge */}
               <Grid item xs={12}>
                 <TextField
                   fullWidth
@@ -126,18 +227,80 @@ const CrimeReportModal = ({ isOpen, onClose, onSubmit }) => {
                   required
                 />
               </Grid>
-              <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                <Button type="submit" variant="contained" color="primary" sx={{ width: '48%' }}>
-                  Submit
-                </Button>
-                <Button
-                  type="button"
-                  onClick={onClose}
-                  variant="contained"
-                  color="secondary"
-                  sx={{ width: '48%' }}
-                >
-                  Close
+
+              {/* Suspect Autocomplete */}
+              <Grid item xs={12}>
+                <Autocomplete
+                  options={suspects}
+                  getOptionLabel={(option) =>
+                    `${option.FullName} (${option.SuspectID})`
+                  }
+                  loading={loadingSuspects}
+                  onChange={handleSuspectChange}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Suspect"
+                      placeholder="Select Suspect"
+                      variant="outlined"
+                      error={!!suspectsError}
+                      helperText={suspectsError}
+                      InputProps={{
+                        ...params.InputProps,
+                        endAdornment: (
+                          <>
+                            {loadingSuspects ? (
+                              <CircularProgress color="inherit" size={20} />
+                            ) : null}
+                            {params.InputProps.endAdornment}
+                          </>
+                        ),
+                      }}
+                    />
+                  )}
+                  // Optional: allow clearing the selection
+                  clearOnEscape
+                />
+              </Grid>
+
+              {/* Victim Autocomplete */}
+              <Grid item xs={12}>
+                <Autocomplete
+                  options={victims}
+                  getOptionLabel={(option) =>
+                    `${option.FullName} (${option.VictimID})`
+                  }
+                  loading={loadingVictims}
+                  onChange={handleVictimChange}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Victim"
+                      placeholder="Select Victim"
+                      variant="outlined"
+                      error={!!victimsError}
+                      helperText={victimsError}
+                      InputProps={{
+                        ...params.InputProps,
+                        endAdornment: (
+                          <>
+                            {loadingVictims ? (
+                              <CircularProgress color="inherit" size={20} />
+                            ) : null}
+                            {params.InputProps.endAdornment}
+                          </>
+                        ),
+                      }}
+                    />
+                  )}
+                  clearOnEscape
+                />
+              </Grid>
+
+              {/* Submit Button */}
+              <Grid item xs={12}>
+                <Button type="submit" variant="contained" color="primary" fullWidth>
+                  Submit Report
                 </Button>
               </Grid>
             </Grid>
