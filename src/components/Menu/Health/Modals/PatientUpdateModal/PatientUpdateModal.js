@@ -80,8 +80,8 @@ const PatientUpdateModal = ({ isOpen, onClose, onSave, patient }) => {
                   type="text"
                   name="PatientID"
                   value={formData.PatientID}
-                  readOnly
                   label="Patient ID"
+                  readOnly
                   sx={{ width: '100%' }}
                 />
               </Grid>
@@ -94,6 +94,7 @@ const PatientUpdateModal = ({ isOpen, onClose, onSave, patient }) => {
                   onChange={handleChange}
                   placeholder="Enter Full Name"
                   required
+                  InputProps={{ readOnly: true }} // Make this field read-only
                 />
               </Grid>
               <Grid item xs={12}>
@@ -105,6 +106,7 @@ const PatientUpdateModal = ({ isOpen, onClose, onSave, patient }) => {
                   onChange={handleChange}
                   placeholder="Enter Address"
                   required
+                  InputProps={{ readOnly: true }} // Make this field read-only
                 />
               </Grid>
               <Grid item xs={12}>
@@ -117,6 +119,7 @@ const PatientUpdateModal = ({ isOpen, onClose, onSave, patient }) => {
                   required
                   InputLabelProps={{ shrink: true }}
                   sx={{ width: '100%' }}
+                  InputProps={{ readOnly: true }} // Make this field read-only
                 />
               </Grid>
               <Grid item xs={12}>
@@ -138,6 +141,7 @@ const PatientUpdateModal = ({ isOpen, onClose, onSave, patient }) => {
                   onChange={handleChange}
                   displayEmpty
                   required
+                  inputProps={{ readOnly: true }} // Make this field read-only
                 >
                   <MenuItem value="" disabled>
                     Select Gender

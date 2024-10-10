@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Box,
   Button,
@@ -7,30 +7,74 @@ import {
   Container,
   Paper,
   Grid,
-  Select,
-  MenuItem,
+  Autocomplete,
 } from '@mui/material';
+import apiconfig from '../../../../../api/apiconfig';
 
 const PatientModal = ({ isOpen, onClose, onSubmit }) => {
-  const [formData, setFormData] = React.useState({
+  const [formData, setFormData] = useState({
     PatientID: '',
     Fullname: '',
     Address: '',
     DateOfBirth: '',
     ContactNo: '',
-    Gender: 'Male', // Default value
+    Gender: 'Male',
     MedicalHistory: '',
   });
 
+  const [residents, setResidents] = useState([]); // State for residents
+
   useEffect(() => {
     if (isOpen) {
-      const generatedID = `PID-${Date.now()}`; // Example ID generation logic
+      const generatedID = `PID-${Date.now()}`;
       setFormData((prevState) => ({
         ...prevState,
         PatientID: generatedID,
       }));
+
+      // Fetch residents data when modal opens
+      fetchResidents();
     }
   }, [isOpen]);
+
+  const fetchResidents = async () => {
+    try {
+      const response = await fetch(apiconfig.residents.getAll);
+      const result = await response.json();
+      if (result.status === 'success') {
+        setResidents(result.data); // Set the resident data
+      } else {
+        console.error('Failed to fetch residents:', result.message);
+      }
+    } catch (error) {
+      console.error('Error fetching residents:', error);
+    }
+  };
+
+  const handleResidentChange = (event, value) => {
+    const resident = residents.find((r) => r.Name === value);
+
+    if (resident) {
+      setFormData({
+        PatientID: formData.PatientID,
+        Fullname: resident.Name,
+        Address: resident.Address,
+        DateOfBirth: resident.Birthday,
+        ContactNo: '', // Assuming contact number is not available
+        Gender: resident.Gender,
+        MedicalHistory: '', // Assuming medical history is not available
+      });
+    } else {
+      // Clear form fields if no resident is selected
+      setFormData((prevState) => ({
+        ...prevState,
+        Fullname: '',
+        Address: '',
+        DateOfBirth: '',
+        Gender: 'Male',
+      }));
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -87,18 +131,16 @@ const PatientModal = ({ isOpen, onClose, onSubmit }) => {
                   value={formData.PatientID}
                   onChange={handleChange}
                   required
-                  disabled // Disable input for PatientID
+                  disabled
                 />
               </Grid>
               <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  name="Fullname"
-                  label="Full Name"
-                  value={formData.Fullname}
-                  onChange={handleChange}
-                  placeholder="Enter Full Name"
-                  required
+                <Autocomplete
+                  options={residents.map((resident) => resident.Name)}
+                  onChange={handleResidentChange}
+                  renderInput={(params) => (
+                    <TextField {...params} label="Full Name" required />
+                  )}
                 />
               </Grid>
               <Grid item xs={12}>
@@ -110,6 +152,7 @@ const PatientModal = ({ isOpen, onClose, onSubmit }) => {
                   onChange={handleChange}
                   placeholder="Enter Address"
                   required
+                  disabled // Disable input for Address
                 />
               </Grid>
               <Grid item xs={12}>
@@ -122,6 +165,7 @@ const PatientModal = ({ isOpen, onClose, onSubmit }) => {
                   onChange={handleChange}
                   required
                   InputLabelProps={{ shrink: true }}
+                  disabled // Disable input for DateOfBirth
                 />
               </Grid>
               <Grid item xs={12}>
@@ -137,17 +181,15 @@ const PatientModal = ({ isOpen, onClose, onSubmit }) => {
                 />
               </Grid>
               <Grid item xs={12}>
-                <Select
+                <TextField
                   fullWidth
                   name="Gender"
+                  label="Gender"
                   value={formData.Gender}
                   onChange={handleChange}
                   required
-                >
-                  <MenuItem value="Male">Male</MenuItem>
-                  <MenuItem value="Female">Female</MenuItem>
-                  <MenuItem value="Other">Other</MenuItem>
-                </Select>
+                  disabled // Disable input for Gender
+                />
               </Grid>
               <Grid item xs={12}>
                 <TextField
