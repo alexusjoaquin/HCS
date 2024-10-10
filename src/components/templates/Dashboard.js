@@ -1,118 +1,156 @@
-// src/components/Dashboard.jsx
-import React, { useEffect, useState } from 'react';
-import { Typography, Box, Grid, Paper, CircularProgress, Alert } from '@mui/material';
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  Legend,
-} from 'recharts';
-import apiconfig from '../../api/apiconfig';
-import axios from 'axios';
+// src/components/templates/Dashboard.jsx
 
-const COLORS = ['#0088FE', '#FF8042', '#00C49F', '#FFBB28', '#FF6384'];
+import React, { useEffect, useState } from 'react';
+import {
+  Typography,
+  Box,
+  Grid,
+  Paper,
+  CircularProgress,
+  Alert,
+  Card,
+  CardContent,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  useTheme,
+} from '@mui/material';
+import PeopleIcon from '@mui/icons-material/People';
+import ElderlyIcon from '@mui/icons-material/Elderly';
+import SecurityIcon from '@mui/icons-material/Security';
+import { BarChart, Bar, PieChart, Pie, Cell, Tooltip, Legend, XAxis, YAxis, ResponsiveContainer, CartesianGrid } from 'recharts';
+import axios from 'axios';
+import apiconfig from '../../api/apiconfig';
 
 const Dashboard = () => {
-  const [totalPatients, setTotalPatients] = useState(null);
-  const [upcomingAppointments, setUpcomingAppointments] = useState(null);
-  const [availableDoctors, setAvailableDoctors] = useState(null);
-  const [recentActivities, setRecentActivities] = useState([]);
+  const theme = useTheme();
+
+  // State variables
+  const [totalResidents, setTotalResidents] = useState(null);
+  const [totalSeniors, setTotalSeniors] = useState(null);
+  const [totalCrimes, setTotalCrimes] = useState(null);
+  const [uniqueAddresses, setUniqueAddresses] = useState([]);
+  const [selectedAddress, setSelectedAddress] = useState('All');
+  const [residentsData, setResidentsData] = useState([]);
+  const [crimeData, setCrimeData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  // Colors for Pie Chart
+  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#AA336A', '#FF6666'];
+
+  // Fetch data on component mount
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-  
-        // Fetch Total Patients
-        const patientsResponse = await axios.get(apiconfig.patients.getAll);
-        console.log('Patients Response:', patientsResponse.data);
-        if (!patientsResponse.data || !Array.isArray(patientsResponse.data.data)) {
-          throw new Error('Invalid patients response');
+
+        // Fetch Residents Data
+        const residentsResponse = await axios.get(apiconfig.residents.getAll);
+        if (
+          residentsResponse.status === 200 &&
+          residentsResponse.data.status === 'success' &&
+          Array.isArray(residentsResponse.data.data)
+        ) {
+          const residents = residentsResponse.data.data;
+          setResidentsData(residents);
+
+          // Extract unique addresses
+          const addresses = [...new Set(residents.map(resident => resident.Address))];
+          setUniqueAddresses(addresses);
+        } else {
+          throw new Error('Failed to fetch residents data');
         }
-        setTotalPatients(patientsResponse.data.data.length);
-  
-        // Fetch Upcoming Appointments
-        const appointmentsResponse = await axios.get(apiconfig.appointments.getAll);
-        console.log('Appointments Response:', appointmentsResponse.data);
-        if (!appointmentsResponse.data || !Array.isArray(appointmentsResponse.data.data)) {
-          throw new Error('Invalid appointments response');
+
+        // Fetch Crime Reports Data
+        const crimeResponse = await axios.get(apiconfig.crime.getAll);
+        if (
+          crimeResponse.status === 200 &&
+          crimeResponse.data.status === 'success' &&
+          crimeResponse.data.data &&
+          typeof crimeResponse.data.data.totalRecords === 'number' &&
+          Array.isArray(crimeResponse.data.data.crimeReports)
+        ) {
+          setCrimeData(crimeResponse.data.data.crimeReports);
+        } else {
+          throw new Error('Failed to fetch crime reports data');
         }
-        const upcoming = appointmentsResponse.data.data.filter((appointment) => {
-          // Convert to valid date format if necessary
-          const appointmentDate = new Date(appointment.Date);
-          if (isNaN(appointmentDate.getTime())) {
-            console.error('Invalid Date:', appointment.Date);
-            return false; // Skip invalid dates
-          }
-          return appointmentDate >= new Date();
-        });
-        setUpcomingAppointments(upcoming.length);
-  
-        // Fetch Available Doctors
-        const doctorsResponse = await axios.get(apiconfig.users.getUsers);
-        console.log('Doctors Response:', doctorsResponse.data);
-        const doctorsUsernames = doctorsResponse.data.usernames || [];
-        // Assuming all doctors in `usernames` array are available
-        setAvailableDoctors(doctorsUsernames.length);
-  
-        // Fetch Recent Patient Activities
-        const activitiesResponse = await axios.get(apiconfig.medical.getAll);
-        console.log('Activities Response:', activitiesResponse.data);
-        if (!activitiesResponse.data || !Array.isArray(activitiesResponse.data.data)) {
-          throw new Error('Invalid activities response');
-        }
-  
-        // Process recent activities and handle date formatting
-        const recentActivitiesData = activitiesResponse.data.data.slice(0, 5).map(activity => {
-          // Convert to valid date format or handle invalid dates
-          const activityDate = new Date(activity.date);
-          if (isNaN(activityDate.getTime())) {
-            console.error('Invalid Date:', activity.date);
-            return {
-              ...activity,
-              date: 'Invalid Date', // Handle invalid date
-            };
-          }
-          return {
-            ...activity,
-            date: activityDate.toLocaleString(), // Convert date to a readable format
-          };
-        });
-        
-        setRecentActivities(recentActivitiesData);
-  
+
         setLoading(false);
       } catch (err) {
-        console.error('Error fetching dashboard data:', err.response ? err.response.data : err.message);
+        console.error('Error fetching dashboard data:', err);
         setError('Failed to load dashboard data. Please try again later.');
         setLoading(false);
       }
     };
-  
+
     fetchData();
   }, []);
-  
-  
 
-  // Sample data for charts (Replace with actual data as needed)
-  const patientAgeDistribution = [
-    { ageGroup: '0-18', count: 200 },
-    { ageGroup: '19-35', count: 500 },
-    { ageGroup: '36-50', count: 300 },
-    { ageGroup: '51+', count: 234 },
-  ];
+  // Handle address filter change
+  const handleAddressChange = (event) => {
+    setSelectedAddress(event.target.value);
+  };
 
-  const doctorAvailability = [
-    { name: 'Available', value: availableDoctors },
-    { name: 'Busy', value: 24 - availableDoctors }, // Assuming total doctors = 24; adjust as necessary
+  // Filter residents based on selected address
+  const filteredResidents = selectedAddress === 'All'
+    ? residentsData
+    : residentsData.filter(resident => resident.Address === selectedAddress);
+
+  // Filter crimes based on selected address
+  const filteredCrimes = selectedAddress === 'All'
+    ? crimeData
+    : crimeData.filter(crime => crime.Location === selectedAddress);
+
+  // Calculate metrics based on filtered data
+  useEffect(() => {
+    setTotalResidents(filteredResidents.length);
+    setTotalSeniors(filteredResidents.filter(resident => resident.is_senior).length);
+    setTotalCrimes(filteredCrimes.length);
+  }, [filteredResidents, filteredCrimes]);
+
+  // Prepare data for Residents Distribution by Address Bar Chart
+  const residentsByAddress = uniqueAddresses.map(address => ({
+    address,
+    count: residentsData.filter(resident => resident.Address === address).length,
+  }));
+
+  // Prepare data for Crime Distribution by Address Pie Chart
+  const crimesByAddress = uniqueAddresses.map(address => ({
+    address,
+    count: crimeData.filter(crime => crime.Location === address).length,
+  })).filter(item => item.count > 0); // Remove addresses with zero crimes
+
+  // Prepare data for Age Distribution Histogram
+  const ageDistribution = [];
+  const ageBins = Array.from({ length: 11 }, (_, i) => i * 10); // 0-10, 10-20, ..., 100-110
+
+  ageBins.forEach(bin => {
+    const count = filteredResidents.filter(resident => resident.Age >= bin && resident.Age < bin + 10).length;
+    ageDistribution.push({ ageRange: `${bin}-${bin + 9}`, count });
+  });
+
+  // Define card data
+  const cardData = [
+    {
+      title: 'Total Residents',
+      value: totalResidents,
+      icon: <PeopleIcon fontSize="large" />,
+      color: '#1976d2', // Blue
+    },
+    {
+      title: 'Total Seniors',
+      value: totalSeniors,
+      icon: <ElderlyIcon fontSize="large" />,
+      color: '#388e3c', // Green
+    },
+    {
+      title: 'Total Crimes',
+      value: totalCrimes,
+      icon: <SecurityIcon fontSize="large" />,
+      color: '#d32f2f', // Red
+    },
   ];
 
   if (loading) {
@@ -122,8 +160,7 @@ const Dashboard = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          minHeight: '100vh',
-          bgcolor: '#f0f4f8',
+          minHeight: '80vh',
         }}
       >
         <CircularProgress />
@@ -138,8 +175,7 @@ const Dashboard = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          minHeight: '100vh',
-          bgcolor: '#f0f4f8',
+          minHeight: '80vh',
           padding: '2rem',
         }}
       >
@@ -153,115 +189,70 @@ const Dashboard = () => {
       sx={{
         padding: '2rem',
         flexGrow: 1,
-        bgcolor: '#f0f4f8',
+        bgcolor: '#f5f5f5',
         minHeight: '100vh',
       }}
     >
-      <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold', color: '#00796b' }}>
+      <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold', color: '#333333' }}>
         Dashboard
       </Typography>
-      <Grid container spacing={3}>
-        {/* Total Patients */}
-        <Grid item xs={12} md={4}>
-          <Paper
-            sx={{
-              padding: '1.5rem',
-              textAlign: 'center',
-              color: '#00796b',
-              fontWeight: 'bold',
-              bgcolor: '#e0f7fa',
-              boxShadow: '0px 4px 10px rgba(0,0,0,0.1)',
-              borderRadius: '12px',
-            }}
+
+      {/* Address Filter */}
+      <Box sx={{ marginBottom: '2rem' }}>
+        <FormControl sx={{ minWidth: 200 }} variant="outlined">
+          <InputLabel id="address-filter-label">Filter by Address</InputLabel>
+          <Select
+            labelId="address-filter-label"
+            id="address-filter"
+            value={selectedAddress}
+            label="Filter by Address"
+            onChange={handleAddressChange}
           >
-            <Typography variant="h6">Total Patients</Typography>
-            <Typography variant="h3" sx={{ marginTop: '0.5rem' }}>
-              {totalPatients}
-            </Typography>
-          </Paper>
-        </Grid>
-        {/* Upcoming Appointments */}
-        <Grid item xs={12} md={4}>
-          <Paper
-            sx={{
-              padding: '1.5rem',
-              textAlign: 'center',
-              color: '#00796b',
-              fontWeight: 'bold',
-              bgcolor: '#e0f7fa',
-              boxShadow: '0px 4px 10px rgba(0,0,0,0.1)',
-              borderRadius: '12px',
-            }}
-          >
-            <Typography variant="h6">Upcoming Appointments</Typography>
-            <Typography variant="h3" sx={{ marginTop: '0.5rem' }}>
-              {upcomingAppointments}
-            </Typography>
-          </Paper>
-        </Grid>
-        {/* Available Doctors */}
-        <Grid item xs={12} md={4}>
-          <Paper
-            sx={{
-              padding: '1.5rem',
-              textAlign: 'center',
-              color: '#00796b',
-              fontWeight: 'bold',
-              bgcolor: '#e0f7fa',
-              boxShadow: '0px 4px 10px rgba(0,0,0,0.1)',
-              borderRadius: '12px',
-            }}
-          >
-            <Typography variant="h6">Available Doctors</Typography>
-            <Typography variant="h3" sx={{ marginTop: '0.5rem' }}>
-              {availableDoctors}
-            </Typography>
-          </Paper>
-        </Grid>
-        {/* Recent Patient Activity */}
-        <Grid item xs={12}>
-          <Paper
-            sx={{
-              padding: '1.5rem',
-              color: '#00796b',
-              fontWeight: 'bold',
-              bgcolor: '#ffffff',
-              boxShadow: '0px 4px 10px rgba(0,0,0,0.1)',
-              borderRadius: '12px',
-            }}
-          >
-            <Typography variant="h6" gutterBottom>
-              Recent Patient Activity
-            </Typography>
-            {recentActivities.length > 0 ? (
-              <Grid container spacing={2}>
-                {recentActivities.map((activity, index) => (
-                  <Grid item xs={12} md={6} key={index}>
-                    <Paper
-                      sx={{
-                        padding: '1rem',
-                        bgcolor: '#f9f9f9',
-                        borderRadius: '8px',
-                        boxShadow: '0px 2px 5px rgba(0,0,0,0.05)',
-                      }}
-                    >
-                      <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
-                        {activity.patientName}
-                      </Typography>
-                      <Typography variant="body2">{activity.activityType}</Typography>
-                      <Typography variant="caption" color="textSecondary">
-                        {new Date(activity.date).toLocaleString()}
-                      </Typography>
-                    </Paper>
-                  </Grid>
-                ))}
-              </Grid>
-            ) : (
-              <Typography variant="body1">No recent activities.</Typography>
-            )}
-          </Paper>
-        </Grid>
-        {/* Patient Distribution Chart */}
+            <MenuItem value="All">All</MenuItem>
+            {uniqueAddresses.map((address, index) => (
+              <MenuItem key={index} value={address}>
+                {address}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      </Box>
+
+      {/* Metrics Cards */}
+      <Grid container spacing={4} sx={{ marginBottom: '2rem' }}>
+        {cardData.map((card, index) => (
+          <Grid item xs={12} md={4} key={index}>
+            <Card
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                padding: '1.5rem',
+                backgroundColor: card.color,
+                color: '#ffffff',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                borderRadius: '12px',
+                transition: 'transform 0.3s, box-shadow 0.3s',
+                '&:hover': {
+                  transform: 'translateY(-5px)',
+                  boxShadow: '0 8px 20px rgba(0,0,0,0.2)',
+                },
+              }}
+            >
+              <Box sx={{ marginRight: '1rem' }}>{card.icon}</Box>
+              <Box>
+                <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+                  {card.title}
+                </Typography>
+                <Typography variant="h5">{card.value}</Typography>
+              </Box>
+            </Card>
+          </Grid>
+        ))}
+      </Grid>
+
+      {/* Graphs */}
+      <Grid container spacing={4}>
+        {/* Residents Distribution by Address */}
         <Grid item xs={12} md={6}>
           <Paper
             sx={{
@@ -272,19 +263,22 @@ const Dashboard = () => {
             }}
           >
             <Typography variant="h6" gutterBottom>
-              Patient Distribution by Age Group
+              Residents Distribution by Address
             </Typography>
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={patientAgeDistribution}>
-                <XAxis dataKey="ageGroup" />
-                <YAxis />
+              <BarChart data={residentsByAddress}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="address" />
+                <YAxis allowDecimals={false} />
                 <Tooltip />
-                <Bar dataKey="count" fill="#00796b" />
+                <Legend />
+                <Bar dataKey="count" fill="#1976d2" name="Residents" />
               </BarChart>
             </ResponsiveContainer>
           </Paper>
         </Grid>
-        {/* Doctor Availability Pie Chart */}
+
+        {/* Crime Distribution by Address */}
         <Grid item xs={12} md={6}>
           <Paper
             sx={{
@@ -295,27 +289,53 @@ const Dashboard = () => {
             }}
           >
             <Typography variant="h6" gutterBottom>
-              Doctor Availability
+              Crime Distribution by Address
             </Typography>
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
                 <Pie
-                  data={doctorAvailability}
-                  dataKey="value"
-                  nameKey="name"
+                  data={crimesByAddress}
+                  dataKey="count"
+                  nameKey="address"
                   cx="50%"
                   cy="50%"
-                  outerRadius={80}
-                  fill="#82ca9d"
+                  outerRadius={100}
+                  fill="#d32f2f"
                   label
                 >
-                  {doctorAvailability.map((entry, index) => (
+                  {crimesByAddress.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
                 <Tooltip />
                 <Legend />
               </PieChart>
+            </ResponsiveContainer>
+          </Paper>
+        </Grid>
+
+        {/* Age Distribution of Residents */}
+        <Grid item xs={12}>
+          <Paper
+            sx={{
+              padding: '1.5rem',
+              bgcolor: '#ffffff',
+              boxShadow: '0px 4px 10px rgba(0,0,0,0.1)',
+              borderRadius: '12px',
+            }}
+          >
+            <Typography variant="h6" gutterBottom>
+              Age Distribution of Residents
+            </Typography>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={ageDistribution}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="ageRange" />
+                <YAxis allowDecimals={false} />
+                <Tooltip />
+                <Legend />
+                <Bar dataKey="count" fill="#388e3c" name="Residents" />
+              </BarChart>
             </ResponsiveContainer>
           </Paper>
         </Grid>

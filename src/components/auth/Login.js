@@ -1,3 +1,4 @@
+// src/components/auth/Login.js
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Formik, Form, Field } from 'formik';
@@ -24,7 +25,7 @@ import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import axios from 'axios';
 
-// Validation schema to validate username/email and password
+// Validation schema remains the same
 const validationSchema = Yup.object().shape({
   identifier: Yup.string()
     .required('Username or Email is required')
@@ -72,6 +73,9 @@ const Login = () => {
       );
 
       if (response.status === 200) {
+        // Store the username in localStorage
+        localStorage.setItem('username', values.identifier);
+
         setSnackbar({
           open: true,
           message: 'Login successful',

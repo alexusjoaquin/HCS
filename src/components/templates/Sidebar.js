@@ -1,3 +1,4 @@
+// src/components/templates/Sidebar.js
 import React, { useState } from 'react';
 import {
   List,
@@ -44,6 +45,8 @@ const Sidebar = () => {
 
   const handleConfirmLogout = () => {
     setOpen(false);
+    // Clear the username from localStorage
+    localStorage.removeItem('username');
     navigate('/'); // Redirect to the login page
   };
 
@@ -69,6 +72,9 @@ const Sidebar = () => {
   const handleFamilyMenuClick = () => {
     setOpenFamilyMenu(!openFamilyMenu);
   };
+
+  // Retrieve the username from localStorage
+  const username = localStorage.getItem('username');
 
   return (
     <Box
@@ -96,19 +102,35 @@ const Sidebar = () => {
         }}
       >
         {/* Use the logo from the public directory */}
-        <img src={`${process.env.PUBLIC_URL}/logo.jpg`} alt="Healthcare System Logo" style={{ width: 100, height: 100, borderRadius: '50%' }} />
+        <img
+          src={`${process.env.PUBLIC_URL}/logo.jpg`}
+          alt="Healthcare System Logo"
+          style={{ width: 100, height: 100, borderRadius: '50%' }}
+        />
       </Box>
 
       <Typography variant="h6" sx={{ fontWeight: 'bold', marginBottom: '1rem', color: '#ffffff' }}>
         Healthcare System
       </Typography>
       <List component="nav" sx={{ flexGrow: 1 }}>
-        <ListItem button onClick={() => handleNavigation('/landing')}>
-          <ListItemIcon sx={{ color: '#bbbbbb' }}> {/* Light gray icon color */}
-            <DashboardIcon />
-          </ListItemIcon>
-          <ListItemText primary="Dashboard" />
-        </ListItem>
+        {/* Conditionally render Dashboard and Settings for admin users */}
+        {username === 'admin' && (
+          <>
+            <ListItem button onClick={() => handleNavigation('/landing')}>
+              <ListItemIcon sx={{ color: '#bbbbbb' }}>
+                <DashboardIcon />
+              </ListItemIcon>
+              <ListItemText primary="Dashboard" />
+            </ListItem>
+
+            <ListItem button onClick={() => handleNavigation('/settings')}>
+              <ListItemIcon sx={{ color: '#bbbbbb' }}>
+                <SettingsIcon />
+              </ListItemIcon>
+              <ListItemText primary="Settings" />
+            </ListItem>
+          </>
+        )}
 
         {/* Residents Menu */}
         <ListItem button onClick={() => handleNavigation('/residents')}>
@@ -204,7 +226,6 @@ const Sidebar = () => {
               </ListItemIcon>
               <ListItemText primary="Family Counseling" />
             </ListItem>
-
           </List>
         </Collapse>
 
@@ -213,13 +234,6 @@ const Sidebar = () => {
             <LocalHospitalIcon />
           </ListItemIcon>
           <ListItemText primary="Senior Citizen" />
-        </ListItem>
-
-        <ListItem button onClick={() => handleNavigation('/settings')}>
-          <ListItemIcon sx={{ color: '#bbbbbb' }}>
-            <SettingsIcon />
-          </ListItemIcon>
-          <ListItemText primary="Settings" />
         </ListItem>
       </List>
 
