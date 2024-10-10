@@ -122,13 +122,6 @@ const Sidebar = () => {
               </ListItemIcon>
               <ListItemText primary="Dashboard" />
             </ListItem>
-
-            <ListItem button onClick={() => handleNavigation('/settings')}>
-              <ListItemIcon sx={{ color: '#bbbbbb' }}>
-                <SettingsIcon />
-              </ListItemIcon>
-              <ListItemText primary="Settings" />
-            </ListItem>
           </>
         )}
 
@@ -235,6 +228,13 @@ const Sidebar = () => {
           </ListItemIcon>
           <ListItemText primary="Senior Citizen" />
         </ListItem>
+
+        <ListItem button onClick={() => handleNavigation('/settings')}>
+              <ListItemIcon sx={{ color: '#bbbbbb' }}>
+                <SettingsIcon />
+              </ListItemIcon>
+              <ListItemText primary="Add New User" />
+            </ListItem>
       </List>
 
       <Divider sx={{ bgcolor: '#555555' }} />

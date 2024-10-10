@@ -311,24 +311,6 @@ const Login = () => {
                         'Sign In'
                       )}
                     </Button>
-                    <Grid container justifyContent="flex-end" sx={{ mt: 2 }}>
-                      <Grid item>
-                        <Link
-                          component="button"
-                          variant="body2"
-                          onClick={() => navigate('/register')}
-                          underline="hover"
-                          sx={{
-                            color: '#00796b',
-                            '&:hover': {
-                              color: '#004d40',
-                            },
-                          }}
-                        >
-                          Don't have an account? Sign Up
-                        </Link>
-                      </Grid>
-                    </Grid>
                   </Form>
                 )}
               </Formik>
