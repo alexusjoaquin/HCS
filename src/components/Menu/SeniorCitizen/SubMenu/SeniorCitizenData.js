@@ -3,13 +3,13 @@ import Sidebar from '../../../templates/Sidebar';
 import SeniorCitizenModal from '../Modals/SeniorCitizenModal/SeniorCitizenModal';
 import SeniorCitizenViewModal from '../Modals/SeniorCitizenViewModal/SeniorCitizenViewModal';
 import SeniorCitizenUpdateModal from '../Modals/SeniorCitizenUpdateModal/SeniorCitizenUpdateModal';
-import seniorcitizenService from '../../../services/seniorcitizenService';
+import residentsService from '../../../services/residentsService'; // Update to import residentsService
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
-import { Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography, IconButton, Tooltip } from '@mui/material';
-import { CSVLink } from 'react-csv'; 
-import ImportExportIcon from '@mui/icons-material/ImportExport'; 
-import PrintIcon from '@mui/icons-material/Print'; 
+import { CircularProgress, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography, IconButton, Tooltip } from '@mui/material';
+import { CSVLink } from 'react-csv';
+import ImportExportIcon from '@mui/icons-material/ImportExport';
+import PrintIcon from '@mui/icons-material/Print';
 
 const MySwal = withReactContent(Swal);
 
@@ -18,126 +18,79 @@ const SeniorCitizenData = () => {
   const [isViewModalOpen, setViewModalOpen] = useState(false);
   const [isUpdateModalOpen, setUpdateModalOpen] = useState(false);
   const [selectedSeniorCitizen, setSelectedSeniorCitizen] = useState(null);
-  const [seniorCitizens, setSeniorCitizens] = useState([]);
-  const [filteredCitizens, setFilteredCitizens] = useState([]);
+  const [residents, setResidents] = useState([]); // Change state to hold residents
+  const [filteredResidents, setFilteredResidents] = useState([]); // Change to filtered residents
   const [searchTerm, setSearchTerm] = useState('');
+  const [loading, setLoading] = useState(true); // Loading state
+  const [selectedResident, setSelectedResident] = useState(null);
 
-  // Fetch senior citizens data when component loads
+  // Fetch residents data when component loads
   useEffect(() => {
-    fetchSeniorCitizens();
+    fetchResidents();
   }, []);
 
   useEffect(() => {
-    const results = seniorCitizens.filter(citizen =>
-      citizen.FullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      citizen.Address.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      citizen.ContactInfo?.Phone.includes(searchTerm) ||
-      citizen.Gender.toLowerCase().includes(searchTerm) ||
-      citizen.MedicalHistory.toLowerCase().includes(searchTerm)
+    const results = residents.filter(resident =>
+      resident.Name.toLowerCase().includes(searchTerm.toLowerCase()) || // Adjust based on your resident object
+      resident.Address.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      resident.Gender.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      resident.Birthday.includes(searchTerm) // You may want to adjust this depending on your data structure
     );
-    setFilteredCitizens(results);
-  }, [searchTerm, seniorCitizens]);
+    setFilteredResidents(results);
+  }, [searchTerm, residents]);
 
-  const fetchSeniorCitizens = async () => {
+  const fetchResidents = async () => {
     try {
-      const response = await seniorcitizenService.getAllSeniorCitizens();
-      console.log('Fetched senior citizens:', response);
-      setSeniorCitizens(response);
-      setFilteredCitizens(response); // Initialize filtered citizens
+      setLoading(true); // Set loading to true before fetching
+      const response = await residentsService.getAllResidents(); // Fetch all residents
+      const seniorResidents = response.filter(resident => {
+        const currentYear = new Date().getFullYear();
+        const birthYear = new Date(resident.Birthday).getFullYear(); // Assuming Birthday is a date string
+        return (currentYear - birthYear) >= 60; // Check if age is 60 or above
+      });
+      setResidents(seniorResidents);
+      setFilteredResidents(seniorResidents); // Initialize filtered residents
     } catch (error) {
-      console.error('Failed to fetch senior citizens:', error);
+      console.error('Failed to fetch residents:', error);
+    } finally {
+      setLoading(false); // Set loading to false after fetching
     }
   };
-
-
 
   const handleCreateModalClose = () => {
     setCreateModalOpen(false);
   };
 
-  const handleCreateSubmit = async (data) => {
-    try {
-      const seniorCitizenData = {
-        SeniorID: `S-${Math.floor(Date.now() / 1000)}`,
-        FullName: data.FullName,
-        Address: data.Address,
-        DateOfBirth: data.DateOfBirth,
-        ContactInfo: data.ContactInfo,
-        Gender: data.Gender,
-        MedicalHistory: data.MedicalHistory,
-      };
-  
-      await seniorcitizenService.createSeniorCitizen(seniorCitizenData);
-      MySwal.fire({
-        icon: 'success',
-        title: 'Success',
-        text: 'Senior Citizen record created successfully!',
-        confirmButtonText: 'OK',
-      });
-      setCreateModalOpen(false);
-      fetchSeniorCitizens();
-    } catch (error) {
-      console.error('Error creating record:', error);
-    }
-  };
-
-  const handleView = (seniorCitizen) => {
-    setSelectedSeniorCitizen(seniorCitizen);
+  const handleView = (resident) => {
+    setSelectedResident(resident); // Use setSelectedResident to update the state
     setViewModalOpen(true);
   };
+  
 
   const handleViewModalClose = () => {
     setViewModalOpen(false);
-    setSelectedSeniorCitizen(null);
+    setSelectedResident(null); // Use setSelectedResident to reset the state
   };
-
   
+
   const handleUpdateModalClose = () => {
     setUpdateModalOpen(false);
-    setSelectedSeniorCitizen(null);
+    selectedResident(null);
   };
 
   const handleUpdateSubmit = async (data) => {
-    try {
-      const updatedSeniorCitizen = {
-        SeniorID: selectedSeniorCitizen.SeniorID,
-        FullName: data.FullName,
-        Address: data.Address,
-        DateOfBirth: data.DateOfBirth,
-        ContactInfo: { Phone: data.ContactInfo.Phone },
-        Gender: data.Gender,
-        MedicalHistory: data.MedicalHistory,
-      };
-
-      await seniorcitizenService.updateSeniorCitizen(updatedSeniorCitizen);
-      MySwal.fire({
-        icon: 'success',
-        title: 'Updated!',
-        text: 'Senior Citizen record updated successfully!',
-        confirmButtonText: 'OK',
-      });
-      setUpdateModalOpen(false);
-      fetchSeniorCitizens();
-    } catch (error) {
-      console.error('Error updating record:', error);
-    }
+    // Handle the update logic as needed
   };
 
-  
   // CSV headers for export
   const csvHeaders = [
-    { label: "Senior ID", key: "SeniorID" },
-    { label: "Full Name", key: "FullName" },
+    { label: "Resident ID", key: "ResidentID" },
+    { label: "Name", key: "Name" },
     { label: "Address", key: "Address" },
-    { label: "Date Of Birth", key: "DateOfBirth" },
-    { label: "Contact Info", key: "ContactInfo" },
+    { label: "Birthday", key: "Birthday" },
     { label: "Gender", key: "Gender" },
-    { label: "Medical History", key: "MedicalHistory" }
+    { label: "Status", key: "Status" }, // Add other necessary fields
   ];
-
-  const handleFileUpload = () => {
-    // Handle file upload logic here
-  }
 
   // Handle Print Records
   const handlePrint = () => {
@@ -159,7 +112,7 @@ const SeniorCitizenData = () => {
             id="import-csv"
             type="file"
             style={{ display: 'none' }}
-            onChange={handleFileUpload}
+            // Handle file upload logic here
           />
           <Tooltip title="Import CSV" arrow>
             <IconButton onClick={() => document.getElementById('import-csv').click()} color="primary" aria-label="Import CSV">
@@ -170,7 +123,7 @@ const SeniorCitizenData = () => {
           {/* Export CSV with Tooltip */}
           <Tooltip title="Export CSV" arrow>
             <span>
-              <CSVLink data={seniorCitizens} headers={csvHeaders} filename="senior_citizens.csv">
+              <CSVLink data={residents} headers={csvHeaders} filename="senior_citizens.csv">
                 <IconButton color="secondary" aria-label="Export CSV">
                   <ImportExportIcon />
                 </IconButton>
@@ -184,10 +137,11 @@ const SeniorCitizenData = () => {
               <PrintIcon />
             </IconButton>
           </Tooltip>
+
           <TextField
             style={{ width: '300px', marginRight: '40px' }}
             variant="outlined"
-            placeholder="Search senior citizens"
+            placeholder="Search residents"
             className="search-input"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -198,7 +152,7 @@ const SeniorCitizenData = () => {
           <Table>
             <TableHead>
               <TableRow>
-                {['Senior ID', 'Full Name', 'Address', 'Date of Birth', 'Contact Info', 'Gender', 'Medical History', 'Actions'].map((header) => (
+                {['Resident ID', 'Name', 'Address', 'Birthday', 'Gender', 'Actions'].map((header) => (
                   <TableCell key={header} style={{ backgroundColor: '#0B8769', color: 'white', padding: '10px', textAlign: 'center' }}>
                     {header}
                   </TableCell>
@@ -206,18 +160,22 @@ const SeniorCitizenData = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {Array.isArray(filteredCitizens) && filteredCitizens.length > 0 ? (
-                filteredCitizens.map((citizen) => (
-                  <TableRow key={citizen.SeniorID}>
-                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>{citizen.SeniorID}</TableCell>
-                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>{citizen.FullName}</TableCell>
-                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>{citizen.Address}</TableCell>
-                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>{citizen.DateOfBirth}</TableCell>
-                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>{citizen.ContactInfo?.Phone}</TableCell>
-                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>{citizen.Gender}</TableCell>
-                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>{citizen.MedicalHistory}</TableCell>
+              {loading ? ( // Check if loading is true
+                <TableRow>
+                  <TableCell colSpan={6} style={{ textAlign: 'center', padding: '20px' }}>
+                    <CircularProgress />
+                  </TableCell>
+                </TableRow>
+              ) : Array.isArray(filteredResidents) && filteredResidents.length > 0 ? (
+                filteredResidents.map((resident) => (
+                  <TableRow key={resident.ResidentID}>
+                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>{resident.ResidentID}</TableCell>
+                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>{resident.Name}</TableCell>
+                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>{resident.Address}</TableCell>
+                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>{resident.Birthday}</TableCell>
+                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>{resident.Gender}</TableCell>
                     <TableCell style={{ padding: '10px', textAlign: 'center' }}>
-                      <Button variant="contained" color="primary" style={{ marginRight: '10px' }} onClick={() => handleView(citizen)}>
+                      <Button variant="contained" color="primary" style={{ marginRight: '10px' }} onClick={() => handleView(resident)}>
                         View
                       </Button>
                     </TableCell>
@@ -225,7 +183,7 @@ const SeniorCitizenData = () => {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={8} style={{ textAlign: 'center' }}>
+                  <TableCell colSpan={6} style={{ textAlign: 'center' }}>
                     No senior citizens found.
                   </TableCell>
                 </TableRow>
@@ -239,22 +197,22 @@ const SeniorCitizenData = () => {
       <SeniorCitizenModal
         isOpen={isCreateModalOpen}
         onClose={handleCreateModalClose}
-        onSubmit={handleCreateSubmit}
+        // onSubmit={handleCreateSubmit} // Add if create functionality needed
       />
 
       {/* Modal for Viewing Senior Citizen Record */}
       <SeniorCitizenViewModal
         isOpen={isViewModalOpen}
         onClose={handleViewModalClose}
-        seniorCitizen={selectedSeniorCitizen}
+        resident={selectedResident}
       />
 
       {/* Modal for Updating Senior Citizen Record */}
       <SeniorCitizenUpdateModal
         isOpen={isUpdateModalOpen}
         onClose={handleUpdateModalClose}
-        onSave={handleUpdateSubmit}
-        seniorCitizen={selectedSeniorCitizen}
+        // onSave={handleUpdateSubmit} // Add if update functionality needed
+        seniorCitizen={selectedResident}
       />
     </div>
   );

@@ -7,6 +7,11 @@ import {
   Container,
   Paper,
   Grid,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  FormHelperText,
 } from '@mui/material';
 
 const VictimsModal = ({ isOpen, onClose, onSubmit }) => {
@@ -21,6 +26,10 @@ const VictimsModal = ({ isOpen, onClose, onSubmit }) => {
     CaseStatus: '',
   });
 
+  const [errors, setErrors] = React.useState({
+    FullName: '',
+  });
+
   useEffect(() => {
     if (isOpen) {
       setFormData({
@@ -30,16 +39,40 @@ const VictimsModal = ({ isOpen, onClose, onSubmit }) => {
         IncidentDate: '',
         CaseStatus: '',
       });
+      setErrors({ FullName: '' }); // Reset errors when modal opens
     }
   }, [isOpen]);
+
+  const validateFullName = (name) => {
+    const regex = /^[a-zA-Z\s]*$/; // Accepts only letters and spaces
+    return regex.test(name);
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
+
+    if (name === 'FullName') {
+      if (!validateFullName(value)) {
+        setErrors((prevErrors) => ({
+          ...prevErrors,
+          FullName: 'Full Name can only contain letters and spaces.',
+        }));
+      } else {
+        setErrors((prevErrors) => ({
+          ...prevErrors,
+          FullName: '',
+        }));
+      }
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    // Check for errors before submitting
+    if (errors.FullName) {
+      return; // Prevent submission if there are errors
+    }
     await onSubmit(formData); // Wait for the submission to complete
     setFormData({
       VictimID: generateVictimID(),
@@ -81,7 +114,6 @@ const VictimsModal = ({ isOpen, onClose, onSubmit }) => {
                   name="VictimID"
                   label="Victim ID"
                   value={formData.VictimID}
-                  onChange={handleChange}
                   required
                   disabled // Auto-generated, so it's read-only
                 />
@@ -95,6 +127,8 @@ const VictimsModal = ({ isOpen, onClose, onSubmit }) => {
                   onChange={handleChange}
                   placeholder="Enter Full Name"
                   required
+                  error={!!errors.FullName}
+                  helperText={errors.FullName} // Display error message
                 />
               </Grid>
               <Grid item xs={12}>
@@ -120,15 +154,25 @@ const VictimsModal = ({ isOpen, onClose, onSubmit }) => {
                 />
               </Grid>
               <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  name="CaseStatus"
-                  label="Case Status"
-                  value={formData.CaseStatus}
-                  onChange={handleChange}
-                  placeholder="Enter Case Status"
-                  required
-                />
+                <FormControl fullWidth required error={!formData.CaseStatus}>
+                  <InputLabel id="case-status-label">Case Status</InputLabel>
+                  <Select
+                    labelId="case-status-label"
+                    name="CaseStatus"
+                    value={formData.CaseStatus}
+                    onChange={handleChange}
+                  >
+                    <MenuItem value="Resolved">Resolved</MenuItem>
+                    <MenuItem value="Pending">Pending</MenuItem>
+                    <MenuItem value="Open">Open</MenuItem>
+                    <MenuItem value="In Progress">In Progress</MenuItem>
+                    <MenuItem value="Escalated">Escalated</MenuItem>
+                    <MenuItem value="Closed">Closed</MenuItem>
+                    <MenuItem value="Cancelled">Cancelled</MenuItem>
+                    <MenuItem value="On Hold">On Hold</MenuItem>
+                  </Select>
+                  {!formData.CaseStatus && <FormHelperText>Case Status is required</FormHelperText>}
+                </FormControl>
               </Grid>
               <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'space-between' }}>
                 <Button type="submit" variant="contained" color="primary" sx={{ width: '48%' }}>

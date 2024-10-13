@@ -23,6 +23,7 @@ const PatientModal = ({ isOpen, onClose, onSubmit }) => {
   });
 
   const [residents, setResidents] = useState([]); // State for residents
+  const [contactError, setContactError] = useState(''); // Error state for contact number validation
 
   useEffect(() => {
     if (isOpen) {
@@ -78,6 +79,17 @@ const PatientModal = ({ isOpen, onClose, onSubmit }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+
+    // Validate contact number field
+    if (name === 'ContactNo') {
+      const contactRegex = /^[0-9-]*$/; // Accepts only numbers or numbers with dashes
+      if (!contactRegex.test(value)) {
+        setContactError('Contact number can only contain numbers and dashes.');
+      } else {
+        setContactError('');
+      }
+    }
+
     setFormData((prevState) => ({
       ...prevState,
       [name]: value,
@@ -86,6 +98,12 @@ const PatientModal = ({ isOpen, onClose, onSubmit }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    
+    if (contactError) {
+      alert('Please fix the errors before submitting.');
+      return;
+    }
+
     onSubmit(formData);
     setFormData({
       PatientID: '',
@@ -178,6 +196,8 @@ const PatientModal = ({ isOpen, onClose, onSubmit }) => {
                   onChange={handleChange}
                   placeholder="Enter Contact Number"
                   required
+                  error={Boolean(contactError)} // Display error if validation fails
+                  helperText={contactError} // Display error message
                 />
               </Grid>
               <Grid item xs={12}>

@@ -11,6 +11,7 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  FormHelperText,
 } from '@mui/material';
 
 const CounsellingUpdateModal = ({ isOpen, onClose, onSave, counselling }) => {
@@ -20,6 +21,11 @@ const CounsellingUpdateModal = ({ isOpen, onClose, onSave, counselling }) => {
     Counselor: '',
     DateOfSession: '',
     Location: '',
+  });
+
+  const [errors, setErrors] = React.useState({
+    ClientName: '',
+    Counselor: '',
   });
 
   React.useEffect(() => {
@@ -34,19 +40,46 @@ const CounsellingUpdateModal = ({ isOpen, onClose, onSave, counselling }) => {
     }
   }, [counselling]);
 
+  const validateField = (name, value) => {
+    const regex = /^[a-zA-Z\s.,]*$/; // Only allows letters, spaces, dots, and commas
+    if (!regex.test(value)) {
+      return "Must only contain letters, spaces, dots, and commas.";
+    }
+    return '';
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
+
+    // Validate the field being changed
+    if (name === 'ClientName') {
+      setErrors({ ...errors, ClientName: validateField(name, value) });
+    } else if (name === 'Counselor') {
+      setErrors({ ...errors, Counselor: validateField(name, value) });
+    }
+  };
+
+  const validateFields = () => {
+    const clientNameError = validateField('ClientName', formData.ClientName);
+    const counselorError = validateField('Counselor', formData.Counselor);
+    const newErrors = {
+      ClientName: clientNameError,
+      Counselor: counselorError,
+    };
+
+    setErrors(newErrors);
+    return !clientNameError && !counselorError; // Return true if there are no errors
   };
 
   const handleSave = (e) => {
     e.preventDefault();
-    if (formData.ClientName && formData.Counselor && formData.DateOfSession && formData.Location) {
-      onSave(formData);
-      onClose(); // Close the modal after saving
-    } else {
-      alert('Please fill in all fields.');
+    if (!validateFields()) {
+      return; // Prevent submission if validation fails
     }
+
+    onSave(formData);
+    onClose(); // Close the modal after saving
   };
 
   if (!isOpen) return null;
@@ -119,7 +152,9 @@ const CounsellingUpdateModal = ({ isOpen, onClose, onSave, counselling }) => {
                   onChange={handleChange}
                   placeholder="Enter Client Name"
                   required
+                  error={!!errors.ClientName} // Highlight error state
                 />
+                {errors.ClientName && <FormHelperText error>{errors.ClientName}</FormHelperText>}
               </Grid>
               <Grid item xs={12}>
                 <TextField
@@ -130,7 +165,9 @@ const CounsellingUpdateModal = ({ isOpen, onClose, onSave, counselling }) => {
                   onChange={handleChange}
                   placeholder="Enter Counselor Name"
                   required
+                  error={!!errors.Counselor} // Highlight error state
                 />
+                {errors.Counselor && <FormHelperText error>{errors.Counselor}</FormHelperText>}
               </Grid>
               <Grid item xs={12}>
                 <TextField
@@ -148,7 +185,7 @@ const CounsellingUpdateModal = ({ isOpen, onClose, onSave, counselling }) => {
                 <FormControl fullWidth required sx={{ mb: 2 }}>
                   <InputLabel id="location-label">Location</InputLabel>
                   <Select
-                    labelId="Location"
+                    labelId="location-label"
                     name="Location"
                     value={formData.Location}
                     onChange={handleChange}

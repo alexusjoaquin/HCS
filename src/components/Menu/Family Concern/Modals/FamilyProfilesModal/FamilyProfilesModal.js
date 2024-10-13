@@ -7,52 +7,94 @@ import {
   Container,
   Paper,
   Grid,
-  MenuItem,
   Select,
+  MenuItem,
   FormControl,
   InputLabel,
 } from '@mui/material';
 
 const FamilyProfilesModal = ({ isOpen, onClose, onSubmit }) => {
-  const generateFamilyID = () => `FAM-${Date.now()}`;
-
+  // Ensure all initial values are defined
   const [formData, setFormData] = React.useState({
-    FamilyID: generateFamilyID(),
+    FamilyID: '', // Family ID will be generated
     FamilyName: '',
     Members: '',
-    Address: '', // Updated to match selection
+    Address: '',
     ContactNo: '',
   });
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
-  };
+  const [errors, setErrors] = React.useState({
+    FamilyName: '',
+    ContactNo: '',
+  });
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    await onSubmit(formData);
-    setFormData({
-      FamilyID: generateFamilyID(),
-      FamilyName: '',
-      Members: '',
-      Address: '',
-      ContactNo: '',
-    });
-    onClose();
-  };
-
+  // Generate a unique Family ID whenever the modal opens
   useEffect(() => {
     if (isOpen) {
+      const generatedID = `FAM${Date.now()}`; // Example ID generation logic
       setFormData({
-        FamilyID: generateFamilyID(),
+        FamilyID: generatedID,
         FamilyName: '',
         Members: '',
         Address: '',
         ContactNo: '',
       });
+      setErrors({ FamilyName: '', ContactNo: '' }); // Reset errors
     }
   }, [isOpen]);
+
+  const validateName = (name) => {
+    const regex = /^[a-zA-Z\s]*$/; // Accepts only letters and spaces
+    return regex.test(name);
+  };
+
+  const validateContactNo = (contactNo) => {
+    const regex = /^[0-9-]*$/; // Accepts only numbers and hyphens
+    return regex.test(contactNo);
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+
+    if (name === 'FamilyName') {
+      if (!validateName(value)) {
+        setErrors((prevErrors) => ({
+          ...prevErrors,
+          FamilyName: 'Family Name can only contain letters and spaces.',
+        }));
+      } else {
+        setErrors((prevErrors) => ({
+          ...prevErrors,
+          FamilyName: '',
+        }));
+      }
+    }
+
+    if (name === 'ContactNo') {
+      if (!validateContactNo(value)) {
+        setErrors((prevErrors) => ({
+          ...prevErrors,
+          ContactNo: 'Contact Number can only contain numbers and hyphens.',
+        }));
+      } else {
+        setErrors((prevErrors) => ({
+          ...prevErrors,
+          ContactNo: '',
+        }));
+      }
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    // Check for errors before submitting
+    if (errors.FamilyName || errors.ContactNo) {
+      return; // Prevent submission if there are errors
+    }
+    await onSubmit(formData); // Wait for the submission to complete
+    onClose(); // Close only after successful submission
+  };
 
   if (!isOpen) return null;
 
@@ -92,8 +134,7 @@ const FamilyProfilesModal = ({ isOpen, onClose, onSubmit }) => {
                   name="FamilyID"
                   label="Family ID"
                   value={formData.FamilyID}
-                  InputProps={{ readOnly: true }}
-                  sx={{ mb: 2 }}
+                  InputProps={{ readOnly: true }} // Disable input for Family ID
                 />
               </Grid>
               <Grid item xs={12}>
@@ -105,7 +146,8 @@ const FamilyProfilesModal = ({ isOpen, onClose, onSubmit }) => {
                   onChange={handleChange}
                   placeholder="Enter Family Name"
                   required
-                  sx={{ mb: 2 }}
+                  error={!!errors.FamilyName}
+                  helperText={errors.FamilyName} // Display error message
                 />
               </Grid>
               <Grid item xs={12}>
@@ -113,22 +155,22 @@ const FamilyProfilesModal = ({ isOpen, onClose, onSubmit }) => {
                   fullWidth
                   name="Members"
                   label="Members"
+                  type="number" // Set type to number
                   value={formData.Members}
                   onChange={handleChange}
                   placeholder="Enter Number of Members"
                   required
-                  sx={{ mb: 2 }}
                 />
               </Grid>
               <Grid item xs={12}>
-                <FormControl fullWidth sx={{ mb: 2 }}>
+                <FormControl fullWidth required>
                   <InputLabel id="address-label">Address</InputLabel>
                   <Select
                     labelId="address-label"
                     name="Address"
                     value={formData.Address}
                     onChange={handleChange}
-                    required
+                    label="Address"
                   >
                     {addressOptions.map((address) => (
                       <MenuItem key={address} value={address}>
@@ -147,7 +189,8 @@ const FamilyProfilesModal = ({ isOpen, onClose, onSubmit }) => {
                   onChange={handleChange}
                   placeholder="Enter Contact Number"
                   required
-                  sx={{ mb: 2 }}
+                  error={!!errors.ContactNo}
+                  helperText={errors.ContactNo} // Display error message
                 />
               </Grid>
               <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'space-between' }}>

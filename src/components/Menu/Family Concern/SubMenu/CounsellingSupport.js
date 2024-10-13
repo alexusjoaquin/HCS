@@ -7,7 +7,7 @@ import familycounsellingService from '../../../services/familycounsellingService
 import { toast } from 'react-toastify';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
-import { Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography, IconButton, Tooltip } from '@mui/material';
+import { CircularProgress ,Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography, IconButton, Tooltip } from '@mui/material';
 import { CSVLink } from 'react-csv'; 
 import ImportExportIcon from '@mui/icons-material/ImportExport'; 
 import PrintIcon from '@mui/icons-material/Print'; 
@@ -22,6 +22,7 @@ const CounsellingSupport = () => {
   const [counsellingRecords, setCounsellingRecords] = useState([]);
   const [filteredRecords, setFilteredRecords] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [loading, setLoading] = useState(true); // Loading state
 
   useEffect(() => {
     fetchCounsellingRecords();
@@ -39,6 +40,7 @@ const CounsellingSupport = () => {
 
   const fetchCounsellingRecords = async () => {
     try {
+      setLoading(true); // Set loading to true before fetching
       const response = await familycounsellingService.getAllFamilyCounselling();
       if (response && Array.isArray(response.counselingRecords)) {
         setCounsellingRecords(response.counselingRecords);
@@ -51,6 +53,8 @@ const CounsellingSupport = () => {
     } catch (error) {
       console.error('Failed to fetch counselling records:', error);
       toast.error('Failed to fetch counselling records.');
+    } finally {
+      setLoading(false); // Set loading to false after fetching
     }
   };
 
@@ -245,7 +249,13 @@ const CounsellingSupport = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {filteredRecords.length > 0 ? (
+              {loading ? ( // Check if loading is true
+                <TableRow>
+                  <TableCell colSpan={6} style={{ textAlign: 'center', padding: '20px' }}>
+                    <CircularProgress />
+                  </TableCell>
+                </TableRow>
+              ) : filteredRecords.length > 0 ? (
                 filteredRecords.map((record) => (
                   <TableRow key={record.ServiceID}>
                     <TableCell style={{ padding: '10px', textAlign: 'center' }}>{record.ServiceID}</TableCell>
@@ -274,6 +284,7 @@ const CounsellingSupport = () => {
                 </TableRow>
               )}
             </TableBody>
+
           </Table>
         </TableContainer>
       </div>

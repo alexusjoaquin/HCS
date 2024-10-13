@@ -8,7 +8,7 @@ import { toast } from 'react-toastify';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
 import apiconfig from '../../../../api/apiconfig';
-import { Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography, IconButton, Tooltip } from '@mui/material';
+import { Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography, IconButton, Tooltip, CircularProgress } from '@mui/material';
 import { CSVLink } from 'react-csv'; 
 import ImportExportIcon from '@mui/icons-material/ImportExport'; 
 import PrintIcon from '@mui/icons-material/Print';
@@ -23,12 +23,13 @@ const Patients = () => {
   const [isViewModalOpen, setViewModalOpen] = useState(false);
   const [isUpdateModalOpen, setUpdateModalOpen] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState(null);
-  const [residents, setResidents] = useState([]); // State for residents data
-  const [selectedResident, setSelectedResident] = useState(null); // State for the selected resident
+  const [residents, setResidents] = useState([]);
+  const [selectedResident, setSelectedResident] = useState(null);
+  const [loading, setLoading] = useState(true); // Loading state
 
   useEffect(() => {
     fetchPatients();
-    fetchResidents(); // Fetch residents data
+    fetchResidents();
   }, []);
 
   useEffect(() => {
@@ -42,6 +43,7 @@ const Patients = () => {
 
   const fetchPatients = async () => {
     try {
+      setLoading(true); // Set loading to true before fetching
       const response = await patientService.getAllPatients();
       if (Array.isArray(response)) {
         setPatients(response);
@@ -54,12 +56,14 @@ const Patients = () => {
     } catch (error) {
       console.error('Failed to fetch patients:', error);
       toast.error('Failed to fetch patients.');
+    } finally {
+      setLoading(false); // Set loading to false after fetching
     }
   };
 
-  const fetchResidents = async () => { // Fetch residents data from the API
+  const fetchResidents = async () => {
     try {
-      const response = await fetch(apiconfig.residents.getAll); // Directly fetching from the API
+      const response = await fetch(apiconfig.residents.getAll);
       const data = await response.json();
       if (data.status === 'success' && Array.isArray(data.data)) {
         setResidents(data.data);
@@ -177,26 +181,24 @@ const Patients = () => {
     }
   };
 
-  const handleFullNameClick = (fullName) => { // Handle click on the full name
+  const handleFullNameClick = (fullName) => {
     const resident = residents.find(res => res.Name === fullName);
     if (resident) {
-      setSelectedResident(resident); // Set the selected resident data
-      setViewModalOpen(true); // Open the resident view modal
+      setSelectedResident(resident);
+      setViewModalOpen(true);
     }
   };
 
-  // Function to handle file upload (CSV)
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
     const reader = new FileReader();
 
     reader.onload = async (e) => {
       const csvData = e.target.result;
-      // Assuming your backend can handle CSV parsing directly.
       try {
         await patientService.importPatientsCSV(csvData);
         toast.success("CSV data imported successfully!");
-        fetchPatients(); // Refresh the patient data
+        fetchPatients();
       } catch (error) {
         console.error('Error importing patients:', error);
         toast.error('Failed to import patients.');
@@ -206,12 +208,10 @@ const Patients = () => {
     if (file) reader.readAsText(file);
   };
 
-  // Function to handle printing
   const handlePrint = () => {
     window.print();
   };
 
-  // CSV headers for export
   const csvHeaders = [
     { label: "Patient ID", key: "PatientID" },
     { label: "Full Name", key: "Fullname" },
@@ -252,7 +252,6 @@ const Patients = () => {
           </Button>
           <TextField style={{ width: '300px', marginRight: '40px' }} variant="outlined" placeholder="Search patients" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
         </div>
-
         <TableContainer style={{ maxWidth: '95%', margin: '30px auto', overflowX: 'auto' }}>
           <Table>
             <TableHead>
@@ -265,7 +264,13 @@ const Patients = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {Array.isArray(filteredPatients) && filteredPatients.length > 0 ? (
+              {loading ? ( // Check if loading is true
+                <TableRow>
+                  <TableCell colSpan={7} style={{ textAlign: 'center', padding: '20px' }}>
+                    <CircularProgress />
+                  </TableCell>
+                </TableRow>
+              ) : Array.isArray(filteredPatients) && filteredPatients.length > 0 ? (
                 filteredPatients.map((patient) => (
                   <TableRow key={patient.PatientID}>
                     <TableCell style={{ padding: '10px', textAlign: 'center' }}>{patient.PatientID}</TableCell>
@@ -302,7 +307,7 @@ const Patients = () => {
         <ResidentViewModal
           isOpen={isViewModalOpen}
           onClose={handleViewModalClose}
-          resident={selectedResident} // Pass selected resident data to the modal
+          resident={selectedResident}
         />
 
         <PatientUpdateModal

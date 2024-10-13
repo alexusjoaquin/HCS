@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Button,
@@ -7,17 +7,22 @@ import {
   Container,
   Paper,
   Grid,
+  Snackbar,
+  Alert,
 } from '@mui/material';
 
 const MedicineUpdateModal = ({ isOpen, onClose, onSave, medicine }) => {
-  const [formData, setFormData] = React.useState({
+  const [formData, setFormData] = useState({
     TransactionID: medicine?.TransactionID || '',
     FullName: medicine?.FullName || '',
     Address: medicine?.Address || '',
     MedicineName: medicine?.MedicineName || '',
   });
 
-  React.useEffect(() => {
+  const [error, setError] = useState(''); // State to track validation errors
+  const [snackbarOpen, setSnackbarOpen] = useState(false); // State for snackbar notification
+
+  useEffect(() => {
     if (medicine) {
       setFormData({
         TransactionID: medicine.TransactionID || '',
@@ -31,18 +36,38 @@ const MedicineUpdateModal = ({ isOpen, onClose, onSave, medicine }) => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
+
+    // Validation for MedicineName: Only allow letters
+    if (name === 'MedicineName') {
+      const isValid = /^[A-Za-z\s-]*$/.test(value);
+      if (!isValid) {
+        setError('Medicine name should only contain alphabetical characters.');
+      } else {
+        setError('');
+      }
+    }
   };
 
   const handleSave = (e) => {
     e.preventDefault();
+
+    if (error) {
+      // If there's a validation error, show the snackbar notification
+      setSnackbarOpen(true);
+      return;
+    }
+
     if (typeof onSave === 'function') {
-      onSave(formData);  // Call the onSave function passed as prop
+      onSave(formData); // Call the onSave function passed as a prop
     } else {
       console.error('onSave is not a function:', onSave);
     }
     onClose();
   };
-  
+
+  const handleCloseSnackbar = () => {
+    setSnackbarOpen(false);
+  };
 
   if (!isOpen || !medicine) return null; // Ensure both conditions are met
 
@@ -111,6 +136,8 @@ const MedicineUpdateModal = ({ isOpen, onClose, onSave, medicine }) => {
                   onChange={handleChange}
                   placeholder="Enter Medicine Name"
                   required
+                  error={Boolean(error)} // Set error state based on validation
+                  helperText={error} // Display error message
                 />
               </Grid>
               <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -131,6 +158,17 @@ const MedicineUpdateModal = ({ isOpen, onClose, onSave, medicine }) => {
           </form>
         </Paper>
       </Container>
+
+      {/* Snackbar for validation notifications */}
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={3000}
+        onClose={handleCloseSnackbar}
+      >
+        <Alert onClose={handleCloseSnackbar} severity="error" sx={{ width: '100%' }}>
+          {error}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

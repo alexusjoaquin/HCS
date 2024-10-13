@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Box,
   Button,
@@ -7,45 +7,109 @@ import {
   Container,
   Paper,
   Grid,
+  CircularProgress,
 } from '@mui/material';
+import Autocomplete from '@mui/material/Autocomplete';
+import axios from 'axios';
+import apiconfig from '../../../../../api/apiconfig'; // Adjust the path as necessary
 
 const CrimeReportUpdateModal = ({ isOpen, onClose, onSave, report }) => {
-  // Initialize the form data state based on the report prop
-  const [formData, setFormData] = React.useState({
+  const [formData, setFormData] = useState({
     ReportID: '',
     Description: '',
     Location: '',
     Date: '',
     OfficerInCharge: '',
+    SuspectID: '',
+    VictimID: '',
   });
 
-  // Update the form data state when the report prop changes
-  React.useEffect(() => {
-    if (report) {
+  // State for suspects and victims
+  const [suspects, setSuspects] = useState([]);
+  const [victims, setVictims] = useState([]);
+  const [loadingSuspects, setLoadingSuspects] = useState(false);
+  const [loadingVictims, setLoadingVictims] = useState(false);
+  const [suspectError, setSuspectError] = useState(false);
+  const [victimError, setVictimError] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
       setFormData({
         ReportID: report.ReportID || '',
         Description: report.Description || '',
         Location: report.Location || '',
         Date: report.Date || '',
         OfficerInCharge: report.OfficerInCharge || '',
+        SuspectID: report.SuspectID || '',
+        VictimID: report.VictimID || '',
       });
+      fetchSuspects();
+      fetchVictims();
     }
-  }, [report]);
+  }, [isOpen, report]);
 
-  // Handle changes to form inputs
+  const fetchSuspects = async () => {
+    setLoadingSuspects(true);
+    try {
+      const response = await axios.get(apiconfig.suspect.getAll);
+      if (response.data.status === 'success') {
+        setSuspects(response.data.data.suspects);
+      }
+    } catch (error) {
+      console.error('Error fetching suspects:', error);
+    } finally {
+      setLoadingSuspects(false);
+    }
+  };
+
+  const fetchVictims = async () => {
+    setLoadingVictims(true);
+    try {
+      const response = await axios.get(apiconfig.victims.getAll);
+      if (response.data.status === 'success') {
+        setVictims(response.data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching victims:', error);
+    } finally {
+      setLoadingVictims(false);
+    }
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
 
-  // Handle form submission
+  const handleSuspectChange = (event, value) => {
+    setFormData({ ...formData, SuspectID: value ? value.SuspectID : '' });
+    setSuspectError(false); // Clear error if selected
+  };
+
+  const handleVictimChange = (event, value) => {
+    setFormData({ ...formData, VictimID: value ? value.VictimID : '' });
+    setVictimError(false); // Clear error if selected
+  };
+
   const handleSave = (e) => {
     e.preventDefault();
+    let hasError = false;
+
+    if (!formData.SuspectID) {
+      setSuspectError(true);
+      hasError = true;
+    }
+    if (!formData.VictimID) {
+      setVictimError(true);
+      hasError = true;
+    }
+
+    if (hasError) return; // Prevent submission if errors exist
+
     onSave(formData); // Call the onSave prop function with the form data
     onClose(); // Close the modal after saving
   };
 
-  // Prevent rendering if the modal is not open or report is null
   if (!isOpen || !report) return null;
 
   return (
@@ -99,8 +163,8 @@ const CrimeReportUpdateModal = ({ isOpen, onClose, onSave, report }) => {
                   value={formData.Date}
                   onChange={handleChange}
                   required
-                  InputLabelProps={{ shrink: true }} // Ensure label stays visible
-                  sx={{ width: '100%' }} // Ensure the field takes the full width
+                  InputLabelProps={{ shrink: true }}
+                  sx={{ width: '100%' }}
                 />
               </Grid>
               <Grid item xs={12}>
@@ -123,6 +187,64 @@ const CrimeReportUpdateModal = ({ isOpen, onClose, onSave, report }) => {
                   onChange={handleChange}
                   placeholder="Enter Officer's Name"
                   required
+                />
+              </Grid>
+              {/* Suspect Autocomplete */}
+              <Grid item xs={12}>
+                <Autocomplete
+                  options={suspects}
+                  getOptionLabel={(option) => `${option.FullName} (${option.SuspectID})`}
+                  loading={loadingSuspects}
+                  onChange={handleSuspectChange}
+                  value={suspects.find(suspect => suspect.SuspectID === formData.SuspectID) || null} // Set the default value
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Suspect"
+                      placeholder="Select Suspect"
+                      variant="outlined"
+                      error={suspectError}
+                      helperText={suspectError ? 'Suspect is required' : ''}
+                      InputProps={{
+                        ...params.InputProps,
+                        endAdornment: (
+                          <>
+                            {loadingSuspects ? <CircularProgress color="inherit" size={20} /> : null}
+                            {params.InputProps.endAdornment}
+                          </>
+                        ),
+                      }}
+                    />
+                  )}
+                />
+              </Grid>
+              {/* Victim Autocomplete */}
+              <Grid item xs={12}>
+                <Autocomplete
+                  options={victims}
+                  getOptionLabel={(option) => `${option.FullName} (${option.VictimID})`}
+                  loading={loadingVictims}
+                  onChange={handleVictimChange}
+                  value={victims.find(victim => victim.VictimID === formData.VictimID) || null} // Set the default value
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Victim"
+                      placeholder="Select Victim"
+                      variant="outlined"
+                      error={victimError}
+                      helperText={victimError ? 'Victim is required' : ''}
+                      InputProps={{
+                        ...params.InputProps,
+                        endAdornment: (
+                          <>
+                            {loadingVictims ? <CircularProgress color="inherit" size={20} /> : null}
+                            {params.InputProps.endAdornment}
+                          </>
+                        ),
+                      }}
+                    />
+                  )}
                 />
               </Grid>
               <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'space-between' }}>

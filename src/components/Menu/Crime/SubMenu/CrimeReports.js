@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from 'react';
 import Sidebar from '../../../templates/Sidebar';
 import CrimeReportModal from '../Modals/CrimeReportModal/CrimeReportModal';
-import CrimeReportViewModal from '../Modals/CrimeReportViewModal/CrimeReportViewModal';
 import CrimeReportUpdateModal from '../Modals/CrimeReportUpdateModal/CrimeReportUpdateModal';
 import VictimsViewModal from '../Modals/VictimsViewModal/VictimsViewModal'; // Import Victim Modal
 import SuspectViewModal from '../Modals/SuspectViewModal/SuspectViewModal'; // Import Suspect Modal
@@ -21,6 +20,7 @@ import {
   Typography,
   IconButton,
   Tooltip,
+  CircularProgress
 } from '@mui/material';
 import { CSVLink } from 'react-csv';
 import ImportExportIcon from '@mui/icons-material/ImportExport';
@@ -32,7 +32,6 @@ const MySwal = withReactContent(Swal);
 
 const CrimeReports = () => {
   const [isCreateModalOpen, setCreateModalOpen] = useState(false);
-  const [isViewModalOpen, setViewModalOpen] = useState(false);
   const [isUpdateModalOpen, setUpdateModalOpen] = useState(false);
   const [selectedReport, setSelectedReport] = useState(null);
   const [crimeReports, setCrimeReports] = useState([]);
@@ -42,6 +41,7 @@ const CrimeReports = () => {
   const [selectedVictim, setSelectedVictim] = useState(null);
   const [isSuspectModalOpen, setSuspectModalOpen] = useState(false);
   const [selectedSuspect, setSelectedSuspect] = useState(null);
+  const [loading, setLoading] = useState(true); // Loading state
 
   useEffect(() => {
     fetchCrimeReports();
@@ -57,6 +57,7 @@ const CrimeReports = () => {
 
   const fetchCrimeReports = async () => {
     try {
+      setLoading(true); // Set loading to true before fetching
       const response = await axios.get(apiconfig.crime.getAll); // Fetch all crime reports
       if (response.data.status === 'success') {
         setCrimeReports(response.data.data.crimeReports);
@@ -69,6 +70,8 @@ const CrimeReports = () => {
     } catch (error) {
       console.error('Failed to fetch crime reports:', error);
       toast.error('Failed to fetch crime reports.');
+    } finally {
+      setLoading(false); // Set loading to false after fetching
     }
   };
 
@@ -105,16 +108,6 @@ const CrimeReports = () => {
       console.error('Error creating crime report:', error);
       toast.error('Failed to create crime report.');
     }
-  };
-
-  const handleView = (report) => {
-    setSelectedReport(report);
-    setViewModalOpen(true);
-  };
-
-  const handleViewModalClose = () => {
-    setViewModalOpen(false);
-    setSelectedReport(null);
   };
 
   const handleUpdate = (report) => {
@@ -311,41 +304,45 @@ const CrimeReports = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {Array.isArray(filteredReports) && filteredReports.length > 0 ? (
-                filteredReports.map((report) => (
-                  <TableRow key={report.ReportID}>
-                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>{report.ReportID}</TableCell>
-                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>{report.Description}</TableCell>
-                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>{report.Location}</TableCell>
-                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>{report.Date}</TableCell>
-                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>{report.OfficerInCharge}</TableCell>
-                    <TableCell style={{ padding: '10px', textAlign: 'center', cursor: 'pointer', color: '#0B8769' }} onClick={() => handleSuspectClick(report.SuspectID)}>
-                      {report.SuspectID}
-                    </TableCell>
-                    <TableCell style={{ padding: '10px', textAlign: 'center', cursor: 'pointer', color: '#0B8769' }} onClick={() => handleVictimClick(report.VictimID)}>
-                      {report.VictimID}
-                    </TableCell>
-                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>
-                      <Button variant="contained" color="primary" style={{ marginRight: '10px' }} onClick={() => handleView(report)}>
-                        View
-                      </Button>
-                      <Button variant="contained" color="secondary" style={{ marginRight: '10px' }} onClick={() => handleUpdate(report)}>
-                        Update
-                      </Button>
-                      <Button variant="contained" color="error" onClick={() => handleDelete(report.ReportID)}>
-                        Delete
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={8} style={{ textAlign: 'center', padding: '20px' }}>
-                    <Typography>No crime reports found.</Typography>
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
+  {loading ? (
+    <TableRow>
+      <TableCell colSpan={7} style={{ textAlign: 'center', padding: '20px' }}>
+        <CircularProgress />
+      </TableCell>
+    </TableRow>
+  ) : Array.isArray(filteredReports) && filteredReports.length > 0 ? (
+    filteredReports.map((report) => (
+      <TableRow key={report.ReportID}>
+        <TableCell style={{ padding: '10px', textAlign: 'center' }}>{report.ReportID}</TableCell>
+        <TableCell style={{ padding: '10px', textAlign: 'center' }}>{report.Description}</TableCell>
+        <TableCell style={{ padding: '10px', textAlign: 'center' }}>{report.Location}</TableCell>
+        <TableCell style={{ padding: '10px', textAlign: 'center' }}>{report.Date}</TableCell>
+        <TableCell style={{ padding: '10px', textAlign: 'center' }}>{report.OfficerInCharge}</TableCell>
+        <TableCell style={{ padding: '10px', textAlign: 'center', cursor: 'pointer', color: '#0B8769' }} onClick={() => handleSuspectClick(report.SuspectID)}>
+          {report.SuspectID}
+        </TableCell>
+        <TableCell style={{ padding: '10px', textAlign: 'center', cursor: 'pointer', color: '#0B8769' }} onClick={() => handleVictimClick(report.VictimID)}>
+          {report.VictimID}
+        </TableCell>
+        <TableCell style={{ padding: '10px', textAlign: 'center' }}>
+          <Button variant="contained" color="secondary" style={{ marginRight: '10px' }} onClick={() => handleUpdate(report)}>
+            Update
+          </Button>
+          <Button variant="contained" color="error" onClick={() => handleDelete(report.ReportID)}>
+            Delete
+          </Button>
+        </TableCell>
+      </TableRow>
+    ))
+  ) : (
+    <TableRow>
+      <TableCell colSpan={8} style={{ textAlign: 'center', padding: '20px' }}>
+        <Typography>No crime reports found.</Typography>
+      </TableCell>
+    </TableRow>
+  )}
+</TableBody>
+
           </Table>
         </TableContainer>
 
@@ -356,12 +353,6 @@ const CrimeReports = () => {
           onSubmit={handleCreateSubmit}
         />
 
-        {/* Modal for Viewing Crime Report */}
-        <CrimeReportViewModal
-          isOpen={isViewModalOpen}
-          onClose={handleViewModalClose}
-          crimeReport={selectedReport}
-        />
 
         {/* Modal for Updating Crime Report */}
         <CrimeReportUpdateModal

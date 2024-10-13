@@ -7,10 +7,13 @@ import {
   Container,
   Paper,
   Grid,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
 } from '@mui/material';
 
 const VictimsUpdateModal = ({ isOpen, onClose, onSave, victim }) => {
-  // Initialize form data state based on the victim prop
   const [formData, setFormData] = React.useState({
     VictimID: '',
     FullName: '',
@@ -19,7 +22,10 @@ const VictimsUpdateModal = ({ isOpen, onClose, onSave, victim }) => {
     CaseStatus: '',
   });
 
-  // Update form data state when victim prop changes
+  const [errors, setErrors] = React.useState({
+    FullName: '',
+  });
+
   React.useEffect(() => {
     if (victim) {
       setFormData({
@@ -32,20 +38,38 @@ const VictimsUpdateModal = ({ isOpen, onClose, onSave, victim }) => {
     }
   }, [victim]);
 
-  // Handle changes to form inputs
+  const validateFullName = (name) => {
+    const regex = /^[a-zA-Z\s]*$/; // Letters and spaces only
+    return regex.test(name);
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
+
+    if (name === 'FullName') {
+      if (!validateFullName(value)) {
+        setErrors((prevErrors) => ({
+          ...prevErrors,
+          FullName: 'Full Name can only contain letters and spaces.',
+        }));
+      } else {
+        setErrors((prevErrors) => ({
+          ...prevErrors,
+          FullName: '',
+        }));
+      }
+    }
   };
 
-  // Handle form submission
   const handleSave = (e) => {
     e.preventDefault();
-    onSave(formData); // Call the onSave function with the form data
-    onClose(); // Close the modal after saving
+    if (!errors.FullName) {
+      onSave(formData); // Pass updated data
+      onClose(); // Close modal after save
+    }
   };
 
-  // Prevent rendering if the modal is not open or victim is null
   if (!isOpen || !victim) return null;
 
   return (
@@ -72,12 +96,11 @@ const VictimsUpdateModal = ({ isOpen, onClose, onSave, victim }) => {
             <Grid container spacing={2}>
               <Grid item xs={12}>
                 <TextField
-                  type="text"
+                  fullWidth
                   name="VictimID"
+                  label="Victim ID"
                   value={formData.VictimID}
                   readOnly
-                  label="Victim ID"
-                  sx={{ width: '100%' }}
                 />
               </Grid>
               <Grid item xs={12}>
@@ -87,7 +110,8 @@ const VictimsUpdateModal = ({ isOpen, onClose, onSave, victim }) => {
                   label="Full Name"
                   value={formData.FullName}
                   onChange={handleChange}
-                  placeholder="Enter Full Name"
+                  error={!!errors.FullName}
+                  helperText={errors.FullName}
                   required
                 />
               </Grid>
@@ -98,7 +122,6 @@ const VictimsUpdateModal = ({ isOpen, onClose, onSave, victim }) => {
                   label="Last Known Address"
                   value={formData.LastKnownAddress}
                   onChange={handleChange}
-                  placeholder="Enter Last Known Address"
                   required
                 />
               </Grid>
@@ -115,15 +138,25 @@ const VictimsUpdateModal = ({ isOpen, onClose, onSave, victim }) => {
                 />
               </Grid>
               <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  name="CaseStatus"
-                  label="Case Status"
-                  value={formData.CaseStatus}
-                  onChange={handleChange}
-                  placeholder="Enter Case Status"
-                  required
-                />
+                <FormControl fullWidth required>
+                  <InputLabel id="case-status-label">Case Status</InputLabel>
+                  <Select
+                    labelId="case-status-label"
+                    name="CaseStatus"
+                    value={formData.CaseStatus}
+                    onChange={handleChange}
+                    required
+                  >
+                    <MenuItem value="Resolved">Resolved</MenuItem>
+                    <MenuItem value="Pending">Pending</MenuItem>
+                    <MenuItem value="Open">Open</MenuItem>
+                    <MenuItem value="In Progress">In Progress</MenuItem>
+                    <MenuItem value="Escalated">Escalated</MenuItem>
+                    <MenuItem value="Closed">Closed</MenuItem>
+                    <MenuItem value="Cancelled">Cancelled</MenuItem>
+                    <MenuItem value="On Hold">On Hold</MenuItem>
+                  </Select>
+                </FormControl>
               </Grid>
               <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'space-between' }}>
                 <Button type="submit" variant="contained" color="primary" sx={{ width: '48%' }}>

@@ -11,6 +11,8 @@ import {
   Checkbox,
   Select,
   MenuItem,
+  Snackbar,
+  Alert,
 } from '@mui/material';
 
 const ResidentCreateModal = ({ isOpen, onClose, onSubmit }) => {
@@ -28,12 +30,27 @@ const ResidentCreateModal = ({ isOpen, onClose, onSubmit }) => {
     is_senior: false,
   });
 
+  const [error, setError] = useState(null); // State to manage error message
+  const [openSnackbar, setOpenSnackbar] = useState(false); // State to manage Snackbar visibility
+
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData((prevData) => ({
       ...prevData,
       [name]: type === 'checkbox' ? checked : value,
     }));
+
+    // Validate Name input
+    if (name === 'Name') {
+      // Regular expression to check if Name contains only letters, spaces, hyphens, and apostrophes
+      const regex = /^[a-zA-Z\s'-]+$/;
+      if (!regex.test(value) && value.length > 0) {
+        setError('Invalid input: Name must only contain letters.');
+        setOpenSnackbar(true);
+      } else {
+        setError(null); // Clear error if the input is valid
+      }
+    }
   };
 
   useEffect(() => {
@@ -72,6 +89,7 @@ const ResidentCreateModal = ({ isOpen, onClose, onSubmit }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (error) return; // Prevent submission if there's an error
     await onSubmit(formData); // Wait for the submission to complete
     // Reset form fields after successful submission
     setFormData({
@@ -88,6 +106,10 @@ const ResidentCreateModal = ({ isOpen, onClose, onSubmit }) => {
       is_senior: false,
     });
     onClose(); // Close modal after submission and reset
+  };
+
+  const handleSnackbarClose = () => {
+    setOpenSnackbar(false);
   };
 
   if (!isOpen) return null;
@@ -123,6 +145,8 @@ const ResidentCreateModal = ({ isOpen, onClose, onSubmit }) => {
                   onChange={handleChange}
                   placeholder="Enter full name"
                   required
+                  error={!!error} // Show error state for the TextField
+                  helperText={error} // Display error message
                 />
               </Grid>
 
@@ -228,17 +252,7 @@ const ResidentCreateModal = ({ isOpen, onClose, onSubmit }) => {
                 </Select>
               </Grid>
 
-              <Grid item xs={4}>
-                <TextField
-                  type="number"
-                  name="BMI"
-                  label="BMI"
-                  value={formData.BMI}
-                  disabled // Disable the BMI field
-                  placeholder="Auto-calculated"
-                />
-              </Grid>
-
+              {/* Inline Height, Weight, and BMI Fields */}
               <Grid item xs={4}>
                 <TextField
                   type="number"
@@ -246,9 +260,7 @@ const ResidentCreateModal = ({ isOpen, onClose, onSubmit }) => {
                   label="Height (cm)"
                   value={formData.Height}
                   onChange={handleChange}
-                  placeholder="Enter Height"
                   required
-                  inputProps={{ min: 0 }} // Ensure the field only accepts positive numbers
                 />
               </Grid>
 
@@ -259,9 +271,18 @@ const ResidentCreateModal = ({ isOpen, onClose, onSubmit }) => {
                   label="Weight (kg)"
                   value={formData.Weight}
                   onChange={handleChange}
-                  placeholder="Enter Weight"
                   required
-                  inputProps={{ min: 0 }} // Ensure the field only accepts positive numbers
+                />
+              </Grid>
+
+              <Grid item xs={4}>
+                <TextField
+                  type="text"
+                  name="BMI"
+                  label="BMI"
+                  value={formData.BMI}
+                  disabled
+                  placeholder="Auto-calculated"
                 />
               </Grid>
 
@@ -281,7 +302,7 @@ const ResidentCreateModal = ({ isOpen, onClose, onSubmit }) => {
                 </Select>
               </Grid>
 
-              <Grid item xs={12}>
+              <Grid item xs={6}>
                 <FormControlLabel
                   control={
                     <Checkbox
@@ -290,28 +311,38 @@ const ResidentCreateModal = ({ isOpen, onClose, onSubmit }) => {
                       onChange={handleChange}
                     />
                   }
-                  label="Check if Senior"
+                  label="Senior Citizen"
                 />
               </Grid>
 
-              <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                <Button type="submit" variant="contained" color="primary" sx={{ width: '48%' }}>
-                  Submit
-                </Button>
-                <Button
-                  type="button"
-                  onClick={onClose}
-                  variant="contained"
-                  color="secondary"
-                  sx={{ width: '48%' }}
-                >
-                  Close
-                </Button>
+              <Grid item xs={12} container spacing={2}>
+                <Grid item xs={6}>
+                  <Button type="submit" variant="contained" color="primary" fullWidth>
+                    Create Resident
+                  </Button>
+                </Grid>
+                <Grid item xs={6}>
+                  <Button
+                    variant="contained"
+                    color="secondary"
+                    onClick={onClose}
+                    fullWidth
+                  >
+                    Cancel
+                  </Button>
+                </Grid>
               </Grid>
             </Grid>
           </form>
         </Paper>
       </Container>
+
+      {/* Snackbar for validation error */}
+      <Snackbar open={openSnackbar} autoHideDuration={6000} onClose={handleSnackbarClose}>
+        <Alert onClose={handleSnackbarClose} severity="error">
+          {error}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

@@ -11,6 +11,7 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  FormHelperText,
 } from '@mui/material';
 
 const CounsellingModal = ({ isOpen, onClose, onSubmit }) => {
@@ -24,6 +25,11 @@ const CounsellingModal = ({ isOpen, onClose, onSubmit }) => {
     Location: '',
   });
 
+  const [errors, setErrors] = useState({
+    ClientName: '',
+    Counselor: '',
+  });
+
   useEffect(() => {
     if (isOpen) {
       setFormData({
@@ -33,16 +39,49 @@ const CounsellingModal = ({ isOpen, onClose, onSubmit }) => {
         DateOfSession: '',
         Location: '',
       });
+      setErrors({ ClientName: '', Counselor: '' }); // Reset errors
     }
   }, [isOpen]);
+
+  const validateField = (name, value) => {
+    const regex = /^[a-zA-Z\s.,]*$/; // Only allows letters, spaces, dots, and commas
+    if (!regex.test(value)) {
+      return "Must only contain letters, spaces, dots, and commas.";
+    }
+    return '';
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
+
+    // Validate the field being changed
+    if (name === 'ClientName') {
+      setErrors({ ...errors, ClientName: validateField(name, value) });
+    } else if (name === 'Counselor') {
+      setErrors({ ...errors, Counselor: validateField(name, value) });
+    }
+  };
+
+  const validateFields = () => {
+    const clientNameError = validateField('ClientName', formData.ClientName);
+    const counselorError = validateField('Counselor', formData.Counselor);
+    const newErrors = {
+      ClientName: clientNameError,
+      Counselor: counselorError,
+    };
+
+    setErrors(newErrors);
+    return !clientNameError && !counselorError; // Return true if there are no errors
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!validateFields()) {
+      return; // Prevent submission if validation fails
+    }
+
     await onSubmit(formData); // Wait for submission to complete
     setFormData({
       ServiceID: generateServiceID(),
@@ -123,7 +162,9 @@ const CounsellingModal = ({ isOpen, onClose, onSubmit }) => {
                   onChange={handleChange}
                   placeholder="Enter Client Name"
                   required
+                  error={!!errors.ClientName}
                 />
+                {errors.ClientName && <FormHelperText error>{errors.ClientName}</FormHelperText>}
               </Grid>
               <Grid item xs={12}>
                 <TextField
@@ -134,7 +175,9 @@ const CounsellingModal = ({ isOpen, onClose, onSubmit }) => {
                   onChange={handleChange}
                   placeholder="Enter Counselor Name"
                   required
+                  error={!!errors.Counselor}
                 />
+                {errors.Counselor && <FormHelperText error>{errors.Counselor}</FormHelperText>}
               </Grid>
               <Grid item xs={12}>
                 <TextField

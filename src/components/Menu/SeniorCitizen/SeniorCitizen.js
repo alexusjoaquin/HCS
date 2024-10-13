@@ -94,6 +94,7 @@ const SeniorCitizen = () => {
     setSelectedSeniorCitizen(null);
   };
 
+  /*
   const handleUpdateSubmit = async (data) => {
     try {
       const updatedSeniorCitizen = {
@@ -119,6 +120,8 @@ const SeniorCitizen = () => {
       console.error('Error updating record:', error);
     }
   };
+
+  */
 
   const handleDelete = async (seniorCitizenID) => {
     const result = await MySwal.fire({
@@ -250,6 +253,7 @@ const SeniorCitizen = () => {
           />
         )}
 
+        {/*
         {isUpdateModalOpen && (
           <SeniorCitizenUpdateModal
             isOpen={isUpdateModalOpen}
@@ -257,7 +261,7 @@ const SeniorCitizen = () => {
             seniorCitizen={selectedSeniorCitizen}
             onSubmit={handleUpdateSubmit}
           />
-        )}
+        )}*/}
       </div>
     </div>
   );

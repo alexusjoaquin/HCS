@@ -7,7 +7,7 @@ import victimsService from '../../../services/victimsService';
 import { toast } from 'react-toastify';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
-import { Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography, IconButton, Tooltip } from '@mui/material';
+import { CircularProgress , Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography, IconButton, Tooltip } from '@mui/material';
 import { CSVLink } from 'react-csv'; 
 import ImportExportIcon from '@mui/icons-material/ImportExport'; 
 import PrintIcon from '@mui/icons-material/Print'; 
@@ -22,6 +22,7 @@ const Victims = () => {
   const [victims, setVictims] = useState([]);
   const [filteredVictims, setFilteredVictims] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [loading, setLoading] = useState(true); // Loading state
 
   useEffect(() => {
     fetchVictims();
@@ -39,6 +40,7 @@ const Victims = () => {
 
   const fetchVictims = async () => {
     try {
+      setLoading(true); // Set loading to true before fetching
       const response = await victimsService.getAllVictims();
       if (response && Array.isArray(response)) {
         setVictims(response);
@@ -51,7 +53,10 @@ const Victims = () => {
     } catch (error) {
       console.error('Failed to fetch victims:', error);
       toast.error('Failed to fetch victims.');
+    }finally {
+      setLoading(false); // Set loading to false after fetching
     }
+    
   };
 
   const handleNewVictim = () => {
@@ -244,7 +249,13 @@ const Victims = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {Array.isArray(filteredVictims) && filteredVictims.length > 0 ? (
+              {loading ? ( // Check if loading is true
+                <TableRow>
+                  <TableCell colSpan={6} style={{ textAlign: 'center', padding: '20px' }}>
+                    <CircularProgress />
+                  </TableCell>
+                </TableRow>
+              ) : Array.isArray(filteredVictims) && filteredVictims.length > 0 ? (
                 filteredVictims.map((victim) => (
                   <TableRow key={victim.VictimID}>
                     <TableCell style={{ padding: '10px', textAlign: 'center' }}>{victim.VictimID}</TableCell>
@@ -273,6 +284,7 @@ const Victims = () => {
                 </TableRow>
               )}
             </TableBody>
+
           </Table>
         </TableContainer>
       </div>

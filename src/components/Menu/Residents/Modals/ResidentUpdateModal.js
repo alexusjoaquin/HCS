@@ -28,6 +28,8 @@ const ResidentUpdateModal = ({ isOpen, onClose, onSave, resident }) => {
     is_senior: false,
   });
 
+  const [errorMessage, setErrorMessage] = useState('');
+
   useEffect(() => {
     if (resident) {
       setFormData({
@@ -36,7 +38,7 @@ const ResidentUpdateModal = ({ isOpen, onClose, onSave, resident }) => {
         Birthday: resident.Birthday || '',
         Address: resident.Address || '',
         Gender: resident.Gender || '',
-        Status: resident.Status || '',
+        Status: resident.Status ? resident.Status.charAt(0).toUpperCase() + resident.Status.slice(1).toLowerCase() : '',
         BMI: resident.BMI || '',
         Height: resident.Height || '',
         Weight: resident.Weight || '',
@@ -82,6 +84,17 @@ const ResidentUpdateModal = ({ isOpen, onClose, onSave, resident }) => {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
+
+    if (name === 'Name') {
+      // Allow only letters and spaces
+      const regex = /^[A-Za-z\s]*$/;
+      if (!regex.test(value)) {
+        setErrorMessage('Name can only contain letters and spaces.');
+      } else {
+        setErrorMessage('');
+      }
+    }
+
     setFormData({
       ...formData,
       [name]: type === 'checkbox' ? checked : value,
@@ -90,6 +103,9 @@ const ResidentUpdateModal = ({ isOpen, onClose, onSave, resident }) => {
 
   const handleSave = (e) => {
     e.preventDefault();
+    if (errorMessage) {
+      return; // Prevent saving if there's an error
+    }
     onSave(formData);
     onClose();
   };
@@ -127,6 +143,8 @@ const ResidentUpdateModal = ({ isOpen, onClose, onSave, resident }) => {
                   onChange={handleChange}
                   placeholder="Enter full name"
                   required
+                  error={!!errorMessage} // Show error state
+                  helperText={errorMessage} // Show error message
                 />
               </Grid>
               <Grid item xs={12}>
@@ -226,40 +244,29 @@ const ResidentUpdateModal = ({ isOpen, onClose, onSave, resident }) => {
                 </Select>
               </Grid>
 
-              <Grid item xs={4}>
-                <TextField
-                  type="number"
-                  name="BMI"
-                  label="BMI"
-                  value={formData.BMI}
-                  disabled // Disable the BMI field
-                  placeholder="Auto-calculated"
-                />
-              </Grid>
-              <Grid item xs={4}>
+              <Grid item xs={6}>
                 <TextField
                   type="number"
                   name="Height"
                   label="Height (cm)"
                   value={formData.Height}
                   onChange={handleChange}
-                  placeholder="Enter Height"
+                  placeholder="Enter height in cm"
                   required
                 />
               </Grid>
-              <Grid item xs={4}>
+              <Grid item xs={6}>
                 <TextField
                   type="number"
                   name="Weight"
                   label="Weight (kg)"
                   value={formData.Weight}
                   onChange={handleChange}
-                  placeholder="Enter Weight"
+                  placeholder="Enter weight in kg"
                   required
                 />
               </Grid>
-
-              <Grid item xs={6}>
+              <Grid item xs={12}>
                 <Select
                   fullWidth
                   name="BloodType"
@@ -270,31 +277,37 @@ const ResidentUpdateModal = ({ isOpen, onClose, onSave, resident }) => {
                 >
                   <MenuItem value="" disabled>Select Blood Type</MenuItem>
                   <MenuItem value="A+">A+</MenuItem>
-                  <MenuItem value="A−">A−</MenuItem>
+                  <MenuItem value="A-">A-</MenuItem>
                   <MenuItem value="B+">B+</MenuItem>
-                  <MenuItem value="B−">B−</MenuItem>
+                  <MenuItem value="B-">B-</MenuItem>
                   <MenuItem value="AB+">AB+</MenuItem>
-                  <MenuItem value="AB−">AB−</MenuItem>
+                  <MenuItem value="AB-">AB-</MenuItem>
                   <MenuItem value="O+">O+</MenuItem>
-                  <MenuItem value="O−">O−</MenuItem>
+                  <MenuItem value="O-">O-</MenuItem>
                 </Select>
               </Grid>
 
-              <Grid item xs={12}>
+              <Grid item xs={6}>
                 <FormControlLabel
                   control={
                     <Checkbox
-                      name="is_senior"
                       checked={formData.is_senior}
                       onChange={handleChange}
+                      name="is_senior"
                     />
                   }
-                  label="Check if Senior"
+                  label="Senior Citizen"
                 />
               </Grid>
 
               <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                <Button type="submit" variant="contained" color="primary" sx={{ width: '48%' }}>
+                <Button
+                  type="submit"
+                  variant="contained"
+                  color="primary"
+                  sx={{ width: '48%' }}
+                  disabled={!!errorMessage}
+                >
                   Save
                 </Button>
                 <Button

@@ -35,6 +35,10 @@ const CrimeReportModal = ({ isOpen, onClose, onSubmit }) => {
   const [loadingVictims, setLoadingVictims] = useState(false);
   const [victimsError, setVictimsError] = useState(null);
 
+  // Additional state for validation
+  const [suspectRequiredError, setSuspectRequiredError] = useState(false);
+  const [victimRequiredError, setVictimRequiredError] = useState(false);
+
   // Effect to initialize form and fetch data when modal opens
   useEffect(() => {
     if (isOpen) {
@@ -49,6 +53,10 @@ const CrimeReportModal = ({ isOpen, onClose, onSubmit }) => {
         SuspectID: '',
         VictimID: '',
       });
+
+      // Reset error states
+      setSuspectRequiredError(false);
+      setVictimRequiredError(false);
 
       // Fetch Suspects and Victims
       fetchSuspects();
@@ -102,6 +110,7 @@ const CrimeReportModal = ({ isOpen, onClose, onSubmit }) => {
   const handleSuspectChange = (event, value) => {
     if (value) {
       setFormData({ ...formData, SuspectID: value.SuspectID });
+      setSuspectRequiredError(false); // Clear error when selected
     } else {
       setFormData({ ...formData, SuspectID: '' });
     }
@@ -110,6 +119,7 @@ const CrimeReportModal = ({ isOpen, onClose, onSubmit }) => {
   const handleVictimChange = (event, value) => {
     if (value) {
       setFormData({ ...formData, VictimID: value.VictimID });
+      setVictimRequiredError(false); // Clear error when selected
     } else {
       setFormData({ ...formData, VictimID: '' });
     }
@@ -118,6 +128,17 @@ const CrimeReportModal = ({ isOpen, onClose, onSubmit }) => {
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
+    // Check for required fields
+    if (!formData.SuspectID) {
+      setSuspectRequiredError(true);
+    }
+    if (!formData.VictimID) {
+      setVictimRequiredError(true);
+    }
+    if (!formData.SuspectID || !formData.VictimID) {
+      return; // Prevent submission if errors exist
+    }
+
     try {
       // Only include SuspectID and VictimID if they are selected
       const submissionData = { ...formData };
@@ -243,8 +264,8 @@ const CrimeReportModal = ({ isOpen, onClose, onSubmit }) => {
                       label="Suspect"
                       placeholder="Select Suspect"
                       variant="outlined"
-                      error={!!suspectsError}
-                      helperText={suspectsError}
+                      error={suspectRequiredError || !!suspectsError}
+                      helperText={suspectRequiredError ? 'Suspect is required' : suspectsError}
                       InputProps={{
                         ...params.InputProps,
                         endAdornment: (
@@ -258,7 +279,6 @@ const CrimeReportModal = ({ isOpen, onClose, onSubmit }) => {
                       }}
                     />
                   )}
-                  // Optional: allow clearing the selection
                   clearOnEscape
                 />
               </Grid>
@@ -278,8 +298,8 @@ const CrimeReportModal = ({ isOpen, onClose, onSubmit }) => {
                       label="Victim"
                       placeholder="Select Victim"
                       variant="outlined"
-                      error={!!victimsError}
-                      helperText={victimsError}
+                      error={victimRequiredError || !!victimsError}
+                      helperText={victimRequiredError ? 'Victim is required' : victimsError}
                       InputProps={{
                         ...params.InputProps,
                         endAdornment: (
@@ -297,12 +317,34 @@ const CrimeReportModal = ({ isOpen, onClose, onSubmit }) => {
                 />
               </Grid>
 
-              {/* Submit Button */}
               <Grid item xs={12}>
-                <Button type="submit" variant="contained" color="primary" fullWidth>
-                  Submit Report
-                </Button>
+                <Grid container spacing={2}>
+                  {/* Submit Button */}
+                  <Grid item xs={6}>
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      type="submit"
+                      fullWidth
+                    >
+                      Submit
+                    </Button>
+                  </Grid>
+
+                  {/* Cancel Button */}
+                  <Grid item xs={6}>
+                    <Button
+                      variant="contained"
+                      color="secondary"
+                      fullWidth
+                      onClick={onClose} // Trigger onClose to close the modal
+                    >
+                      Cancel
+                    </Button>
+                  </Grid>
+                </Grid>
               </Grid>
+
             </Grid>
           </form>
         </Paper>

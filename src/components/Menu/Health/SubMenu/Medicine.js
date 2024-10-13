@@ -8,7 +8,7 @@ import medicineService from '../../../services/medicineService';
 import { toast } from 'react-toastify';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
-import { Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography, Tabs, Tab, Box, IconButton, Tooltip } from '@mui/material';
+import { CircularProgress, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography, Tabs, Tab, Box, IconButton, Tooltip } from '@mui/material';
 import LocalPharmacyIcon from '@mui/icons-material/LocalPharmacy';
 import VaccinesIcon from '@mui/icons-material/Vaccines';
 import ImportExportIcon from '@mui/icons-material/ImportExport';
@@ -25,6 +25,7 @@ const Medicine = () => {
   const [isMedicineModalOpen, setIsMedicineModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
+  const [loading, setLoading] = useState(true); // Loading state
   const navigate = useNavigate();
 
   const handleTabChange = (event, newValue) => {
@@ -42,6 +43,7 @@ const Medicine = () => {
 
   const fetchTransactions = async () => {
     try {
+      setLoading(true); // Set loading to true before fetching
       const data = await medicineService.getAllMedicines();
       if (Array.isArray(data)) {
         setTransactions(data);
@@ -52,6 +54,8 @@ const Medicine = () => {
     } catch (error) {
       console.error('Failed to fetch transactions:', error);
       toast.error('Failed to fetch transactions.');
+    } finally {
+      setLoading(false); // Set loading to false after fetching
     }
   };
 
@@ -267,11 +271,20 @@ const Medicine = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {filteredTransactions.length > 0 ? (
+              {loading ? ( // Check if loading is true
+                <TableRow>
+                  <TableCell colSpan={5} style={{ textAlign: 'center', padding: '20px' }}>
+                    <CircularProgress />
+                  </TableCell>
+                </TableRow>
+              ) : filteredTransactions.length > 0 ? (
                 filteredTransactions.map((transaction) => (
                   <TableRow key={transaction.TransactionID}>
                     <TableCell style={{ padding: '10px', textAlign: 'center' }}>{transaction.TransactionID}</TableCell>
-                    <TableCell style={{ padding: '10px', textAlign: 'center', cursor: 'pointer', color: '#1976d2' }} onClick={() => handleView(transaction)}>
+                    <TableCell
+                      style={{ padding: '10px', textAlign: 'center', cursor: 'pointer', color: '#1976d2' }}
+                      onClick={() => handleView(transaction)}
+                    >
                       {transaction.FullName}
                     </TableCell>
                     <TableCell style={{ padding: '10px', textAlign: 'center' }}>{transaction.Address}</TableCell>
@@ -297,10 +310,13 @@ const Medicine = () => {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={5} style={{ textAlign: 'center' }}>No records found</TableCell>
+                  <TableCell colSpan={5} style={{ textAlign: 'center' }}>
+                    No records found.
+                  </TableCell>
                 </TableRow>
               )}
             </TableBody>
+
           </Table>
         </TableContainer>
 

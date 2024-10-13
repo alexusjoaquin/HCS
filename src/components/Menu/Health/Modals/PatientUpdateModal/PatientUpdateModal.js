@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Button,
@@ -12,7 +12,7 @@ import {
 } from '@mui/material';
 
 const PatientUpdateModal = ({ isOpen, onClose, onSave, patient }) => {
-  const [formData, setFormData] = React.useState({
+  const [formData, setFormData] = useState({
     PatientID: patient?.PatientID || '',
     Fullname: patient?.Fullname || '',
     Address: patient?.Address || '',
@@ -22,7 +22,9 @@ const PatientUpdateModal = ({ isOpen, onClose, onSave, patient }) => {
     MedicalHistory: patient?.MedicalHistory || '',
   });
 
-  React.useEffect(() => {
+  const [contactError, setContactError] = useState(''); // Error message state for ContactNo
+
+  useEffect(() => {
     if (patient) {
       setFormData({
         PatientID: patient.PatientID || '',
@@ -38,11 +40,27 @@ const PatientUpdateModal = ({ isOpen, onClose, onSave, patient }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+
+    // Validation for ContactNo: only allows numbers and hyphens
+    if (name === 'ContactNo') {
+      const regex = /^[0-9-]*$/;
+      if (!regex.test(value)) {
+        setContactError('Contact No can only contain numbers and hyphens.');
+        return;
+      } else {
+        setContactError(''); // Clear the error if valid
+      }
+    }
+
     setFormData({ ...formData, [name]: value });
   };
 
   const handleSave = (e) => {
     e.preventDefault();
+
+    // Prevent save if there's an error
+    if (contactError) return;
+
     if (typeof onSave === 'function') {
       onSave(formData);
     } else {
@@ -131,6 +149,8 @@ const PatientUpdateModal = ({ isOpen, onClose, onSave, patient }) => {
                   onChange={handleChange}
                   placeholder="Enter Contact No"
                   required
+                  error={!!contactError} // Display error if true
+                  helperText={contactError} // Show error message near the field
                 />
               </Grid>
               <Grid item xs={12}>

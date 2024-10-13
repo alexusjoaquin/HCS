@@ -7,7 +7,7 @@ import { toast } from 'react-toastify';
 import ResidentCreateModal from './Modals/ResidentCreateModal';
 import ResidentViewModal from './Modals/ResidentViewModal';
 import ResidentUpdateModal from './Modals/ResidentUpdateModal';
-import { Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography, IconButton, Tooltip } from '@mui/material';
+import { Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography, IconButton, Tooltip, CircularProgress } from '@mui/material';
 import { CSVLink } from 'react-csv'; 
 import ImportExportIcon from '@mui/icons-material/ImportExport'; 
 import PrintIcon from '@mui/icons-material/Print'; 
@@ -23,6 +23,7 @@ const Residents = () => {
   const [isViewModalOpen, setViewModalOpen] = useState(false);
   const [isUpdateModalOpen, setUpdateModalOpen] = useState(false);
   const [selectedResident, setSelectedResident] = useState(null);
+  const [loading, setLoading] = useState(true); // New loading state
 
   useEffect(() => {
     fetchResidents();
@@ -38,6 +39,7 @@ const Residents = () => {
   }, [searchTerm, residents]);
 
   const fetchResidents = async () => {
+    setLoading(true); // Set loading to true when fetching starts
     try {
       const response = await residentsService.getAllResidents();
       if (response && Array.isArray(response)) {
@@ -51,6 +53,8 @@ const Residents = () => {
     } catch (error) {
       console.error('Failed to fetch residents:', error);
       toast.error('Failed to fetch residents. ' + error.message);
+    } finally {
+      setLoading(false); // Set loading to false when fetching ends
     }
   };
 
@@ -267,29 +271,37 @@ const Residents = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {Array.isArray(filteredResidents) && filteredResidents.length > 0 ? (
-                filteredResidents.map((resident) => (
-                  <TableRow key={resident.ResidentID}>
-                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>{resident.ResidentID}</TableCell>
-                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>{resident.Name}</TableCell>
-                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>{resident.Age}</TableCell>
-                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>{resident.Birthday}</TableCell>
-                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>{resident.Gender}</TableCell>
-                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>{resident.Address}</TableCell>
-                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>{resident.is_senior ? 'Yes' : 'No'}</TableCell>
-                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>
-                      <Button variant="contained" color="primary" style={{ marginRight: '10px' }} onClick={() => handleView(resident)}>View</Button>
-                      <Button variant="contained" color="secondary" style={{ marginRight: '10px' }} onClick={() => handleUpdate(resident)}>Update</Button>
-                      <Button variant="contained" color="error" onClick={() => handleDelete(resident.ResidentID)}>Delete</Button>
-                    </TableCell>
-                  </TableRow>
-                ))
-              ) : (
+              {loading ? ( // Check loading state
                 <TableRow>
                   <TableCell colSpan={8} style={{ textAlign: 'center', padding: '20px' }}>
-                    No residents found.
+                    <CircularProgress />
                   </TableCell>
                 </TableRow>
+              ) : (
+                Array.isArray(filteredResidents) && filteredResidents.length > 0 ? (
+                  filteredResidents.map((resident) => (
+                    <TableRow key={resident.ResidentID}>
+                      <TableCell style={{ padding: '10px', textAlign: 'center' }}>{resident.ResidentID}</TableCell>
+                      <TableCell style={{ padding: '10px', textAlign: 'center' }}>{resident.Name}</TableCell>
+                      <TableCell style={{ padding: '10px', textAlign: 'center' }}>{resident.Age}</TableCell>
+                      <TableCell style={{ padding: '10px', textAlign: 'center' }}>{resident.Birthday}</TableCell>
+                      <TableCell style={{ padding: '10px', textAlign: 'center' }}>{resident.Gender}</TableCell>
+                      <TableCell style={{ padding: '10px', textAlign: 'center' }}>{resident.Address}</TableCell>
+                      <TableCell style={{ padding: '10px', textAlign: 'center' }}>{resident.is_senior ? 'Yes' : 'No'}</TableCell>
+                      <TableCell style={{ padding: '10px', textAlign: 'center' }}>
+                        <Button variant="contained" color="primary" style={{ marginRight: '10px' }} onClick={() => handleView(resident)}>View</Button>
+                        <Button variant="contained" color="secondary" style={{ marginRight: '10px' }} onClick={() => handleUpdate(resident)}>Update</Button>
+                        <Button variant="contained" color="error" onClick={() => handleDelete(resident.ResidentID)}>Delete</Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={8} style={{ textAlign: 'center', padding: '20px' }}>
+                      No residents found.
+                    </TableCell>
+                  </TableRow>
+                )
               )}
             </TableBody>
           </Table>

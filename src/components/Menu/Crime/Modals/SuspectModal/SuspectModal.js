@@ -7,6 +7,10 @@ import {
   Container,
   Paper,
   Grid,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
 } from '@mui/material';
 
 const SuspectModal = ({ isOpen, onClose, onSubmit }) => {
@@ -17,6 +21,11 @@ const SuspectModal = ({ isOpen, onClose, onSubmit }) => {
     Alias: '',
     LastKnownAddress: '',
     Status: '',
+  });
+
+  const [errors, setErrors] = React.useState({
+    FullName: '',
+    Alias: '',
   });
 
   // Generate a unique Suspect ID whenever the modal opens
@@ -30,16 +39,54 @@ const SuspectModal = ({ isOpen, onClose, onSubmit }) => {
         LastKnownAddress: '',
         Status: '',
       });
+      setErrors({ FullName: '', Alias: '' }); // Reset errors
     }
   }, [isOpen]);
+
+  const validateName = (name) => {
+    const regex = /^[a-zA-Z\s]*$/; // Accepts only letters and spaces
+    return regex.test(name);
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
+
+    if (name === 'FullName') {
+      if (!validateName(value)) {
+        setErrors((prevErrors) => ({
+          ...prevErrors,
+          FullName: 'Full Name can only contain letters and spaces.',
+        }));
+      } else {
+        setErrors((prevErrors) => ({
+          ...prevErrors,
+          FullName: '',
+        }));
+      }
+    }
+
+    if (name === 'Alias') {
+      if (!validateName(value)) {
+        setErrors((prevErrors) => ({
+          ...prevErrors,
+          Alias: 'Alias can only contain letters and spaces.',
+        }));
+      } else {
+        setErrors((prevErrors) => ({
+          ...prevErrors,
+          Alias: '',
+        }));
+      }
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    // Check for errors before submitting
+    if (errors.FullName || errors.Alias) {
+      return; // Prevent submission if there are errors
+    }
     await onSubmit(formData); // Wait for the submission to complete
     onClose(); // Close only after successful submission
   };
@@ -88,6 +135,8 @@ const SuspectModal = ({ isOpen, onClose, onSubmit }) => {
                   onChange={handleChange}
                   placeholder="Enter Full Name"
                   required
+                  error={!!errors.FullName}
+                  helperText={errors.FullName} // Display error message
                 />
               </Grid>
               <Grid item xs={12}>
@@ -99,6 +148,8 @@ const SuspectModal = ({ isOpen, onClose, onSubmit }) => {
                   onChange={handleChange}
                   placeholder="Enter Alias"
                   required
+                  error={!!errors.Alias}
+                  helperText={errors.Alias} // Display error message
                 />
               </Grid>
               <Grid item xs={12}>
@@ -113,15 +164,25 @@ const SuspectModal = ({ isOpen, onClose, onSubmit }) => {
                 />
               </Grid>
               <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  name="Status"
-                  label="Status"
-                  value={formData.Status}
-                  onChange={handleChange}
-                  placeholder="Enter Status"
-                  required
-                />
+                <FormControl fullWidth required>
+                  <InputLabel id="status-label">Status</InputLabel>
+                  <Select
+                    labelId="status-label"
+                    name="Status"
+                    value={formData.Status}
+                    onChange={handleChange}
+                    label="Status"
+                  >
+                    <MenuItem value="Wanted">Wanted</MenuItem>
+                    <MenuItem value="Captured">Captured</MenuItem>
+                    <MenuItem value="Arrested">Arrested</MenuItem>
+                    <MenuItem value="Charged">Charged</MenuItem>
+                    <MenuItem value="Cleared">Cleared</MenuItem>
+                    <MenuItem value="In Custody">In Custody</MenuItem>
+                    <MenuItem value="Released">Released</MenuItem>
+                    <MenuItem value="Pending Investigation">Pending Investigation</MenuItem>
+                  </Select>
+                </FormControl>
               </Grid>
               <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'space-between' }}>
                 <Button type="submit" variant="contained" color="primary" sx={{ width: '48%' }}>

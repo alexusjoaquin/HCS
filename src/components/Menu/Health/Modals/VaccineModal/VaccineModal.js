@@ -8,6 +8,8 @@ import {
   Paper,
   Grid,
   Autocomplete,
+  Snackbar,
+  Alert,
 } from '@mui/material';
 import apiconfig from '../../../../../api/apiconfig';
 
@@ -20,6 +22,8 @@ const VaccineModal = ({ isOpen, onClose, onSubmit }) => {
   });
 
   const [residents, setResidents] = useState([]); // State for residents
+  const [error, setError] = useState(''); // State to track validation errors
+  const [snackbarOpen, setSnackbarOpen] = useState(false); // State for snackbar notification
 
   // Generate a unique Transaction ID whenever the modal opens
   useEffect(() => {
@@ -73,10 +77,27 @@ const VaccineModal = ({ isOpen, onClose, onSubmit }) => {
       ...prevState,
       [name]: value,
     }));
+
+    // Validation for VaccineName: Only allow letters, spaces, and hyphens
+    if (name === 'VaccineName') {
+      const isValid = /^[A-Za-z0-9\s-]+$/.test(value); // Allow letters, spaces, and hyphens
+      if (!isValid) {
+        setError('Vaccine name should only contain letters, spaces, or hyphens.');
+      } else {
+        setError('');
+      }
+    }
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    if (error) {
+      // If there's a validation error, show the snackbar notification
+      setSnackbarOpen(true);
+      return;
+    }
+
     onSubmit(formData);
     // Reset form after submission
     setFormData({
@@ -86,6 +107,10 @@ const VaccineModal = ({ isOpen, onClose, onSubmit }) => {
       VaccineName: '',
     });
     onClose();
+  };
+
+  const handleCloseSnackbar = () => {
+    setSnackbarOpen(false);
   };
 
   if (!isOpen) return null;
@@ -153,6 +178,8 @@ const VaccineModal = ({ isOpen, onClose, onSubmit }) => {
                   onChange={handleChange}
                   placeholder="Enter Vaccine Name"
                   required
+                  error={Boolean(error)} // Set error state based on validation
+                  helperText={error} // Display error message
                 />
               </Grid>
               <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -173,6 +200,17 @@ const VaccineModal = ({ isOpen, onClose, onSubmit }) => {
           </form>
         </Paper>
       </Container>
+
+      {/* Snackbar for validation notifications */}
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={3000}
+        onClose={handleCloseSnackbar}
+      >
+        <Alert onClose={handleCloseSnackbar} severity="error" sx={{ width: '100%' }}>
+          {error}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

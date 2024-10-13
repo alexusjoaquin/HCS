@@ -22,6 +22,11 @@ const FamilyProfilesUpdateModal = ({ isOpen, onClose, onSave, family }) => {
     ContactNo: '',
   });
 
+  const [errors, setErrors] = React.useState({
+    FamilyName: '',
+    ContactNo: '',
+  });
+
   React.useEffect(() => {
     if (family) {
       setFormData({
@@ -34,18 +39,58 @@ const FamilyProfilesUpdateModal = ({ isOpen, onClose, onSave, family }) => {
     }
   }, [family]);
 
+  const validateName = (name) => {
+    const regex = /^[a-zA-Z\s]*$/; // Accepts only letters and spaces
+    return regex.test(name);
+  };
+
+  const validateContactNo = (contactNo) => {
+    const regex = /^[0-9-]*$/; // Accepts only numbers and hyphens
+    return regex.test(contactNo);
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
+
+    // Validate FamilyName
+    if (name === 'FamilyName') {
+      if (!validateName(value)) {
+        setErrors((prevErrors) => ({
+          ...prevErrors,
+          FamilyName: 'Family Name can only contain letters and spaces.',
+        }));
+      } else {
+        setErrors((prevErrors) => ({
+          ...prevErrors,
+          FamilyName: '',
+        }));
+      }
+    }
+
+    // Validate ContactNo
+    if (name === 'ContactNo') {
+      if (!validateContactNo(value)) {
+        setErrors((prevErrors) => ({
+          ...prevErrors,
+          ContactNo: 'Contact Number can only contain numbers and hyphens.',
+        }));
+      } else {
+        setErrors((prevErrors) => ({
+          ...prevErrors,
+          ContactNo: '',
+        }));
+      }
+    }
   };
 
   const handleSave = (e) => {
     e.preventDefault();
     // Ensure Members is a number before saving
-    if (!isNaN(formData.Members) && formData.Members > 0) {
+    if (!isNaN(formData.Members) && formData.Members > 0 && !errors.FamilyName && !errors.ContactNo) {
       onSave(formData);
     } else {
-      alert("Please enter a valid number for Members.");
+      alert("Please enter valid details.");
     }
   };
 
@@ -100,6 +145,8 @@ const FamilyProfilesUpdateModal = ({ isOpen, onClose, onSave, family }) => {
                   onChange={handleChange}
                   placeholder="Enter Family Name"
                   required
+                  error={!!errors.FamilyName} // Display error state
+                  helperText={errors.FamilyName} // Display error message
                 />
               </Grid>
               <Grid item xs={12}>
@@ -116,14 +163,13 @@ const FamilyProfilesUpdateModal = ({ isOpen, onClose, onSave, family }) => {
                 />
               </Grid>
               <Grid item xs={12}>
-                <FormControl fullWidth sx={{ mb: 2 }}>
+                <FormControl fullWidth sx={{ mb: 2 }} required>
                   <InputLabel id="address-label">Address</InputLabel>
                   <Select
                     labelId="address-label"
                     name="Address"
                     value={formData.Address}
                     onChange={handleChange}
-                    required
                   >
                     {addressOptions.map((address) => (
                       <MenuItem key={address} value={address}>
@@ -143,6 +189,8 @@ const FamilyProfilesUpdateModal = ({ isOpen, onClose, onSave, family }) => {
                   onChange={handleChange}
                   placeholder="Enter Contact No"
                   required
+                  error={!!errors.ContactNo} // Display error state
+                  helperText={errors.ContactNo} // Display error message
                 />
               </Grid>
               <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'space-between' }}>

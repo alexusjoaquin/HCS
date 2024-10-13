@@ -7,7 +7,7 @@ import SuspectUpdateModal from '../Modals/SuspectUpdateModal/SuspectUpdateModal'
 import { toast } from 'react-toastify';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
-import { Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography, IconButton, Tooltip } from '@mui/material';
+import { CircularProgress ,Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography, IconButton, Tooltip } from '@mui/material';
 import { CSVLink } from 'react-csv'; 
 import ImportExportIcon from '@mui/icons-material/ImportExport'; 
 import PrintIcon from '@mui/icons-material/Print'; 
@@ -22,6 +22,7 @@ const Suspects = () => {
   const [isViewModalOpen, setViewModalOpen] = useState(false);
   const [isUpdateModalOpen, setUpdateModalOpen] = useState(false);
   const [selectedSuspect, setSelectedSuspect] = useState(null);
+  const [loading, setLoading] = useState(true); // Loading state
 
   useEffect(() => {
     fetchSuspects();
@@ -39,6 +40,7 @@ const Suspects = () => {
 
   const fetchSuspects = async () => {
     try {
+      setLoading(true); // Set loading to true before fetching
       const response = await suspectService.getAllSuspects();
       if (response && Array.isArray(response)) {
         setSuspects(response);
@@ -51,6 +53,8 @@ const Suspects = () => {
     } catch (error) {
       console.error('Failed to fetch suspects:', error);
       toast.error('Failed to fetch suspects. ' + error.message);
+    } finally {
+      setLoading(false); // Set loading to false after fetching
     }
   };
 
@@ -243,7 +247,13 @@ const Suspects = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {Array.isArray(filteredSuspects) && filteredSuspects.length > 0 ? (
+              {loading ? ( // Check if loading is true
+                <TableRow>
+                  <TableCell colSpan={6} style={{ textAlign: 'center', padding: '20px' }}>
+                    <CircularProgress />
+                  </TableCell>
+                </TableRow>
+              ) : Array.isArray(filteredSuspects) && filteredSuspects.length > 0 ? (
                 filteredSuspects.map((suspect) => (
                   <TableRow key={suspect.SuspectID}>
                     <TableCell align="center">{suspect.SuspectID}</TableCell>
@@ -251,7 +261,7 @@ const Suspects = () => {
                     <TableCell align="center">{suspect.Alias}</TableCell>
                     <TableCell align="center">{suspect.LastKnownAddress}</TableCell>
                     <TableCell align="center">{suspect.Status}</TableCell>
-                    <TableCell style={{ padding: '10px', textAlign: 'center' }}>
+                    <TableCell align="center" style={{ padding: '10px' }}>
                       <Button variant="contained" color="primary" style={{ marginRight: '10px' }} onClick={() => handleView(suspect)}>
                         View
                       </Button>
@@ -266,10 +276,13 @@ const Suspects = () => {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={6} align="center">No suspects found</TableCell>
+                  <TableCell colSpan={6} align="center">
+                    No suspects found
+                  </TableCell>
                 </TableRow>
               )}
             </TableBody>
+
           </Table>
         </TableContainer>
 

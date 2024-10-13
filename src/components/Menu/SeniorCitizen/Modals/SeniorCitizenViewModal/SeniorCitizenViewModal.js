@@ -9,8 +9,8 @@ import {
   TextField,
 } from '@mui/material';
 
-const SeniorCitizenViewModal = ({ isOpen, onClose, seniorCitizen }) => {
-  if (!isOpen || !seniorCitizen) return null;
+const SeniorCitizenViewModal = ({isOpen, onClose, resident }) => {
+  if (!isOpen || !resident) return null;
 
   return (
     <Box
@@ -48,8 +48,8 @@ const SeniorCitizenViewModal = ({ isOpen, onClose, seniorCitizen }) => {
             <Grid item xs={12}>
               <TextField
                 fullWidth
-                label="Senior ID"
-                value={seniorCitizen.SeniorID || ''}
+                label="Resident ID"
+                value={resident.ResidentID || ''}
                 variant="outlined"
                 InputProps={{
                   readOnly: true,
@@ -59,8 +59,8 @@ const SeniorCitizenViewModal = ({ isOpen, onClose, seniorCitizen }) => {
             <Grid item xs={12}>
               <TextField
                 fullWidth
-                label="Full Name"
-                value={seniorCitizen.FullName || ''}
+                label="Name"
+                value={resident.Name || ''}
                 variant="outlined"
                 InputProps={{
                   readOnly: true,
@@ -71,7 +71,7 @@ const SeniorCitizenViewModal = ({ isOpen, onClose, seniorCitizen }) => {
               <TextField
                 fullWidth
                 label="Address"
-                value={seniorCitizen.Address || ''}
+                value={resident.Address || ''}
                 variant="outlined"
                 InputProps={{
                   readOnly: true,
@@ -82,18 +82,7 @@ const SeniorCitizenViewModal = ({ isOpen, onClose, seniorCitizen }) => {
               <TextField
                 fullWidth
                 label="Date of Birth"
-                value={seniorCitizen.DateOfBirth || ''}
-                variant="outlined"
-                InputProps={{
-                  readOnly: true,
-                }}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Contact No."
-                value={seniorCitizen.ContactInfo?.Phone || ''}
+                value={resident.Birthday || ''}
                 variant="outlined"
                 InputProps={{
                   readOnly: true,
@@ -104,21 +93,8 @@ const SeniorCitizenViewModal = ({ isOpen, onClose, seniorCitizen }) => {
               <TextField
                 fullWidth
                 label="Gender"
-                value={seniorCitizen.Gender || ''}
+                value={resident.Gender || ''}
                 variant="outlined"
-                InputProps={{
-                  readOnly: true,
-                }}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Medical History"
-                value={seniorCitizen.MedicalHistory || ''}
-                variant="outlined"
-                multiline
-                rows={4}
                 InputProps={{
                   readOnly: true,
                 }}

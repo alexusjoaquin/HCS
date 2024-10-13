@@ -20,6 +20,7 @@ const MedicineModal = ({ isOpen, onClose, onSubmit }) => {
   });
 
   const [residents, setResidents] = useState([]); // State for residents
+  const [medicineError, setMedicineError] = useState(''); // Error state for MedicineName
 
   // Generate a unique Transaction ID whenever the modal opens
   useEffect(() => {
@@ -68,10 +69,19 @@ const MedicineModal = ({ isOpen, onClose, onSubmit }) => {
     }
   };
 
-  
-
   const handleChange = (e) => {
     const { name, value } = e.target;
+
+    // Validate MedicineName to accept only letters (alphabetic characters)
+    if (name === 'MedicineName') {
+      const regex = /^[A-Za-z\s-]*$/; // Allow letters, spaces, and hyphens
+      if (!regex.test(value)) {
+        setMedicineError('Medicine Name can only contain letters.');
+      } else {
+        setMedicineError(''); // Clear error if valid
+      }
+    }
+
     setFormData((prevState) => ({
       ...prevState,
       [name]: value,
@@ -80,7 +90,12 @@ const MedicineModal = ({ isOpen, onClose, onSubmit }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    // Prevent submission if there is an error in the MedicineName field
+    if (medicineError) return;
+
     onSubmit(formData);
+
     // Reset form after submission
     setFormData({
       TransactionID: '',
@@ -156,6 +171,8 @@ const MedicineModal = ({ isOpen, onClose, onSubmit }) => {
                   onChange={handleChange}
                   placeholder="Enter Medicine Name"
                   required
+                  error={!!medicineError} // Highlight the field in red if there's an error
+                  helperText={medicineError} // Display the error message below the field
                 />
               </Grid>
               <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'space-between' }}>

@@ -7,7 +7,7 @@ import familyprofilesService from '../../../services/familyprofilesService';
 import { toast } from 'react-toastify';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
-import { Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography, IconButton, Tooltip } from '@mui/material';
+import { CircularProgress ,Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography, IconButton, Tooltip } from '@mui/material';
 import { CSVLink } from 'react-csv'; 
 import ImportExportIcon from '@mui/icons-material/ImportExport'; 
 import PrintIcon from '@mui/icons-material/Print'; 
@@ -21,6 +21,7 @@ const FamilyProfiles = () => {
   const [familyProfiles, setFamilyProfiles] = useState([]);
   const [filteredProfiles, setFilteredProfiles] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [loading, setLoading] = useState(true); // Loading state
 
   useEffect(() => {
     fetchFamilyProfiles();
@@ -38,6 +39,7 @@ const FamilyProfiles = () => {
 
   const fetchFamilyProfiles = async () => {
     try {
+      setLoading(true); // Set loading to true before fetching
       const response = await familyprofilesService.getAllFamilyProfiles();
       if (response && Array.isArray(response)) {
         setFamilyProfiles(response);
@@ -50,6 +52,8 @@ const FamilyProfiles = () => {
     } catch (error) {
       console.error('Failed to fetch family profiles:', error);
       toast.error('Failed to fetch family profiles. ' + error.message);
+    } finally {
+      setLoading(false); // Set loading to false after fetching
     }
   };
 
@@ -244,7 +248,13 @@ const FamilyProfiles = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {Array.isArray(filteredProfiles) && filteredProfiles.length > 0 ? (
+              {loading ? ( // Check if loading is true
+                <TableRow>
+                  <TableCell colSpan={6} style={{ textAlign: 'center', padding: '20px' }}>
+                    <CircularProgress />
+                  </TableCell>
+                </TableRow>
+              ) : Array.isArray(filteredProfiles) && filteredProfiles.length > 0 ? (
                 filteredProfiles.map((profile) => (
                   <TableRow key={profile.FamilyID}>
                     <TableCell style={{ padding: '10px', textAlign: 'center' }}>{profile.FamilyID}</TableCell>
@@ -273,6 +283,7 @@ const FamilyProfiles = () => {
                 </TableRow>
               )}
             </TableBody>
+
           </Table>
         </TableContainer>
       </div>

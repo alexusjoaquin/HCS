@@ -7,6 +7,8 @@ import {
   Container,
   Paper,
   Grid,
+  Snackbar,
+  Alert,
 } from '@mui/material';
 
 const VaccineUpdateModal = ({ isOpen, onClose, onSave, transaction }) => {
@@ -16,6 +18,9 @@ const VaccineUpdateModal = ({ isOpen, onClose, onSave, transaction }) => {
     Address: transaction?.Address || '',
     VaccineName: transaction?.VaccineName || '',
   });
+
+  const [error, setError] = React.useState(''); // State to track validation errors
+  const [snackbarOpen, setSnackbarOpen] = React.useState(false); // State for snackbar notification
 
   React.useEffect(() => {
     if (transaction) {
@@ -30,17 +35,40 @@ const VaccineUpdateModal = ({ isOpen, onClose, onSave, transaction }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+
+    // Validation for VaccineName: Allow letters, numbers, spaces, and hyphens
+    if (name === 'VaccineName') {
+      const isValid = /^[A-Za-z0-9\s-]+$/.test(value); // Allow letters, numbers, spaces, and hyphens
+      if (!isValid) {
+        setError('Vaccine name should only contain letters, numbers, spaces, or hyphens.');
+        setSnackbarOpen(true);
+      } else {
+        setError('');
+      }
+    }
+
     setFormData({ ...formData, [name]: value });
   };
 
   const handleSave = (e) => {
     e.preventDefault();
+    
+    // Check if there is an error before saving
+    if (error) {
+      setSnackbarOpen(true);
+      return;
+    }
+
     if (typeof onSave === 'function') {
       onSave(formData);
     } else {
       console.error('onSave is not a function:', onSave);
     }
     onClose();
+  };
+
+  const handleCloseSnackbar = () => {
+    setSnackbarOpen(false);
   };
 
   if (!isOpen || !transaction) return null;
@@ -108,6 +136,8 @@ const VaccineUpdateModal = ({ isOpen, onClose, onSave, transaction }) => {
                   onChange={handleChange}
                   placeholder="Enter Vaccine Name"
                   required
+                  error={Boolean(error)} // Set error state based on validation
+                  helperText={error} // Display error message
                 />
               </Grid>
               <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -126,6 +156,17 @@ const VaccineUpdateModal = ({ isOpen, onClose, onSave, transaction }) => {
               </Grid>
             </Grid>
           </form>
+
+          {/* Snackbar for validation notifications */}
+          <Snackbar
+            open={snackbarOpen}
+            autoHideDuration={3000}
+            onClose={handleCloseSnackbar}
+          >
+            <Alert onClose={handleCloseSnackbar} severity="error" sx={{ width: '100%' }}>
+              {error}
+            </Alert>
+          </Snackbar>
         </Paper>
       </Container>
     </Box>

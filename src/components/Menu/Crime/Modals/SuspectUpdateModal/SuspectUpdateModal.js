@@ -7,10 +7,14 @@ import {
   Container,
   Paper,
   Grid,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  FormHelperText,
 } from '@mui/material';
 
 const SuspectUpdateModal = ({ isOpen, onClose, onSave, suspect }) => {
-  // Initialize the form data state based on the suspect prop
   const [formData, setFormData] = React.useState({
     SuspectID: '',
     FullName: '',
@@ -19,7 +23,11 @@ const SuspectUpdateModal = ({ isOpen, onClose, onSave, suspect }) => {
     Status: '',
   });
 
-  // Update the form data state when the suspect prop changes
+  const [errors, setErrors] = React.useState({
+    FullName: '',
+    Alias: '',
+  });
+
   React.useEffect(() => {
     if (suspect) {
       setFormData({
@@ -29,23 +37,58 @@ const SuspectUpdateModal = ({ isOpen, onClose, onSave, suspect }) => {
         LastKnownAddress: suspect.LastKnownAddress || '',
         Status: suspect.Status || '',
       });
+      setErrors({ FullName: '', Alias: '' }); // Reset errors when suspect changes
     }
   }, [suspect]);
 
-  // Handle changes to form inputs
+  const validateName = (name) => {
+    const regex = /^[a-zA-Z\s]*$/; // Accepts only letters and spaces
+    return regex.test(name);
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
+
+    if (name === 'FullName') {
+      if (!validateName(value)) {
+        setErrors((prevErrors) => ({
+          ...prevErrors,
+          FullName: 'Full Name can only contain letters and spaces.',
+        }));
+      } else {
+        setErrors((prevErrors) => ({
+          ...prevErrors,
+          FullName: '',
+        }));
+      }
+    }
+
+    if (name === 'Alias') {
+      if (!validateName(value)) {
+        setErrors((prevErrors) => ({
+          ...prevErrors,
+          Alias: 'Alias can only contain letters and spaces.',
+        }));
+      } else {
+        setErrors((prevErrors) => ({
+          ...prevErrors,
+          Alias: '',
+        }));
+      }
+    }
   };
 
-  // Handle form submission
   const handleSave = (e) => {
     e.preventDefault();
+    // Check for errors before saving
+    if (errors.FullName || errors.Alias) {
+      return; // Prevent saving if there are errors
+    }
     onSave(formData); // Call the onSave prop function with the form data
     onClose(); // Close the modal after saving
   };
 
-  // Prevent rendering if the modal is not open or suspect is null
   if (!isOpen || !suspect) return null;
 
   return (
@@ -89,6 +132,8 @@ const SuspectUpdateModal = ({ isOpen, onClose, onSave, suspect }) => {
                   onChange={handleChange}
                   placeholder="Enter Full Name"
                   required
+                  error={!!errors.FullName}
+                  helperText={errors.FullName} // Display error message
                 />
               </Grid>
               <Grid item xs={12}>
@@ -100,6 +145,8 @@ const SuspectUpdateModal = ({ isOpen, onClose, onSave, suspect }) => {
                   onChange={handleChange}
                   placeholder="Enter Alias"
                   required
+                  error={!!errors.Alias}
+                  helperText={errors.Alias} // Display error message
                 />
               </Grid>
               <Grid item xs={12}>
@@ -114,15 +161,28 @@ const SuspectUpdateModal = ({ isOpen, onClose, onSave, suspect }) => {
                 />
               </Grid>
               <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  name="Status"
-                  label="Status"
-                  value={formData.Status}
-                  onChange={handleChange}
-                  placeholder="Enter Status"
-                  required
-                />
+                <FormControl fullWidth error={!formData.Status}>
+                  <InputLabel id="status-label">Status</InputLabel>
+                  <Select
+                    labelId="status-label"
+                    name="Status"
+                    value={formData.Status}
+                    onChange={handleChange}
+                    required
+                  >
+                    <MenuItem value="Wanted">Wanted</MenuItem>
+                    <MenuItem value="Captured">Captured</MenuItem>
+                    <MenuItem value="Arrested">Arrested</MenuItem>
+                    <MenuItem value="Charged">Charged</MenuItem>
+                    <MenuItem value="Cleared">Cleared</MenuItem>
+                    <MenuItem value="In Custody">In Custody</MenuItem>
+                    <MenuItem value="Released">Released</MenuItem>
+                    <MenuItem value="Pending Investigation">Pending Investigation</MenuItem>
+                  </Select>
+                  {!formData.Status && (
+                    <FormHelperText>Status is required</FormHelperText>
+                  )}
+                </FormControl>
               </Grid>
               <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'space-between' }}>
                 <Button type="submit" variant="contained" color="primary" sx={{ width: '48%' }}>
