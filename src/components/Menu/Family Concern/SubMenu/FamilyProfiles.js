@@ -23,6 +23,21 @@ const FamilyProfiles = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true); // Loading state
 
+  const username = localStorage.getItem('username'); // Get username from localStorage
+const isAdmin = username && username.startsWith('admin'); // Check if the user is an admin
+
+// Function to extract barangay name
+const extractBarangay = (username) => {
+  if (isAdmin) return null; // If admin, return null
+  
+  const parts = username.split('_');
+  // Join all parts after the first one to handle names with spaces
+  return parts.slice(1).join(' ').replace(/_/g, ' '); // Replace underscores with spaces
+};
+
+const barangay = extractBarangay(username); // Extract barangay
+
+
   useEffect(() => {
     fetchFamilyProfiles();
   }, []);
@@ -42,8 +57,11 @@ const FamilyProfiles = () => {
       setLoading(true); // Set loading to true before fetching
       const response = await familyprofilesService.getAllFamilyProfiles();
       if (response && Array.isArray(response)) {
-        setFamilyProfiles(response);
-        setFilteredProfiles(response); // Initialize filtered profiles
+        // Filter family profiles by barangay
+        const filteredProfiles = isAdmin ? response : response.filter(profile => profile.Address === barangay);
+  
+        setFamilyProfiles(filteredProfiles);
+        setFilteredProfiles(filteredProfiles); // Initialize filtered profiles
       } else {
         console.warn('Fetched data is not an array:', response);
         setFamilyProfiles([]);
@@ -56,7 +74,7 @@ const FamilyProfiles = () => {
       setLoading(false); // Set loading to false after fetching
     }
   };
-
+  
   const handleNewProfile = () => {
     setSelectedProfile(null);
     setCreateModalOpen(true);

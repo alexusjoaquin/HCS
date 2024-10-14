@@ -24,6 +24,20 @@ const CounsellingSupport = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true); // Loading state
 
+  const username = localStorage.getItem('username'); // Get username from localStorage
+const isAdmin = username && username.startsWith('admin'); // Check if the user is an admin
+
+// Function to extract barangay name
+const extractBarangay = (username) => {
+  if (isAdmin) return null; // If admin, return null
+  
+  const parts = username.split('_');
+  return parts.slice(1).join(' ').replace(/_/g, ' '); // Replace underscores with spaces
+};
+
+const barangay = extractBarangay(username); // Extract barangay
+
+
   useEffect(() => {
     fetchCounsellingRecords();
   }, []);
@@ -43,8 +57,11 @@ const CounsellingSupport = () => {
       setLoading(true); // Set loading to true before fetching
       const response = await familycounsellingService.getAllFamilyCounselling();
       if (response && Array.isArray(response.counselingRecords)) {
-        setCounsellingRecords(response.counselingRecords);
-        setFilteredRecords(response.counselingRecords); // Initialize filtered records
+        // Filter records by barangay
+        const filteredRecords = isAdmin ? response.counselingRecords : response.counselingRecords.filter(record => record.Location === barangay);
+        
+        setCounsellingRecords(filteredRecords);
+        setFilteredRecords(filteredRecords); // Initialize filtered records
       } else {
         console.warn('Fetched data is not an array:', response);
         setCounsellingRecords([]);

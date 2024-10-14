@@ -41,8 +41,18 @@ const Dashboard = () => {
 
   const username = localStorage.getItem('username'); // Get username from localStorage
   const isAdmin = username && username.startsWith('admin'); // Check if the user is an admin
-  const barangay = isAdmin ? null : username.split('_')[1]; // Extract barangay from username (e.g., 'LGU_Malayantoc' => 'Malayantoc')
-
+  
+  // Function to extract barangay name
+  const extractBarangay = (username) => {
+    if (isAdmin) return null; // If admin, return null
+  
+    const parts = username.split('_');
+    // Join all parts after the first one to handle names with spaces
+    return parts.slice(1).join(' ').replace(/_/g, ' '); // Replace underscores with spaces
+  };
+  
+  const barangay = extractBarangay(username); // Extract barangay
+  
   // Fetch data on component mount
   useEffect(() => {
     const fetchData = async () => {
@@ -57,18 +67,18 @@ const Dashboard = () => {
           Array.isArray(residentsResponse.data.data)
         ) {
           const residents = residentsResponse.data.data;
-          
+  
           // If user is not admin, filter residents by barangay
           const filteredResidents = isAdmin ? residents : residents.filter(resident => resident.Address === barangay);
           setResidentsData(filteredResidents);
-
+  
           // Extract unique addresses
           const addresses = [...new Set(filteredResidents.map(resident => resident.Address))];
           setUniqueAddresses(addresses);
         } else {
           throw new Error('Failed to fetch residents data');
         }
-
+  
         // Fetch Crime Reports Data
         const crimeResponse = await axios.get(apiconfig.crime.getAll);
         if (
@@ -79,14 +89,14 @@ const Dashboard = () => {
           Array.isArray(crimeResponse.data.data.crimeReports)
         ) {
           const crimes = crimeResponse.data.data.crimeReports;
-
+  
           // If user is not admin, filter crimes by barangay
           const filteredCrimes = isAdmin ? crimes : crimes.filter(crime => crime.Location === barangay);
           setCrimeData(filteredCrimes);
         } else {
           throw new Error('Failed to fetch crime reports data');
         }
-
+  
         setLoading(false);
       } catch (err) {
         console.error('Error fetching dashboard data:', err);
@@ -94,9 +104,10 @@ const Dashboard = () => {
         setLoading(false);
       }
     };
-
+  
     fetchData();
   }, [isAdmin, barangay]);
+  
 
   // Handle address filter change
   const handleAddressChange = (event) => {

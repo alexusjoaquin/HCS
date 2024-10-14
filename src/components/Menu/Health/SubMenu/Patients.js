@@ -27,39 +27,59 @@ const Patients = () => {
   const [selectedResident, setSelectedResident] = useState(null);
   const [loading, setLoading] = useState(true); // Loading state
 
-  useEffect(() => {
-    fetchPatients();
-    fetchResidents();
-  }, []);
+ // Get username from localStorage
+const username = localStorage.getItem('username'); 
+const isAdmin = username && username.startsWith('admin'); // Check if the user is an admin
 
-  useEffect(() => {
-    const results = patients.filter(patient =>
-      patient.PatientID.toString().includes(searchTerm) ||
-      patient.Fullname.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      patient.Address.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    setFilteredPatients(results);
-  }, [searchTerm, patients]);
+// Function to extract barangay name
+const extractBarangay = (username) => {
+  if (isAdmin) return null; // If admin, return null
 
-  const fetchPatients = async () => {
-    try {
-      setLoading(true); // Set loading to true before fetching
-      const response = await patientService.getAllPatients();
-      if (Array.isArray(response)) {
-        setPatients(response);
-        setFilteredPatients(response);
-      } else {
-        console.warn('Fetched data is not an array:', response);
-        setPatients([]);
-        setFilteredPatients([]);
-      }
-    } catch (error) {
-      console.error('Failed to fetch patients:', error);
-      toast.error('Failed to fetch patients.');
-    } finally {
-      setLoading(false); // Set loading to false after fetching
+  const parts = username.split('_');
+  // Join all parts after the first one to handle names with spaces
+  return parts.slice(1).join(' ').replace(/_/g, ' '); // Replace underscores with spaces
+};
+
+const barangay = extractBarangay(username); // Extract barangay
+
+useEffect(() => {
+  fetchPatients(); // Fetch patients when the component mounts
+}, []);
+
+useEffect(() => {
+  const results = patients.filter(patient =>
+    patient.PatientID.toString().includes(searchTerm) ||
+    patient.Fullname.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    patient.Address.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+  setFilteredPatients(results);
+}, [searchTerm, patients]);
+
+const fetchPatients = async () => {
+  setLoading(true); // Set loading to true when fetching starts
+  try {
+    const response = await patientService.getAllPatients();
+    if (response && Array.isArray(response)) {
+      const patients = response;
+
+      // Filter patients by barangay
+      const filteredPatients = isAdmin ? patients : patients.filter(patient => patient.Address === barangay);
+
+      setPatients(filteredPatients);
+      setFilteredPatients(filteredPatients);
+    } else {
+      console.warn('Fetched data is not an array:', response);
+      setPatients([]);
+      setFilteredPatients([]);
     }
-  };
+  } catch (error) {
+    console.error('Failed to fetch patients:', error);
+    toast.error('Failed to fetch patients. ' + error.message);
+  } finally {
+    setLoading(false); // Set loading to false when fetching ends
+  }
+};
+
 
   const fetchResidents = async () => {
     try {

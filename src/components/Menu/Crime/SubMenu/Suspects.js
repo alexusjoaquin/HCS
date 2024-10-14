@@ -24,6 +24,21 @@ const Suspects = () => {
   const [selectedSuspect, setSelectedSuspect] = useState(null);
   const [loading, setLoading] = useState(true); // Loading state
 
+
+  const username = localStorage.getItem('username'); // Get username from localStorage
+const isAdmin = username && username.startsWith('admin'); // Check if the user is an admin
+
+// Function to extract barangay name
+const extractBarangay = (username) => {
+  if (isAdmin) return null; // If admin, return null
+  
+  const parts = username.split('_');
+  return parts.slice(1).join(' ').replace(/_/g, ' '); // Join all parts after the first one
+};
+
+const barangay = extractBarangay(username); // Extract barangay
+
+
   useEffect(() => {
     fetchSuspects();
   }, []);
@@ -43,8 +58,11 @@ const Suspects = () => {
       setLoading(true); // Set loading to true before fetching
       const response = await suspectService.getAllSuspects();
       if (response && Array.isArray(response)) {
-        setSuspects(response);
-        setFilteredSuspects(response); // Initialize filtered suspects
+        // Filter suspects by barangay
+        const filteredSuspects = isAdmin ? response : response.filter(suspect => suspect.LastKnownAddress === barangay);
+        
+        setSuspects(filteredSuspects);
+        setFilteredSuspects(filteredSuspects); // Initialize filtered suspects
       } else {
         console.warn('Fetched data is not an array:', response);
         setSuspects([]);
@@ -57,7 +75,7 @@ const Suspects = () => {
       setLoading(false); // Set loading to false after fetching
     }
   };
-
+  
   const handleNewSuspect = () => {
     setSelectedSuspect(null);
     setCreateModalOpen(true);

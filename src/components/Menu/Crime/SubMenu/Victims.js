@@ -24,6 +24,19 @@ const Victims = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true); // Loading state
 
+  const username = localStorage.getItem('username'); // Get username from localStorage
+const isAdmin = username && username.startsWith('admin'); // Check if the user is an admin
+
+// Function to extract barangay name
+const extractBarangay = (username) => {
+  if (isAdmin) return null; // If admin, return null
+  
+  const parts = username.split('_');
+  return parts.slice(1).join(' ').replace(/_/g, ' '); // Join parts after the first one and replace underscores
+};
+
+const barangay = extractBarangay(username); // Extract barangay
+
   useEffect(() => {
     fetchVictims();
   }, []);
@@ -43,8 +56,10 @@ const Victims = () => {
       setLoading(true); // Set loading to true before fetching
       const response = await victimsService.getAllVictims();
       if (response && Array.isArray(response)) {
-        setVictims(response);
-        setFilteredVictims(response); // Initialize filtered victims
+        // Filter victims by barangay
+        const filteredVictims = isAdmin ? response : response.filter(victim => victim.LastKnownAddress === barangay);
+        setVictims(filteredVictims);
+        setFilteredVictims(filteredVictims); // Initialize filtered victims
       } else {
         console.warn('Fetched data is not an array:', response);
         setVictims([]);
@@ -53,10 +68,9 @@ const Victims = () => {
     } catch (error) {
       console.error('Failed to fetch victims:', error);
       toast.error('Failed to fetch victims.');
-    }finally {
+    } finally {
       setLoading(false); // Set loading to false after fetching
     }
-    
   };
 
   const handleNewVictim = () => {

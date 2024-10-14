@@ -43,6 +43,22 @@ const CrimeReports = () => {
   const [selectedSuspect, setSelectedSuspect] = useState(null);
   const [loading, setLoading] = useState(true); // Loading state
 
+  // Get username from localStorage and check if the user is an admin
+const username = localStorage.getItem('username');
+const isAdmin = username && username.startsWith('admin');
+
+// Function to extract barangay name
+const extractBarangay = (username) => {
+  if (isAdmin) return null; // If admin, return null
+  
+  const parts = username.split('_');
+  // Join all parts after the first one to handle names with spaces
+  return parts.slice(1).join(' ').replace(/_/g, ' '); // Replace underscores with spaces
+};
+
+const barangay = extractBarangay(username); // Extract barangay
+
+
   useEffect(() => {
     fetchCrimeReports();
   }, []);
@@ -56,24 +72,31 @@ const CrimeReports = () => {
   }, [searchTerm, crimeReports]);
 
   const fetchCrimeReports = async () => {
-    try {
-      setLoading(true); // Set loading to true before fetching
-      const response = await axios.get(apiconfig.crime.getAll); // Fetch all crime reports
-      if (response.data.status === 'success') {
-        setCrimeReports(response.data.data.crimeReports);
-        setFilteredReports(response.data.data.crimeReports);
-      } else {
-        console.warn('Fetched data is not valid:', response);
-        setCrimeReports([]);
-        setFilteredReports([]);
+  try {
+    setLoading(true); // Set loading to true before fetching
+    const response = await axios.get(apiconfig.crime.getAll); // Fetch all crime reports
+    if (response.data.status === 'success') {
+      let fetchedReports = response.data.data.crimeReports;
+
+      // Filter crime reports by barangay if not admin
+      if (!isAdmin) {
+        fetchedReports = fetchedReports.filter(report => report.Location === barangay);
       }
-    } catch (error) {
-      console.error('Failed to fetch crime reports:', error);
-      toast.error('Failed to fetch crime reports.');
-    } finally {
-      setLoading(false); // Set loading to false after fetching
+
+      setCrimeReports(fetchedReports);
+      setFilteredReports(fetchedReports);
+    } else {
+      console.warn('Fetched data is not valid:', response);
+      setCrimeReports([]);
+      setFilteredReports([]);
     }
-  };
+  } catch (error) {
+    console.error('Failed to fetch crime reports:', error);
+    toast.error('Failed to fetch crime reports.');
+  } finally {
+    setLoading(false); // Set loading to false after fetching
+  }
+};
 
   const handleNewReport = () => {
     setSelectedReport(null);

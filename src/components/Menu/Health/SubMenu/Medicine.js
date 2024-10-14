@@ -28,6 +28,21 @@ const Medicine = () => {
   const [loading, setLoading] = useState(true); // Loading state
   const navigate = useNavigate();
 
+  const username = localStorage.getItem('username'); // Get username from localStorage
+const isAdmin = username && username.startsWith('admin'); // Check if the user is an admin
+
+// Function to extract barangay name
+const extractBarangay = (username) => {
+  if (isAdmin) return null; // If admin, return null
+  
+  const parts = username.split('_');
+  // Join all parts after the first one to handle names with spaces
+  return parts.slice(1).join(' ').replace(/_/g, ' '); // Replace underscores with spaces
+};
+
+const barangay = extractBarangay(username); // Extract barangay
+
+
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
     if (newValue === 0) {
@@ -46,7 +61,9 @@ const Medicine = () => {
       setLoading(true); // Set loading to true before fetching
       const data = await medicineService.getAllMedicines();
       if (Array.isArray(data)) {
-        setTransactions(data);
+        // Filter transactions by barangay if not an admin
+        const filteredTransactions = isAdmin ? data : data.filter(transaction => transaction.Address === barangay);
+        setTransactions(filteredTransactions);
       } else {
         console.warn('Fetched data is not an array:', data);
         setTransactions([]);
@@ -58,6 +75,7 @@ const Medicine = () => {
       setLoading(false); // Set loading to false after fetching
     }
   };
+  
 
   const handleNewRecord = () => {
     setIsMedicineModalOpen(true);

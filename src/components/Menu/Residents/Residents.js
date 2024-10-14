@@ -13,6 +13,7 @@ import ImportExportIcon from '@mui/icons-material/ImportExport';
 import PrintIcon from '@mui/icons-material/Print'; 
 import '../Health/CssFiles/Appointment.css';
 
+
 const MySwal = withReactContent(Swal);
 
 const Residents = () => {
@@ -25,38 +26,57 @@ const Residents = () => {
   const [selectedResident, setSelectedResident] = useState(null);
   const [loading, setLoading] = useState(true); // New loading state
 
-  useEffect(() => {
-    fetchResidents();
-  }, []);
+ const username = localStorage.getItem('username'); // Get username from localStorage
+ const isAdmin = username && username.startsWith('admin'); // Check if the user is an admin
 
-  useEffect(() => {
-    const results = residents.filter(resident =>
-      resident.ResidentID.toString().includes(searchTerm) ||
-      resident.Name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      resident.Address.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    setFilteredResidents(results);
-  }, [searchTerm, residents]);
+// Function to extract barangay name
+const extractBarangay = (username) => {
+  if (isAdmin) return null; // If admin, return null
+  
+  const parts = username.split('_');
+  // Join all parts after the first one to handle names with spaces
+  return parts.slice(1).join(' ').replace(/_/g, ' '); // Replace underscores with spaces
+};
 
-  const fetchResidents = async () => {
-    setLoading(true); // Set loading to true when fetching starts
-    try {
-      const response = await residentsService.getAllResidents();
-      if (response && Array.isArray(response)) {
-        setResidents(response);
-        setFilteredResidents(response);
-      } else {
-        console.warn('Fetched data is not an array:', response);
-        setResidents([]);
-        setFilteredResidents([]);
-      }
-    } catch (error) {
-      console.error('Failed to fetch residents:', error);
-      toast.error('Failed to fetch residents. ' + error.message);
-    } finally {
-      setLoading(false); // Set loading to false when fetching ends
+const barangay = extractBarangay(username); // Extract barangay
+
+useEffect(() => {
+  fetchResidents();
+}, []);
+
+useEffect(() => {
+  const results = residents.filter(resident =>
+    resident.ResidentID.toString().includes(searchTerm) ||
+    resident.Name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    resident.Address.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+  setFilteredResidents(results);
+}, [searchTerm, residents]);
+
+const fetchResidents = async () => {
+  setLoading(true); // Set loading to true when fetching starts
+  try {
+    const response = await residentsService.getAllResidents();
+    if (response && Array.isArray(response)) {
+      const residents = response;
+
+      // Filter residents by barangay
+      const filteredResidents = isAdmin ? residents : residents.filter(resident => resident.Address === barangay);
+
+      setResidents(filteredResidents);
+      setFilteredResidents(filteredResidents);
+    } else {
+      console.warn('Fetched data is not an array:', response);
+      setResidents([]);
+      setFilteredResidents([]);
     }
-  };
+  } catch (error) {
+    console.error('Failed to fetch residents:', error);
+    toast.error('Failed to fetch residents. ' + error.message);
+  } finally {
+    setLoading(false); // Set loading to false when fetching ends
+  }
+};
 
   const handleNewResident = () => {
     setSelectedResident(null);

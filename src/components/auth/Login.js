@@ -34,7 +34,8 @@ const validationSchema = Yup.object().shape({
       'Must be a valid email or username (minimum 3 characters)',
       function (value) {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        const usernameRegex = /^[a-zA-Z0-9_]{3,}$/;
+        // Modified regex to include underscores, letters, numbers, parentheses, and minimum 3 characters
+        const usernameRegex = /^[a-zA-Z0-9_()]{3,}$/;
         return emailRegex.test(value) || usernameRegex.test(value);
       }
     ),
@@ -42,6 +43,7 @@ const validationSchema = Yup.object().shape({
     .min(6, 'Password should be at least 6 characters')
     .required('Password is required'),
 });
+
 
 const Login = () => {
   const navigate = useNavigate();

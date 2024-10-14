@@ -24,6 +24,24 @@ const SeniorCitizenData = () => {
   const [loading, setLoading] = useState(true); // Loading state
   const [selectedResident, setSelectedResident] = useState(null);
 
+  const username = localStorage.getItem('username'); // Get username from localStorage
+const isAdmin = username && username.startsWith('admin'); // Check if the user is an admin
+
+// Function to extract barangay name
+const extractBarangay = (username) => {
+  if (isAdmin) return null; // If admin, return null
+  
+  const parts = username.split('_');
+  // Join all parts after the first one to handle names with spaces
+  return parts.slice(1).join(' ').replace(/_/g, ' '); // Replace underscores with spaces
+};
+
+const barangay = extractBarangay(username); // Extract barangay
+
+  
+
+  
+
   // Fetch residents data when component loads
   useEffect(() => {
     fetchResidents();
@@ -43,11 +61,18 @@ const SeniorCitizenData = () => {
     try {
       setLoading(true); // Set loading to true before fetching
       const response = await residentsService.getAllResidents(); // Fetch all residents
-      const seniorResidents = response.filter(resident => {
+  
+      // Filter residents by barangay
+      const filteredResidents = isAdmin 
+        ? response // If admin, get all residents
+        : response.filter(resident => resident.Address === barangay); // Filter by barangay
+  
+      const seniorResidents = filteredResidents.filter(resident => {
         const currentYear = new Date().getFullYear();
         const birthYear = new Date(resident.Birthday).getFullYear(); // Assuming Birthday is a date string
         return (currentYear - birthYear) >= 60; // Check if age is 60 or above
       });
+  
       setResidents(seniorResidents);
       setFilteredResidents(seniorResidents); // Initialize filtered residents
     } catch (error) {
@@ -56,6 +81,7 @@ const SeniorCitizenData = () => {
       setLoading(false); // Set loading to false after fetching
     }
   };
+  
 
   const handleCreateModalClose = () => {
     setCreateModalOpen(false);

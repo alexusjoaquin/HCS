@@ -28,6 +28,19 @@
     const [loading, setLoading] = useState(true); // Loading state
     const navigate = useNavigate();
 
+    const username = localStorage.getItem('username'); // Get username from localStorage
+    const isAdmin = username && username.startsWith('admin'); // Check if the user is an admin
+
+// Function to extract barangay name
+const extractBarangay = (username) => {
+  if (isAdmin) return null; // If admin, return null
+  
+  const parts = username.split('_');
+  return parts.slice(1).join(' ').replace(/_/g, ' '); // Join all parts after the first one to handle names with spaces
+};
+
+const barangay = extractBarangay(username); // Extract barangay
+
     const handleTabChange = (event, newValue) => {
       setActiveTab(newValue);
       if (newValue === 0) {
@@ -46,7 +59,9 @@
         setLoading(true); // Set loading to true before fetching
         const data = await vaccineService.getAllVaccines();
         if (Array.isArray(data)) {
-          setTransactions(data);
+          // Filter transactions by barangay
+          const filteredTransactions = isAdmin ? data : data.filter(transaction => transaction.Address === barangay);
+          setTransactions(filteredTransactions);
         } else {
           console.warn('Fetched data is not an array:', data);
           setTransactions([]); // Fallback to empty array
@@ -58,7 +73,7 @@
         setLoading(false); // Set loading to false after fetching
       }
     };
-
+    
 
     const handleSearchChange = (event) => {
       setSearchQuery(event.target.value);
