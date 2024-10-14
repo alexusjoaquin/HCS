@@ -44,7 +44,6 @@ const validationSchema = Yup.object().shape({
     .required('Password is required'),
 });
 
-
 const Login = () => {
   const navigate = useNavigate();
   const theme = useTheme();
@@ -52,14 +51,14 @@ const Login = () => {
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: '',
-    severity: 'success', // 'success' | 'error' | 'warning' | 'info'
+    severity: 'success',
   });
 
   const handleCloseSnackbar = () => {
     setSnackbar({ ...snackbar, open: false });
   };
 
-  const handleSubmit = async (values, { setSubmitting, setFieldError }) => {
+  const handleSubmit = async (values, { setSubmitting }) => {
     try {
       const response = await axios.post(
         `${process.env.REACT_APP_API_BASE_URL}/loginUser`,
@@ -75,8 +74,8 @@ const Login = () => {
       );
 
       if (response.status === 200) {
-        // Store the username in localStorage
-        localStorage.setItem('username', values.identifier);
+        // Store the token in localStorage
+        localStorage.setItem('token', response.data.token); // Assuming token is in response.data.token
 
         setSnackbar({
           open: true,
@@ -93,19 +92,11 @@ const Login = () => {
       }
     } catch (error) {
       console.error('Error logging in:', error);
-      if (error.response && error.response.data && error.response.data.message) {
-        setSnackbar({
-          open: true,
-          message: error.response.data.message,
-          severity: 'error',
-        });
-      } else {
-        setSnackbar({
-          open: true,
-          message: 'An error occurred during login',
-          severity: 'error',
-        });
-      }
+      setSnackbar({
+        open: true,
+        message: error.response?.data?.message || 'An error occurred during login',
+        severity: 'error',
+      });
     } finally {
       setSubmitting(false);
     }
@@ -160,24 +151,10 @@ const Login = () => {
               />
             </Grid>
             <Grid item>
-              <Typography
-                variant="h4"
-                component="h1"
-                align="center"
-                sx={{
-                  fontWeight: 'bold',
-                  color: '#333',
-                }}
-              >
+              <Typography variant="h4" component="h1" align="center" sx={{ fontWeight: 'bold', color: '#333' }}>
                 Welcome Back
               </Typography>
-              <Typography
-                variant="subtitle1"
-                align="center"
-                sx={{
-                  color: '#666',
-                }}
-              >
+              <Typography variant="subtitle1" align="center" sx={{ color: '#666' }}>
                 Please log in to your account
               </Typography>
             </Grid>
@@ -187,15 +164,7 @@ const Login = () => {
                 validationSchema={validationSchema}
                 onSubmit={handleSubmit}
               >
-                {({
-                  errors,
-                  touched,
-                  handleChange,
-                  handleBlur,
-                  isSubmitting,
-                  values,
-                  setFieldValue,
-                }) => (
+                {({ errors, touched, handleChange, handleBlur, isSubmitting, values, setFieldValue }) => (
                   <Form>
                     {errors.general && (
                       <Typography color="error" variant="body2" sx={{ mb: 2 }}>
@@ -264,11 +233,7 @@ const Login = () => {
                       InputProps={{
                         endAdornment: (
                           <InputAdornment position="end">
-                            <IconButton
-                              onClick={handleClickShowPassword}
-                              edge="end"
-                              aria-label="toggle password visibility"
-                            >
+                            <IconButton onClick={handleClickShowPassword} edge="end" aria-label="toggle password visibility">
                               {showPassword ? <VisibilityOff /> : <Visibility />}
                             </IconButton>
                           </InputAdornment>
@@ -307,11 +272,7 @@ const Login = () => {
                         transition: 'background-color 0.3s',
                       }}
                     >
-                      {isSubmitting ? (
-                        <CircularProgress size={24} color="inherit" />
-                      ) : (
-                        'Sign In'
-                      )}
+                      {isSubmitting ? <CircularProgress size={24} color="inherit" /> : 'Sign In'}
                     </Button>
                   </Form>
                 )}
@@ -321,7 +282,6 @@ const Login = () => {
         </Paper>
       </Container>
 
-      {/* Snackbar for Notifications */}
       <Snackbar
         open={snackbar.open}
         autoHideDuration={6000}
@@ -337,3 +297,4 @@ const Login = () => {
 };
 
 export default Login;
+
