@@ -25,40 +25,37 @@ import CounsellingSupport from './components/Menu/Family Concern/SubMenu/Counsel
 import FamilyProfiles from './components/Menu/Family Concern/SubMenu/FamilyProfiles';
 import FamilyPlanning from './components/Menu/Family Concern/SubMenu/FamilyPlanning';
 
-import Settings from './components/Menu/Settings/Settings';
+import Settings from './components/Menu/Settings/Settings'; // Import Settings component
 
 function App() {
-  const isAuthenticated = () => {
-    return !!localStorage.getItem('token');
-  };
-
   return (
     <Router>
       <Routes>
-        <Route path="/" element={isAuthenticated() ? <Navigate to="/landing" /> : <Login />} />
-        <Route path="/landing" element={isAuthenticated() ? <LandingPage /> : <Navigate to="/" />} />
-        <Route path="/residents" element={isAuthenticated() ? <Residents /> : <Navigate to="/" />} />
-        <Route path="/health" element={isAuthenticated() ? <Health /> : <Navigate to="/" />} />
-        <Route path="/patientmanagement" element={isAuthenticated() ? <PatientManagement /> : <Navigate to="/" />} />
-        <Route path="/healthrecords" element={isAuthenticated() ? <HealthRecords /> : <Navigate to="/" />} />
-        <Route path="/medicine" element={isAuthenticated() ? <Medicine /> : <Navigate to="/" />} />
-        <Route path="/vaccine" element={isAuthenticated() ? <Vaccine /> : <Navigate to="/" />} />
-        <Route path="/patients" element={isAuthenticated() ? <Patients /> : <Navigate to="/" />} />
+        <Route path="/" element={<Login />} />
+        {/* Removed the /register route */}
+        <Route path="/residents" element={<Residents />} />
+        <Route path="/landing" element={<LandingPage />} />
+        <Route path="/health" element={<Health />} />
+        <Route path="/patientmanagement" element={<PatientManagement />} />
+        <Route path="/healthrecords" element={<HealthRecords />} />
+        <Route path="/medicine" element={<Medicine />} />
+        <Route path="/vaccine" element={<Vaccine />} />
+        <Route path="/patients" element={<Patients />} />
 
-        <Route path="/crime" element={isAuthenticated() ? <Crime /> : <Navigate to="/" />} />
-        <Route path="/crimereports" element={isAuthenticated() ? <CrimeReports /> : <Navigate to="/" />} />
-        <Route path="/suspects" element={isAuthenticated() ? <Suspects /> : <Navigate to="/" />} />
-        <Route path="/victims" element={isAuthenticated() ? <Victims /> : <Navigate to="/" />} />
+        <Route path="/crime" element={<Crime />} />
+        <Route path="/crimereports" element={<CrimeReports />} />
+        <Route path="/suspects" element={<Suspects />} />
+        <Route path="/victims" element={<Victims />} />
 
-        <Route path="/seniorcitizen" element={isAuthenticated() ? <SeniorCitizen /> : <Navigate to="/" />} />
-        <Route path="/seniorcitizendata" element={isAuthenticated() ? <SeniorCitizenData /> : <Navigate to="/" />} />
+        <Route path="/seniorcitizen" element={<SeniorCitizen />} />
+        <Route path="/seniorcitizendata" element={<SeniorCitizenData />} />
 
-        <Route path="/familyconcern" element={isAuthenticated() ? <FamilyConcern /> : <Navigate to="/" />} />
-        <Route path="/familyprofiles" element={isAuthenticated() ? <FamilyProfiles /> : <Navigate to="/" />} />
-        <Route path="/familyplanning" element={isAuthenticated() ? <FamilyPlanning /> : <Navigate to="/" />} />
-        <Route path="/counsellingsupport" element={isAuthenticated() ? <CounsellingSupport /> : <Navigate to="/" />} />
+        <Route path="/familyconcern" element={<FamilyConcern />} />
+        <Route path="/familyprofiles" element={<FamilyProfiles />} />
+        <Route path="/familyplanning" element={<FamilyPlanning />} />
+        <Route path="/counsellingsupport" element={<CounsellingSupport />} />
 
-        <Route path="/settings" element={isAuthenticated() ? <Settings /> : <Navigate to="/" />} />
+        <Route path="/settings" element={<Settings />} /> {/* Route for settings */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
