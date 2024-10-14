@@ -28,10 +28,11 @@ import FamilyPlanning from './components/Menu/Family Concern/SubMenu/FamilyPlann
 import Settings from './components/Menu/Settings/Settings'; // Import Settings component
 
 function App() {
+  const login = localStorage.getItem('username')
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Login />} />
+        <Route path="/" element={login ? <LandingPage /> : <Login />} />
         {/* Removed the /register route */}
         <Route path="/residents" element={<Residents />} />
         <Route path="/landing" element={<LandingPage />} />
