@@ -28,6 +28,7 @@ import FamilyPlanning from './components/Menu/Family Concern/SubMenu/FamilyPlann
 import Settings from './components/Menu/Settings/Settings'; // Import Settings component
 
 function App() {
+  //added
   const login = localStorage.getItem('username')
   return (
     <Router>

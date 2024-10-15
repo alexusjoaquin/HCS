@@ -38,6 +38,10 @@ const Sidebar = () => {
   const [openFamilyMenu, setOpenFamilyMenu] = useState(false); // State for Family Concern dropdown
   const navigate = useNavigate();
 
+    // Retrieve the username from localStorage
+  const username = localStorage.getItem('username');
+  const isAdmin = username && username.startsWith('admin'); // Check if the user is an admin
+
   const handleLogoutClick = () => {
     setOpen(true);
   };
@@ -72,8 +76,7 @@ const Sidebar = () => {
     setOpenFamilyMenu(!openFamilyMenu);
   };
 
-  // Retrieve the username from localStorage
-  const username = localStorage.getItem('username');
+
 
   return (
     <Box
@@ -224,12 +227,16 @@ const Sidebar = () => {
           <ListItemText primary="Senior Citizen" />
         </ListItem>
 
+        { isAdmin ? 
         <ListItem button onClick={() => handleNavigation('/settings')}>
-          <ListItemIcon sx={{ color: '#bbbbbb' }}>
-            <SettingsIcon />
-          </ListItemIcon>
-          <ListItemText primary="Add New User" />
-        </ListItem>
+        <ListItemIcon sx={{ color: '#bbbbbb' }}>
+          <SettingsIcon />
+        </ListItemIcon>
+        <ListItemText primary="Add New User" />
+      </ListItem> : null
+          
+        }
+        
       </List>
 
       <Divider sx={{ bgcolor: '#555555' }} />
