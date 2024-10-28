@@ -11,6 +11,8 @@ import { CircularProgress ,Button, Table, TableBody, TableCell, TableContainer, 
 import { CSVLink } from 'react-csv'; 
 import ImportExportIcon from '@mui/icons-material/ImportExport'; 
 import PrintIcon from '@mui/icons-material/Print'; 
+import AWS from 'aws-sdk'; // Make sure to install aws-sdk package
+import apiconfig from '../../../../api/apiconfig';
 
 const MySwal = withReactContent(Swal);
 
@@ -41,6 +43,7 @@ const barangay = extractBarangay(username); // Extract barangay
 
   useEffect(() => {
     fetchSuspects();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -192,10 +195,112 @@ const barangay = extractBarangay(username); // Extract barangay
     { label: "Status", key: "Status" },
   ];
 
-  const handleFileUpload = () => {
-    // Handle file upload logic here
-  };
 
+  // Initialize AWS S3 client
+  const s3 = new AWS.S3({
+    accessKeyId: process.env.REACT_APP_AWS_ACCESS_KEY_ID,  // Set these in environment variables
+    secretAccessKey: process.env.REACT_APP_AWS_SECRET_ACCESS_KEY,
+    region: process.env.REACT_APP_AWS_REGION,
+  });
+  
+
+
+  const handleFileUpload = async (event) => {
+    const file = event.target.files[0]; // Get the selected file
+  
+    if (!file) {
+      toast.error("No file selected.");
+      return;
+    }
+  
+    try {
+      // Step 1: Upload the CSV file to S3
+      const s3Params = {
+        Bucket: process.env.REACT_APP_AWS_S3_BUCKET_NAME,
+        Key: `suspects/${file.name}`, // Store the file under the 'suspects' folder
+        Body: file,
+        ContentType: file.type,
+      };
+  
+      // Upload file to S3
+      const uploadResult = await s3.upload(s3Params).promise();
+      const s3FileUrl = uploadResult.Location; // URL of the uploaded file in S3
+      toast.success("File uploaded to S3 successfully!");
+  
+      // Step 2: Fetch the file from S3
+      const response = await fetch(s3FileUrl);
+      const csvData = await response.text();
+  
+      // Step 3: Process the CSV data
+      const rows = csvData.split('\n').map(row => row.split(','));
+  
+      // Check for all required columns
+      const header = rows[0].map(col => col.trim()); // Trim whitespace in header
+      const requiredColumns = ['SuspectID', 'FullName', 'Alias', 'LastKnownAddress', 'Status'];
+
+      const missingColumns = requiredColumns.filter(col => !header.includes(col));
+      if (missingColumns.length > 0) {
+        MySwal.fire({
+          icon: 'error',
+          title: 'Invalid File Format',
+          text: `Missing columns: ${missingColumns.join(', ')}`,
+          confirmButtonText: 'OK',
+        });
+        return;
+      }
+  
+      // Step 4: Process each row and import suspects
+      // Step 4: Process each row and import suspects
+const newSuspects = rows.slice(1).map(row => {
+  const suspect = {};
+  header.forEach((key, index) => {
+    // Correct field names and trim values
+    suspect[key.trim() === 'Address' ? 'LastKnownAddress' : key.trim()] = row[index] ? row[index].trim() : ''; 
+  });
+
+  // Auto-generate SuspectID if not present
+  if (!suspect.SuspectID) {
+    suspect.SuspectID = `SUS-${Math.floor(Date.now() / 1000)}`;
+  }
+
+  // Skip suspect if required fields are missing (you can add more conditions here)
+  const requiredFields = ['FullName', 'Alias', 'LastKnownAddress', 'Status'];
+  const isEmpty = requiredFields.every(field => !suspect[field]);
+
+  // Only include suspect if they have values for the required fields
+  return isEmpty ? null : suspect;
+}).filter(suspect => suspect); // Filter out empty/null suspects
+
+      
+  
+      // Step 5: Prepare the payload for the API
+      const payload = { suspects: newSuspects }; // Adjust the payload to send as { "suspects": [...] }
+  
+      // Send the suspects data to your API endpoint
+      await fetch( apiconfig.suspects.importCSV,{
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+  
+      // Step 6: Show success notification with SweetAlert2
+      MySwal.fire({
+        icon: 'success',
+        title: 'Import Successful',
+        text: 'CSV data with Suspect IDs imported successfully!',
+        confirmButtonText: 'OK',
+      });
+  
+      // Refresh suspects data after import
+      fetchSuspects(); // Re-fetch suspects to update the list
+  
+    } catch (error) {
+      console.error('Error during CSV upload or processing:', error);
+      toast.error("Failed to import suspects: " + error.message);
+    }
+  };
+  
+  
   // Handle Print Records
   const handlePrint = () => {
     window.print();

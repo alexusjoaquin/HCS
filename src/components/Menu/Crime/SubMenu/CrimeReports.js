@@ -27,6 +27,9 @@ import ImportExportIcon from '@mui/icons-material/ImportExport';
 import PrintIcon from '@mui/icons-material/Print';
 import axios from 'axios';
 import apiconfig from '../../../../api/apiconfig'; // Adjust the path as necessary
+import AWS from 'aws-sdk';
+import crimeReportService from '../../../services/crimeReportService';
+
 
 const MySwal = withReactContent(Swal);
 
@@ -42,6 +45,10 @@ const CrimeReports = () => {
   const [isSuspectModalOpen, setSuspectModalOpen] = useState(false);
   const [selectedSuspect, setSelectedSuspect] = useState(null);
   const [loading, setLoading] = useState(true); // Loading state
+  const [victims, setVictims] = useState([]); // State to hold victims data
+  const [suspects, setSuspects] = useState([]);
+
+
 
   // Get username from localStorage and check if the user is an admin
 const username = localStorage.getItem('username');
@@ -58,9 +65,47 @@ const extractBarangay = (username) => {
 
 const barangay = extractBarangay(username); // Extract barangay
 
+// Fetch victims data once when component mounts
+useEffect(() => {
+  const fetchVictims = async () => {
+    try {
+      const response = await axios.get(apiconfig.victims.getAll);
+      if (response.data.status === 'success') {
+        setVictims(response.data.data); // Assuming response has the necessary data structure
+      }
+    } catch (error) {
+      console.error('Failed to fetch victims:', error);
+      toast.error('Failed to fetch victims.');
+    }
+  };
+
+  fetchVictims();
+}, []);
+
+// Fetch suspects data once when component mounts
+useEffect(() => {
+  const fetchSuspects = async () => {
+    try {
+      const response = await axios.get(apiconfig.suspect.getAll);
+      console.log('Fetched suspects:', response.data); // Check the structure here
+      if (response.data.status === 'success') {
+        setSuspects(response.data.data.suspects); // Ensure this is an array
+      } else {
+        toast.error('Failed to fetch suspects.');
+      }
+    } catch (error) {
+      console.error('Error fetching suspects:', error);
+      toast.error('Failed to fetch suspects.');
+    }
+  };
+
+  fetchSuspects();
+}, []);
+
 
   useEffect(() => {
     fetchCrimeReports();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -213,9 +258,97 @@ const barangay = extractBarangay(username); // Extract barangay
     { label: "Victim ID", key: "VictimID" },   // Added VictimID
   ];
 
-  const handleFileUpload = () => {
-    // Handle file upload logic here
-  }
+  const s3 = new AWS.S3({
+    accessKeyId: process.env.REACT_APP_AWS_ACCESS_KEY_ID,  // Set these in environment variables
+    secretAccessKey: process.env.REACT_APP_AWS_SECRET_ACCESS_KEY,
+    region: process.env.REACT_APP_AWS_REGION,
+  });
+  
+
+  // Inside CrimeReports component
+  const handleFileUpload = async (event) => {
+    const file = event.target.files[0]; // Get the selected file
+  
+    if (!file) {
+      toast.error("No file selected.");
+      return;
+    }
+  
+    try {
+      // Step 1: Upload the CSV file to S3
+      const s3Params = {
+        Bucket: process.env.REACT_APP_AWS_S3_BUCKET_NAME,
+        Key: `crimes/${file.name}`,  // Store the file under the 'crimes' folder
+        Body: file,
+        ContentType: file.type,
+      };
+  
+      // Upload file to S3
+      const uploadResult = await s3.upload(s3Params).promise();
+      const s3FileUrl = uploadResult.Location; // URL of the uploaded file in S3
+      toast.success("File uploaded to S3 successfully!");
+  
+      // Step 2: Fetch the file from S3
+      const response = await fetch(s3FileUrl);
+      const csvData = await response.text();
+  
+      // Step 3: Process the CSV data
+      const rows = csvData.split('\n').map(row => row.split(','));
+  
+      // Check for all required columns
+      const header = rows[0].map(col => col.trim());  // Trim whitespace in header
+      const requiredColumns = ['ReportID', 'Location', 'Description', 'Date', 'OfficerInCharge', 'SuspectID', 'VictimID'];
+  
+      const missingColumns = requiredColumns.filter(col => !header.includes(col));
+      if (missingColumns.length > 0) {
+        MySwal.fire({
+          icon: 'error',
+          title: 'Invalid File Format',
+          text: `Missing columns: ${missingColumns.join(', ')}`,
+          confirmButtonText: 'OK',
+        });
+        return;
+      }
+  
+      // Step 4: Process each row and prepare crime reports
+      const crimeReportsToImport = rows.slice(1).map(row => {
+        const report = {};
+        header.forEach((key, index) => {
+          if (index < row.length) {
+            report[key.trim()] = row[index].trim(); // Map CSV row data to the appropriate fields
+          }
+        });
+  
+        // Auto-generate ReportID if not present
+        if (!report.ReportID) {
+          report.ReportID = `R${Date.now()}`; // Use a timestamp for unique ID
+        }
+  
+        return report;
+      }).filter(report => report); // Filter out any undefined or empty reports
+  
+      // Step 5: Send crime reports to the backend
+      await crimeReportService.importCrimesCSV(crimeReportsToImport);
+  
+      // Step 6: Show success notification with SweetAlert2
+      MySwal.fire({
+        icon: 'success',
+        title: 'Import Successful',
+        text: 'CSV data with crime reports imported successfully!',
+        confirmButtonText: 'OK',
+      });
+  
+      // Refresh crime reports data (after import)
+      fetchCrimeReports(); // Re-fetch crime reports to update the list
+  
+    } catch (error) {
+      console.error('Error importing crime reports:', error);
+      toast.error('Failed to import crime reports: ' + error.message);
+    }
+  };
+  
+
+
 
   // Handle Print Records
   const handlePrint = () => {
@@ -238,7 +371,8 @@ const barangay = extractBarangay(username); // Extract barangay
     }
   };
 
-  // Fetch suspect data by ID
+
+  // // Fetch suspect data by ID
   const fetchSuspectData = async (suspectID) => {
     try {
       const response = await axios.get(apiconfig.suspect.getById(suspectID)); // Adjust as necessary
@@ -246,7 +380,12 @@ const barangay = extractBarangay(username); // Extract barangay
         setSelectedSuspect(response.data.data.suspectDetails); // Ensure correct data structure
         setSuspectModalOpen(true);
       } else {
-        toast.error(response.data.message);
+        MySwal.fire({
+          icon: 'error',
+          title: 'Not Found',
+          text: 'Suspect is not in the suspect\'s record',
+          confirmButtonText: 'OK'
+        })
       }
     } catch (error) {
       console.error('Error fetching suspect data:', error);
@@ -254,13 +393,58 @@ const barangay = extractBarangay(username); // Extract barangay
     }
   };
 
-  const handleVictimClick = (victimID) => {
-    fetchVictimData(victimID);
-  };
+  
 
-  const handleSuspectClick = (suspectID) => {
-    fetchSuspectData(suspectID);
-  };
+  // const handleVictimClick = (victimID) => {
+  //   fetchVictimData(victimID);
+  // };
+
+  // const handleSuspectClick = (suspectID) => {
+  //   fetchSuspectData(suspectID);
+  // };
+
+  // Check if victim exists and fetch data
+// Check if victim exists and fetch data
+const handleVictimClick = (victimID) => {
+  if (Array.isArray(victims) && victims.some(victim => victim.VictimID === victimID)) {
+    fetchVictimData(victimID);
+  } else {
+    MySwal.fire({
+      icon: 'warning',
+      title: 'Not Found',
+      text: 'Victim is not found in the records.',
+      confirmButtonText: 'OK',
+    });
+  }
+};
+
+// Check if suspect exists and fetch data
+const handleSuspectClick = (suspectID) => {
+  console.log('Clicked Suspect ID:', suspectID);
+  
+  if (Array.isArray(suspects)) {
+    const suspectFound = suspects.some(suspect => suspect.SuspectID === suspectID);
+    
+    if (suspectFound) {
+      fetchSuspectData(suspectID);
+    } else {
+      MySwal.fire({
+        icon: 'warning',
+        title: 'Not Found',
+        text: 'Suspect is not found in the records.',
+        confirmButtonText: 'OK',
+      });
+    }
+  } else {
+    console.error('Suspects is not an array:', suspects);
+    MySwal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: 'An error occurred while checking the suspect records.',
+      confirmButtonText: 'OK',
+    });
+  }
+};
 
   return (
     <div className="container">

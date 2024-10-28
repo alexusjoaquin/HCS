@@ -79,6 +79,22 @@ const medicineService = {
       throw error;
     }
   },
+
+  importMedicinesCSV: async (base64String) => {
+    const response = await fetch(apiconfig.medicine.importCSV, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ csvFile: base64String }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to import CSV');
+    }
+
+    return await response.json();
+  },
 };
 
 export default medicineService;

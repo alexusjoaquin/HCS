@@ -48,22 +48,22 @@ const vaccineService = {
     }
   },
 
-  // Delete a vaccine record
-  deleteVaccine: async (transactionID) => {
-    try {
-      const response = await axios.delete(apiconfig.vaccines.delete, {
-        data: { TransactionID: transactionID },
-      });
-      if (response.data.status === 'success') {
-        return response.data.message; // Confirmation message
-      } else {
-        throw new Error(response.data.message || 'Failed to delete vaccine');
-      }
-    } catch (error) {
-      console.error('Error deleting vaccine:', error);
-      throw error;
+// Delete a vaccine record
+deleteVaccine: async (transactionID) => {
+  try {
+    const response = await axios.delete(apiconfig.vaccines.delete, {
+      data: { TransactionID: transactionID },
+    });
+    if (response.data.status === 'success') {
+      return response.data.message; // Confirmation message
+    } else {
+      throw new Error(response.data.message || 'Failed to delete vaccine');
     }
-  },
+  } catch (error) {
+    console.error('Error deleting vaccine:', error);
+    throw error;
+  }
+},
 
   // Fetch vaccine by Transaction ID
   getVaccineById: async (id) => {
@@ -79,6 +79,22 @@ const vaccineService = {
       throw error;
     }
   },
+
+  importVaccinesCSV: async (base64String) => {
+    const response = await fetch(apiconfig.vaccine.importCSV, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ csvFile: base64String }),
+    });
+
+    if (!response.ok) {
+        throw new Error('Failed to import CSV');
+    }
+
+    return await response.json();
+},
 };
 
 export default vaccineService;

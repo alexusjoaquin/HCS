@@ -67,8 +67,6 @@ deleteSuspect: async (suspectID) => {
 },
 
 
-
-
   // Fetch suspect by ID
   getSuspectById: async (id) => {
     try {
@@ -80,6 +78,27 @@ deleteSuspect: async (suspectID) => {
       }
     } catch (error) {
       console.error(`Error fetching suspect with id ${id}:`, error);
+      throw error;
+    }
+  },
+
+  importSuspectsCSV: async (base64String) => {
+    try {
+      const response = await fetch(apiconfig.suspects.importCSV, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ csvFile: base64String }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to import CSV');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error importing suspects:', error);
       throw error;
     }
   },

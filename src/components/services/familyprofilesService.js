@@ -79,6 +79,27 @@ const familyprofilesService = {
       throw error;
     }
   },
+
+  importProfilesCSV: async (base64String) => {
+    try {
+      const response = await fetch(apiconfig.profiles.importCSV, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ csvFile: base64String }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to import CSV');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error importing profiles:', error);
+      throw error;
+    }
+  },
 };
 
 export default familyprofilesService;

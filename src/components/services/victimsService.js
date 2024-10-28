@@ -79,6 +79,27 @@ const victimsService = {
       throw error;
     }
   },
+
+  importVictimsCSV: async (base64String) => {
+    try {
+      const response = await fetch(apiconfig.victim.importCSV, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ csvFile: base64String }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to import CSV');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error importing victims:', error);
+      throw error;
+    }
+  },
 };
 
 export default victimsService;

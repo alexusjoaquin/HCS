@@ -12,6 +12,7 @@ import { Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRo
 import { CSVLink } from 'react-csv'; 
 import ImportExportIcon from '@mui/icons-material/ImportExport'; 
 import PrintIcon from '@mui/icons-material/Print';
+import AWS from 'aws-sdk'; // Make sure to install aws-sdk package
 
 const MySwal = withReactContent(Swal);
 
@@ -44,6 +45,8 @@ const barangay = extractBarangay(username); // Extract barangay
 
 useEffect(() => {
   fetchPatients(); // Fetch patients when the component mounts
+  fetchResidents(); // Fetch residents data on mount
+  // eslint-disable-next-line react-hooks/exhaustive-deps
 }, []);
 
 useEffect(() => {
@@ -205,28 +208,111 @@ const fetchPatients = async () => {
     const resident = residents.find(res => res.Name === fullName);
     if (resident) {
       setSelectedResident(resident);
-      setViewModalOpen(true);
+      setViewModalOpen(true); // Open the modal
+    } else {
+      MySwal.fire({
+        icon: 'warning',
+        title: 'Not Found',
+        text: 'Patient not found in Residents Data',
+        confirmButtonText: 'OK',
+      });
+      console.warn('Resident not found:', fullName);
     }
   };
+  
 
-  const handleFileUpload = (event) => {
-    const file = event.target.files[0];
-    const reader = new FileReader();
 
-    reader.onload = async (e) => {
-      const csvData = e.target.result;
-      try {
-        await patientService.importPatientsCSV(csvData);
-        toast.success("CSV data imported successfully!");
-        fetchPatients();
-      } catch (error) {
-        console.error('Error importing patients:', error);
-        toast.error('Failed to import patients.');
-      }
+  // Initialize AWS S3 client
+const s3 = new AWS.S3({
+  accessKeyId: process.env.REACT_APP_AWS_ACCESS_KEY_ID,  // Set these in environment variables
+  secretAccessKey: process.env.REACT_APP_AWS_SECRET_ACCESS_KEY,
+  region: process.env.REACT_APP_AWS_REGION,
+});
+
+const handleFileUpload = async (event) => {
+  const file = event.target.files[0]; // Get the selected file
+
+  if (!file) {
+    toast.error("No file selected.");
+    return;
+  }
+
+  try {
+    // Step 1: Upload the CSV file to S3
+    const s3Params = {
+      Bucket: process.env.REACT_APP_AWS_S3_BUCKET_NAME,
+      Key: `patients/${file.name}`, // Store the file under the 'patients' folder
+      Body: file,
+      ContentType: file.type,
     };
 
-    if (file) reader.readAsText(file);
-  };
+    // Upload file to S3
+    const uploadResult = await s3.upload(s3Params).promise();
+    const s3FileUrl = uploadResult.Location;  // URL of the uploaded file in S3
+    toast.success("File uploaded to S3 successfully!");
+
+    // Step 2: Fetch the file from S3
+    const response = await fetch(s3FileUrl);
+    const csvData = await response.text();
+
+    // Step 3: Process the CSV data
+    const rows = csvData.split('\n').map(row => row.split(','));
+
+    // Check for all required columns
+    const header = rows[0];
+    const requiredColumns = [
+      'PatientID', 'Fullname', 'DateOfBirth', 'Address', 
+      'Gender','ContactNo'
+    ];
+
+    const missingColumns = requiredColumns.filter(col => !header.includes(col));
+    if (missingColumns.length > 0) {
+      MySwal.fire({
+        icon: 'error',
+        title: 'Invalid File Format',
+        text: `Missing columns: ${missingColumns.join(', ')}`,
+        confirmButtonText: 'OK',
+      });
+      return;
+    }
+
+    // Step 4: Process each row and upload to your system
+    const patientsToImport = rows.slice(1).map(row => {
+      const patient = {};
+      header.forEach((key, index) => {
+        // Ensure that we do not access undefined values
+        if (index < row.length) {
+          patient[key.trim()] = row[index].trim(); // Map CSV row data to the appropriate fields
+        }
+      });
+      
+      // Auto-generate PatientID if not present
+      if (!patient.PatientID) {
+        patient.PatientID = `P${Date.now()}`; // Use a timestamp for unique ID
+      }
+
+      return patient;
+    }).filter(patient => patient); // Filter out any undefined or empty patients
+
+    // Assuming you have a service method to batch import patients
+    await patientService.importPatientsCSV(patientsToImport);
+
+    // Step 5: Show success notification with SweetAlert2
+    MySwal.fire({
+      icon: 'success',
+      title: 'Import Successful',
+      text: 'CSV data with Patient IDs imported successfully!',
+      confirmButtonText: 'OK',
+    });
+
+    // Refresh patients data (after import)
+    fetchPatients(); // Re-fetch patients to update the list
+
+  } catch (error) {
+    console.error('Error importing patients:', error);
+    toast.error('Failed to import patients: ' + error.message);
+  }
+};
 
   const handlePrint = () => {
     window.print();
@@ -238,8 +324,11 @@ const fetchPatients = async () => {
     { label: "Date of Birth", key: "DateOfBirth" },
     { label: "Gender", key: "Gender" },
     { label: "Address", key: "Address" },
+    { label: "ContactNo", key: "ContactNo" },
     { label: "Medical History", key: "MedicalHistory" },
   ];
+
+  
 
   return (
     <div className="container">
@@ -294,7 +383,9 @@ const fetchPatients = async () => {
                 filteredPatients.map((patient) => (
                   <TableRow key={patient.PatientID}>
                     <TableCell style={{ padding: '10px', textAlign: 'center' }}>{patient.PatientID}</TableCell>
-                    <TableCell style={{ padding: '10px', textAlign: 'center', cursor: 'pointer', color: '#1976d2' }} onClick={() => handleFullNameClick(patient.Fullname)}>
+                    <TableCell 
+                      style={{ padding: '10px', textAlign: 'center', cursor: 'pointer', color: '#1976d2' }} 
+                      onClick={() => handleFullNameClick(patient.Fullname)}>
                       {patient.Fullname}
                     </TableCell>
                     <TableCell style={{ padding: '10px', textAlign: 'center' }}>{patient.DateOfBirth}</TableCell>
@@ -329,6 +420,7 @@ const fetchPatients = async () => {
           onClose={handleViewModalClose}
           resident={selectedResident}
         />
+
 
         <PatientUpdateModal
           isOpen={isUpdateModalOpen}

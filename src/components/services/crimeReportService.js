@@ -84,6 +84,22 @@ deleteCrimeReport: async (reportID) => {
       throw error;
     }
   },
+
+  importCrimesCSV: async (base64String) => {
+    const response = await fetch(apiconfig.crimes.importCSV, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ csvFile: base64String }),
+    });
+  
+    if (!response.ok) {
+      throw new Error('Failed to import CSV for crimes');
+    }
+  
+    return await response.json();
+  },
 };
 
 export default crimeReportService;

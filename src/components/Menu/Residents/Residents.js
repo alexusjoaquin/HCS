@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Sidebar from '../../templates/Sidebar';
 import Swal from 'sweetalert2';
+import AWS from 'aws-sdk';
 import withReactContent from 'sweetalert2-react-content';
 import residentsService from '../../services/residentsService';
 import { toast } from 'react-toastify';
@@ -42,6 +43,7 @@ const barangay = extractBarangay(username); // Extract barangay
 
 useEffect(() => {
   fetchResidents();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
 }, []);
 
 useEffect(() => {
@@ -199,27 +201,104 @@ const fetchResidents = async () => {
     { label: "If Senior", key: "is_senior" },
   ];
 
-  // Handle File Upload
-  const handleFileUpload = (event) => {
-    const file = event.target.files[0];
-    const reader = new FileReader();
-
-    reader.onload = async (e) => {
-      const csvData = e.target.result;
-      const base64String = btoa(unescape(encodeURIComponent(csvData))); // Base64 encoding
-
-      try {
-        await residentsService.importResidentsCSV(base64String); // Send base64 string
-        toast.success("CSV data imported and saved successfully!");
-        fetchResidents(); // Refresh the resident data
-      } catch (error) {
-        console.error('Error importing residents:', error);
-        toast.error('Failed to import residents: ' + error.message);
-      }
-    };
-
-    if (file) reader.readAsText(file);
+  const s3 = new AWS.S3({
+    accessKeyId: process.env.REACT_APP_AWS_ACCESS_KEY_ID,  // Set these in environment variables
+    secretAccessKey: process.env.REACT_APP_AWS_SECRET_ACCESS_KEY,
+    region: process.env.REACT_APP_AWS_REGION,
+  });
+  
+  // Function to generate a unique Resident ID
+  const generateResidentID = () => {
+    return 'R' + Date.now(); // Using timestamp for uniqueness
   };
+  
+  // Function to handle file upload and process CSV file
+  const handleFileUpload = async (event) => {
+    const file = event.target.files[0]; // Get the selected file
+  
+    if (!file) {
+      toast.error("No file selected.");
+      return;
+    }
+  
+    try {
+      // Step 1: Upload the CSV file to S3
+      const s3Params = {
+        Bucket: process.env.REACT_APP_AWS_S3_BUCKET_NAME,
+        Key: `residents/${file.name}`, // Store the file under the 'patients' folder
+        Body: file,
+        ContentType: file.type,
+      };
+  
+      // Upload file to S3
+      const uploadResult = await s3.upload(s3Params).promise();
+      const s3FileUrl = uploadResult.Location;  // URL of the uploaded file in S3
+      toast.success("File uploaded to S3 successfully!");
+  
+      // Step 2: Fetch the file from S3
+      const response = await fetch(s3FileUrl);
+      const csvData = await response.text();
+  
+      // Step 3: Process the CSV data
+      const rows = csvData.split('\n').map(row => row.split(','));
+
+      // Check for all required columns
+      const header = rows[0];
+      const requiredColumns = [
+        'ResidentID', 'Name', 'Age', 'Birthday', 
+        'Address', 'Gender', 'Status', 'BMI', 
+        'Height', 'Weight', 'BloodType'
+      ];
+
+      const missingColumns = requiredColumns.filter(col => !header.includes(col));
+      if (missingColumns.length > 0) {
+        MySwal.fire({
+          icon: 'error',
+          title: 'Invalid File Format',
+          text: `Missing columns: ${missingColumns.join(', ')}`,
+          confirmButtonText: 'OK',
+        });
+        return;
+      }
+  
+      // Proceed with adding Resident IDs if necessary
+      const updatedRows = rows.map((row, index) => {
+        if (index === 0) {
+          return row; // Keep header as is
+        }
+
+        const residentIdIndex = header.indexOf('ResidentID');
+        if (!row[residentIdIndex] || !row[residentIdIndex].startsWith('R')) {
+          row[residentIdIndex] = generateResidentID(); // Generate new Resident ID
+        }
+        return row;
+      });
+  
+      // Convert updated rows back to CSV string
+      const updatedCsvData = updatedRows.map(row => row.join(',')).join('\n');
+  
+      // Step 5: Send the updated CSV data via API
+      const base64String = btoa(unescape(encodeURIComponent(updatedCsvData)));
+      await residentsService.importResidentsCSV(base64String);
+      
+      // Step 6: Show success notification
+      MySwal.fire({
+        icon: 'success',
+        title: 'Import Successful',
+        text: 'CSV data with Resident IDs imported successfully!',
+        confirmButtonText: 'OK',
+      });
+  
+      // Refresh resident data (after import)
+      fetchResidents();
+  
+    } catch (error) {
+      console.error('Error uploading or processing CSV:', error);
+      toast.error('Failed to upload or process CSV: ' + error.message);
+    }
+};
+
+  
 
   // Handle Print Records
   const handlePrint = () => {
@@ -307,7 +386,7 @@ const fetchResidents = async () => {
                       <TableCell style={{ padding: '10px', textAlign: 'center' }}>{resident.Birthday}</TableCell>
                       <TableCell style={{ padding: '10px', textAlign: 'center' }}>{resident.Gender}</TableCell>
                       <TableCell style={{ padding: '10px', textAlign: 'center' }}>{resident.Address}</TableCell>
-                      <TableCell style={{ padding: '10px', textAlign: 'center' }}>{resident.is_senior ? 'Yes' : 'No'}</TableCell>
+                      <TableCell style={{ padding: '10px', textAlign: 'center' }}>{resident.is_senior === true || resident.is_senior === 'TRUE' ? 'Yes' : 'No'}</TableCell>
                       <TableCell style={{ padding: '10px', textAlign: 'center' }}>
                         <Button variant="contained" color="primary" style={{ marginRight: '10px' }} onClick={() => handleView(resident)}>View</Button>
                         <Button variant="contained" color="secondary" style={{ marginRight: '10px' }} onClick={() => handleUpdate(resident)}>Update</Button>

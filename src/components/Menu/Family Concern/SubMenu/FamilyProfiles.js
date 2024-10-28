@@ -11,6 +11,9 @@ import { CircularProgress ,Button, Table, TableBody, TableCell, TableContainer, 
 import { CSVLink } from 'react-csv'; 
 import ImportExportIcon from '@mui/icons-material/ImportExport'; 
 import PrintIcon from '@mui/icons-material/Print'; 
+import AWS from 'aws-sdk'; // Don't forget to import AWS
+
+
 const MySwal = withReactContent(Swal);
 
 const FamilyProfiles = () => {
@@ -40,6 +43,7 @@ const barangay = extractBarangay(username); // Extract barangay
 
   useEffect(() => {
     fetchFamilyProfiles();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -193,9 +197,105 @@ const barangay = extractBarangay(username); // Extract barangay
       { label: "Contact No", key: "ContactNo" },
     ];
   
-    const handleFileUpload = () => {
-      // Handle file upload logic here
+
+    // Initialize AWS S3 client outside the component
+const s3 = new AWS.S3({
+  accessKeyId: process.env.REACT_APP_AWS_ACCESS_KEY_ID,
+  secretAccessKey: process.env.REACT_APP_AWS_SECRET_ACCESS_KEY,
+  region: process.env.REACT_APP_AWS_REGION,
+});
+
+
+const handleFileUpload = async (event) => {
+  const file = event.target.files[0]; // Get the selected file
+
+  if (!file) {
+    toast.error("No file selected.");
+    return;
+  }
+
+  try {
+    // Step 1: Upload the CSV file to S3
+    const s3Params = {
+      Bucket: process.env.REACT_APP_AWS_S3_BUCKET_NAME,
+      Key: `profiles/${file.name}`, 
+      Body: file,
+      ContentType: file.type,
+    };
+
+    // Upload file to S3
+    const uploadResult = await s3.upload(s3Params).promise();
+    const s3FileUrl = uploadResult.Location;  // URL of the uploaded file in S3
+    toast.success("File uploaded to S3 successfully!");
+
+    // Step 2: Fetch the file from S3
+    const response = await fetch(s3FileUrl);
+    const csvData = await response.text();
+
+    // Step 3: Process the CSV data
+    const rows = csvData.split('\n').map(row => row.split(','));
+
+    // Check for all required columns
+    const header = rows[0].map(col => col.trim()); // Trim whitespace in header
+    const requiredColumns = [
+      'FamilyID', 'FamilyName', 'Members', 'Address', 
+      'ContactNo',
+    ];
+
+    const missingColumns = requiredColumns.filter(col => !header.includes(col));
+    if (missingColumns.length > 0) {
+      MySwal.fire({
+        icon: 'error',
+        title: 'Invalid File Format',
+        text: `Missing columns: ${missingColumns.join(', ')}`,
+        confirmButtonText: 'OK',
+      });
+      return;
     }
+
+    // Step 4: Process each row and prepare for upload
+    const familiesToImport = rows.slice(1).map(row => {
+      const family = {};
+      header.forEach((key, index) => {
+        // Ensure that we do not access undefined values
+        if (index < row.length) {
+          family[key.trim()] = row[index] ? row[index].trim() : ''; // Map CSV row data to the appropriate fields
+        }
+      });
+      
+      // Auto-generate FamilyID if not present
+      if (!family.FamilyID) {
+        family.FamilyID = `FAM-${Date.now()}`; // Use a timestamp for unique ID
+      }
+
+      // Skip family if required fields are missing
+      const requiredFields = ['FamilyName', 'Members', 'Address', 'ContactNo'];
+      const isEmpty = requiredFields.every(field => !family[field]);
+
+      // Only include family if they have values for the required fields
+      return isEmpty ? null : family;
+    }).filter(family => family); // Filter out null families
+
+    // Assuming you have a service method to batch import families
+    await familyprofilesService.importProfilesCSV(familiesToImport);
+
+    // Step 5: Show success notification with SweetAlert2
+    MySwal.fire({
+      icon: 'success',
+      title: 'Import Successful',
+      text: 'CSV data with Family IDs imported successfully!',
+      confirmButtonText: 'OK',
+    });
+
+    // Refresh family profiles data (after import)
+    fetchFamilyProfiles(); // Re-fetch families to update the list
+
+  } catch (error) {
+    console.error('Error importing family profiles:', error);
+    toast.error('Failed to import family profiles: ' + error.message);
+  }
+};
+
   
     // Handle Print Records
     const handlePrint = () => {

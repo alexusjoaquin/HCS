@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect  } from 'react';
 import Sidebar from '../../../templates/Sidebar';
 import SeniorCitizenModal from '../Modals/SeniorCitizenModal/SeniorCitizenModal';
 import SeniorCitizenViewModal from '../Modals/SeniorCitizenViewModal/SeniorCitizenViewModal';
@@ -10,6 +10,9 @@ import { CircularProgress, Button, Table, TableBody, TableCell, TableContainer, 
 import { CSVLink } from 'react-csv';
 import ImportExportIcon from '@mui/icons-material/ImportExport';
 import PrintIcon from '@mui/icons-material/Print';
+import { toast } from 'react-toastify';
+
+import AWS from 'aws-sdk'; // Make sure to install aws-sdk package
 
 const MySwal = withReactContent(Swal);
 
@@ -17,7 +20,7 @@ const SeniorCitizenData = () => {
   const [isCreateModalOpen, setCreateModalOpen] = useState(false);
   const [isViewModalOpen, setViewModalOpen] = useState(false);
   const [isUpdateModalOpen, setUpdateModalOpen] = useState(false);
-  const [selectedSeniorCitizen, setSelectedSeniorCitizen] = useState(null);
+  // const [selectedSeniorCitizen, setSelectedSeniorCitizen] = useState(null);
   const [residents, setResidents] = useState([]); // Change state to hold residents
   const [filteredResidents, setFilteredResidents] = useState([]); // Change to filtered residents
   const [searchTerm, setSearchTerm] = useState('');
@@ -27,7 +30,7 @@ const SeniorCitizenData = () => {
   const username = localStorage.getItem('username'); // Get username from localStorage
 const isAdmin = username && username.startsWith('admin'); // Check if the user is an admin
 
-// Function to extract barangay name
+// Function to extract barangay names
 const extractBarangay = (username) => {
   if (isAdmin) return null; // If admin, return null
   
@@ -38,13 +41,11 @@ const extractBarangay = (username) => {
 
 const barangay = extractBarangay(username); // Extract barangay
 
-  
-
-  
 
   // Fetch residents data when component loads
   useEffect(() => {
     fetchResidents();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -104,9 +105,6 @@ const barangay = extractBarangay(username); // Extract barangay
     selectedResident(null);
   };
 
-  const handleUpdateSubmit = async (data) => {
-    // Handle the update logic as needed
-  };
 
   // CSV headers for export
   const csvHeaders = [
@@ -117,6 +115,105 @@ const barangay = extractBarangay(username); // Extract barangay
     { label: "Gender", key: "Gender" },
     { label: "Status", key: "Status" }, // Add other necessary fields
   ];
+
+    // Initialize AWS S3 client
+    const s3 = new AWS.S3({
+      accessKeyId: process.env.REACT_APP_AWS_ACCESS_KEY_ID,  // Set these in environment variables
+      secretAccessKey: process.env.REACT_APP_AWS_SECRET_ACCESS_KEY,
+      region: process.env.REACT_APP_AWS_REGION,
+    });
+
+      // Function to generate a unique Resident ID
+  const generateResidentID = () => {
+    return 'R' + Date.now(); // Using timestamp for uniqueness
+  };
+    
+    const handleFileUpload = async (event) => {
+      const file = event.target.files[0]; // Get the selected file
+    
+      if (!file) {
+        toast.error("No file selected.");
+        return;
+      }
+    
+      try {
+        // Step 1: Upload the CSV file to S3
+        const s3Params = {
+          Bucket: process.env.REACT_APP_AWS_S3_BUCKET_NAME,
+          Key: `residents/${file.name}`, // Store the file under the 'patients' folder
+          Body: file,
+          ContentType: file.type,
+        };
+    
+        // Upload file to S3
+        const uploadResult = await s3.upload(s3Params).promise();
+        const s3FileUrl = uploadResult.Location;  // URL of the uploaded file in S3
+        toast.success("File uploaded to S3 successfully!");
+    
+        // Step 2: Fetch the file from S3
+        const response = await fetch(s3FileUrl);
+        const csvData = await response.text();
+    
+        // Step 3: Process the CSV data
+        const rows = csvData.split('\n').map(row => row.split(','));
+  
+        // Check for all required columns
+        const header = rows[0];
+        const requiredColumns = [
+          'ResidentID', 'Name', 'Age', 'Birthday', 
+          'Address', 'Gender', 'Status', 'BMI', 
+          'Height', 'Weight', 'BloodType'
+        ];
+  
+        const missingColumns = requiredColumns.filter(col => !header.includes(col));
+        if (missingColumns.length > 0) {
+          MySwal.fire({
+            icon: 'error',
+            title: 'Invalid File Format',
+            text: `Missing columns: ${missingColumns.join(', ')}`,
+            confirmButtonText: 'OK',
+          });
+          return;
+        }
+    
+        // Proceed with adding Resident IDs if necessary
+        const updatedRows = rows.map((row, index) => {
+          if (index === 0) {
+            return row; // Keep header as is
+          }
+  
+          const residentIdIndex = header.indexOf('ResidentID');
+          if (!row[residentIdIndex] || !row[residentIdIndex].startsWith('R')) {
+            row[residentIdIndex] = generateResidentID(); // Generate new Resident ID
+          }
+          return row;
+        });
+    
+        // Convert updated rows back to CSV string
+        const updatedCsvData = updatedRows.map(row => row.join(',')).join('\n');
+    
+        // Step 5: Send the updated CSV data via API
+        const base64String = btoa(unescape(encodeURIComponent(updatedCsvData)));
+        await residentsService.importResidentsCSV(base64String);
+        
+        // Step 6: Show success notification
+        MySwal.fire({
+          icon: 'success',
+          title: 'Import Successful',
+          text: 'CSV data with Resident IDs imported successfully!',
+          confirmButtonText: 'OK',
+        });
+    
+        // Refresh resident data (after import)
+        fetchResidents();
+    
+      } catch (error) {
+        console.error('Error uploading or processing CSV:', error);
+        toast.error('Failed to upload or process CSV: ' + error.message);
+      }
+  };
+  
+
 
   // Handle Print Records
   const handlePrint = () => {
@@ -138,7 +235,7 @@ const barangay = extractBarangay(username); // Extract barangay
             id="import-csv"
             type="file"
             style={{ display: 'none' }}
-            // Handle file upload logic here
+            onChange={handleFileUpload}
           />
           <Tooltip title="Import CSV" arrow>
             <IconButton onClick={() => document.getElementById('import-csv').click()} color="primary" aria-label="Import CSV">

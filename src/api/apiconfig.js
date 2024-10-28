@@ -215,10 +215,6 @@ const apiconfig = {
     getAll: `${API_BASE_URL}/Residents/all`, // GET /all
   },
   
-  resident: {
-    importCSV: `${API_BASE_URL}/Resident/importCSV`, // POST for CSV import
-  },
-
   medicines: {
     create: `${API_BASE_URL}/Medicines`, // POST
     update: `${API_BASE_URL}/Medicines`, // PUT
@@ -230,11 +226,49 @@ const apiconfig = {
   vaccines: {
     create: `${API_BASE_URL}/Vaccines`, // POST
     update: `${API_BASE_URL}/Vaccines`, // PUT
-    delete: `${API_BASE_URL}/Medicines`, // DELETE
+    delete: `${API_BASE_URL}/Vaccines`, // DELETE
     getById: (id) => `${API_BASE_URL}/Vaccines/${id}`, // GET /{id}
     getAll: `${API_BASE_URL}/Vaccines/all`, // GET /all
   },
+
+  resident: {
+    importCSV: `${API_BASE_URL}/ResidentsCSV`, // POST for CSV import
+  },
+  patient: {
+    importCSV: `${API_BASE_URL}//PatientsCSV`, // POST for CSV import
+  },
+
+  medicine: {
+    importCSV: `${API_BASE_URL}/MedicinesCSV`, // POST for CSV import
+  },
+
+  vaccine: {
+    importCSV: `${API_BASE_URL}/VaccinesCSV`, // POST for CSV import
+  },
+
+  crimes: {
+    importCSV: `${API_BASE_URL}/CrimesCSV`, // POST for CSV import
+  },
+
+  suspects: {
+    importCSV: `${API_BASE_URL}/SuspectsCSV`, // POST for CSV import
+  },
+
+  victim: {
+    importCSV: `${API_BASE_URL}/VictimsCSV`, // POST for CSV import
+  },
   
+  profiles: {
+    importCSV: `${API_BASE_URL}/ProfilesCSV`, // POST for CSV import
+  },
+  
+  counseling: {
+    importCSV: `${API_BASE_URL}/CounselingCSV`, // POST for CSV import
+  },
+
+  seniors: {
+    importCSV: `${API_BASE_URL}/SeniorsCSV`, // POST for CSV import
+  },
 };
 
 export default apiconfig;

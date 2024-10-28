@@ -79,6 +79,30 @@ const familycounsellingService = {
       throw error;
     }
   },
+
+
+  importCounselingCSV: async (base64String) => {
+    try {
+      const response = await fetch(apiconfig.counseling.importCSV, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ counselingRecords: base64String }),  // Use counselingRecords here
+      });
+  
+      if (!response.ok) {
+        throw new Error('Failed to import CSV');
+      }
+  
+      return await response.json();
+    } catch (error) {
+      console.error('Error importing counseling support:', error);
+      throw error;
+    }
+  },
+
+
 };
 
 export default familycounsellingService;

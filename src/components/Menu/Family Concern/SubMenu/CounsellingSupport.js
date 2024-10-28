@@ -11,6 +11,7 @@ import { CircularProgress ,Button, Table, TableBody, TableCell, TableContainer, 
 import { CSVLink } from 'react-csv'; 
 import ImportExportIcon from '@mui/icons-material/ImportExport'; 
 import PrintIcon from '@mui/icons-material/Print'; 
+import AWS from 'aws-sdk'; // Make sure to install aws-sdk package
 
 const MySwal = withReactContent(Swal);
 
@@ -40,6 +41,7 @@ const barangay = extractBarangay(username); // Extract barangay
 
   useEffect(() => {
     fetchCounsellingRecords();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -191,9 +193,97 @@ const barangay = extractBarangay(username); // Extract barangay
     { label: "Location", key: "Location" },
   ];
 
-  const handleFileUpload = () => {
-    // Handle file upload logic here
+    // Initialize AWS S3 client
+const s3 = new AWS.S3({
+  accessKeyId: process.env.REACT_APP_AWS_ACCESS_KEY_ID,  // Set these in environment variables
+  secretAccessKey: process.env.REACT_APP_AWS_SECRET_ACCESS_KEY,
+  region: process.env.REACT_APP_AWS_REGION,
+});
+
+const handleFileUpload = async (event) => {
+  const file = event.target.files[0]; // Get the selected file
+
+  if (!file) {
+    toast.error("No file selected.");
+    return;
   }
+
+  try {
+    // Step 1: Upload the CSV file to S3
+    const s3Params = {
+      Bucket: process.env.REACT_APP_AWS_S3_BUCKET_NAME,
+      Key: `counselling/${file.name}`, // Store the file under the 'counselling' folder
+      Body: file,
+      ContentType: file.type,
+    };
+
+    // Upload file to S3
+    const uploadResult = await s3.upload(s3Params).promise();
+    const s3FileUrl = uploadResult.Location;  // URL of the uploaded file in S3
+    toast.success("File uploaded to S3 successfully!");
+
+    // Step 2: Fetch the file from S3
+    const response = await fetch(s3FileUrl);
+    const csvData = await response.text();
+
+    // Step 3: Process the CSV data
+    const rows = csvData.split('\n').map(row => row.split(','));
+
+    // Check for all required columns
+    const header = rows[0];
+    const requiredColumns = [
+      'ServiceID', 'ClientName', 'Counselor', 'DateOfSession'
+      
+    ];
+
+    const missingColumns = requiredColumns.filter(col => !header.includes(col));
+    if (missingColumns.length > 0) {
+      MySwal.fire({
+        icon: 'error',
+        title: 'Invalid File Format',
+        text: `Missing columns: ${missingColumns.join(', ')}`,
+        confirmButtonText: 'OK',
+      });
+      return;
+    }
+
+    // Step 4: Process each row and upload to your system
+    const counsellingToImport = rows.slice(1).map(row => {
+      const counselling = {};
+      header.forEach((key, index) => {
+        // Ensure that we do not access undefined values
+        if (index < row.length) {
+          counselling[key.trim()] = row[index].trim(); // Map CSV row data to the appropriate fields
+        }
+      });
+      
+      // Auto-generate ServiceID if not present
+      if (!counselling.ServiceID) {
+        counselling.ServiceID = `S-${Date.now()}`; // Use a timestamp for unique ID
+      }
+
+      return counselling;
+    }).filter(counselling => counselling); // Filter out any undefined or empty records
+
+    // Assuming you have a service method to batch import counselling records
+    await familycounsellingService.importCounselingCSV(counsellingToImport);
+
+    // Step 5: Show success notification with SweetAlert2
+    MySwal.fire({
+      icon: 'success',
+      title: 'Import Successful',
+      text: 'CSV data with Service IDs imported successfully!',
+      confirmButtonText: 'OK',
+    });
+
+    // Refresh counselling records (after import)
+    fetchCounsellingRecords(); // Re-fetch records to update the list
+
+  } catch (error) {
+    console.error('Error importing counselling records:', error);
+    toast.error('Failed to import counselling records: ' + error.message);
+  }
+};
 
   // Handle Print Records
   const handlePrint = () => {
